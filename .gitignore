@@ -1,0 +1,18 @@
+# Ignore IDEA project files #
+*.iml
+*.ipr
+*.iws
+.idea
+
+# Mac Files
+.DS_Store
+
+# backups
+*~
+
+node_modules/
+
+lokki-ios/lokki.xcodeproj/project.xcworkspace/xcuserdata
+lokki-ios/lokki.xcodeproj/xcuserdata
+
+newrelic_agent.log

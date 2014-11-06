@@ -1,0 +1,25 @@
+{
+    "name": "lokki-server",
+    "version": "0.1.1",
+
+    "dependencies": {
+        "express": "3.x",
+        "redis": "x",
+        "easynexmo": "x",
+        "nodetime": "x",
+        "apn": "x",
+        "gcm": "x",
+        "mpns": "x",
+        "knox": "0.8.x",
+        "newrelic" : "x",
+        "sendgrid": "0.4.x",
+        "validator": "2.0.x",
+        "node-uuid": "1.4.x",
+        "memwatch": "x"
+    },
+
+    "engines": {
+        "node": "0.10.x",
+        "npm": "1.2.x"
+    }
+}
