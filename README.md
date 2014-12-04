@@ -63,3 +63,10 @@ To be able to run the unit and end-to-end tests you need:
 - manual tests are located in "manual_test" subdirectory. They test access against external services (Amazon AWS S3).
     - to run them you need to set the access keys as environment variables. go to "lokki-server" folder and type "AWS_ACCESS_KEY_ID=TheKey AWS_SECRET_ACCESS_KEY=SecretKey ./node_modules/nodeunit/bin/nodeunit manual_test/testAWSS3.js"
 
+Note
+====
+
+Lokki is available to the open source community under Apache v2 license AS IS.
+
+This fork of the project is READ-ONLY and thus F-Secure will not respond to any pull requests, bug reports or
+vulnerability reports.
