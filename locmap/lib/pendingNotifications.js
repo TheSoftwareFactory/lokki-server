@@ -63,7 +63,7 @@ var pendingNotifications = function() {
                 if (res !== null) {
                     // Check timestamp.
                     var now = Date.now();
-                    if (res['timestamp'] + timeout*1000 < now) {
+                    if (res.timestamp + timeout*1000 <= now) {
                         db.rpop(pendingNotificationsDBKey, function(error, popResult) {
                             if (error) {
                                 console.log("ERROR: Failed to pop the last key on pending notifications list with error " + error);
@@ -71,7 +71,7 @@ var pendingNotifications = function() {
                             } else {
                                 var popRes = verifyResult(popResult);
                                 if (popRes !== null) {
-                                    if (popRes['timestamp'] + timeout*1000 < now) {
+                                    if (popRes.timestamp + timeout*1000 <= now) {
                                         callback(popRes);
                                     } else {
                                         console.log("ERROR: Pending notification entry had too new timestamp, discarding.");
