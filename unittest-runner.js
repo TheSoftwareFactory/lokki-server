@@ -10,4 +10,8 @@ var reporter = require('nodeunit').reporters.default;
 global.lokkiUnitTestingMode = {};// just inform everyone that we are in "run unittests" mode
 
 // Start all tests
-reporter.run(['locmap/test', 'test']);
+reporter.run(['locmap/test', 'test'], null, function() {
+  // Redis connection should be closed after tests are run, otherwise process will hang
+  var db = require('./lib/db');
+  db.quit();
+});
