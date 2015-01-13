@@ -21,6 +21,8 @@ Tests can be run with:
 
     $ node unittest-runner.js
 
+See the [Lokki Wiki](https://github.com/TheSoftwareFactory/lokki/wiki) for more information on development.
+
 ## Files
 
 *NOTE: Incomplete. Fill as files functions are discovered.*
