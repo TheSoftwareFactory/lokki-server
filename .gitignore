@@ -1,4 +1,4 @@
-# Ignore IDEA project files #
+# Ignore IDEA project files
 *.iml
 *.ipr
 *.iws
@@ -12,8 +12,7 @@
 *.swp
 
 node_modules/
-
-lokki-ios/lokki.xcodeproj/project.xcworkspace/xcuserdata
-lokki-ios/lokki.xcodeproj/xcuserdata
-
 newrelic_agent.log
+
+# Redis database dumps
+dump.rdb
