@@ -11,10 +11,10 @@ global.lokkiUnitTestingMode = {};// just inform everyone that we are in "run uni
 
 // Start all tests
 reporter.run(['locmap/test', 'test'], null, function(err) {
-  // Redis connection should be closed after tests are run, otherwise process will hang
-  var db = require('./lib/db');
-  db.quit();
-  if (err) {
-    process.exit(1);
-  }
+    // Redis connection should be closed after tests are run, otherwise process will hang
+    var db = require('./lib/db');
+    db.quit();
+    if (err) {
+        process.exit(1);
+    }
 });
