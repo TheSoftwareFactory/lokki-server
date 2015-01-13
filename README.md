@@ -1,4 +1,4 @@
-lokki-server
+lokki-server [![Build Status](https://travis-ci.org/TheSoftwareFactory/lokki-server.svg?branch=master)](https://travis-ci.org/TheSoftwareFactory/lokki-server)
 ============
 
 Backend code (API server) for the Lokki project.
