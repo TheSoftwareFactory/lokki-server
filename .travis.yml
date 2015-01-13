@@ -1,0 +1,4 @@
+language: node_js
+script: "node unittest-runner.js"
+services:
+  - redis-server
