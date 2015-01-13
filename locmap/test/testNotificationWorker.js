@@ -152,12 +152,9 @@ module.exports = {
                         NotificationWorker.doNotificationsCheck(function(notificationResult) {
                             // Function reports correct number of sent notifications.
                             test.equal(notificationResult, 1);
-                            // Notifications are done async, timeout needed to combat test failures.
-                            setTimeout(function() {
-                                test.equal(pushedNotifications.length, 1);
-                                test.deepEqual(pushedNotifications[0], {token: "APN", text: "Your Lokki friends are requesting your location. You should start Lokki to enable location reporting."});
-                                test.done();
-                            }, 200);
+                            test.equal(pushedNotifications.length, 1);
+                            test.deepEqual(pushedNotifications[0], {token: "APN", text: "Your Lokki friends are requesting your location. You should start Lokki to enable location reporting."});
+                            test.done();
                         });
                     });
                 });
