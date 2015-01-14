@@ -5,6 +5,9 @@ See LICENSE for details
 
 'use strict';
 
+var conf = require('../lib/config');
+var logger = require('../lib/logger');
+
 var testServerProcess = {};
 
 var testPlaceTemplate = {
@@ -14,6 +17,8 @@ var testPlaceTemplate = {
     radius: 100,
     type: 'factory'
 };
+
+var port = conf.get('port');
 
 // TODO Add the security headers.
 module.exports = {
@@ -154,7 +159,7 @@ module.exports = {
 
     // Setup client with automatic tests on each response
     api: require('nodeunit-httpclient').create({
-        port: 9000,
+        port: port,
         path: '/api',   // Base URL for requests
         status: 200,    // Test each response is OK (can override later)
         headers: {      // Test that each response must have these headers (can override later)
@@ -164,7 +169,7 @@ module.exports = {
 
     // Setup client with automatic tests on each response
     apiRoot: require('nodeunit-httpclient').create({
-        port: 9000,
+        port: port,
         path: '',   // Base URL for requests
         status: 200,    // Test each response is OK (can override later)
         headers: {      // Test that each response must have these headers (can override later)
@@ -175,31 +180,40 @@ module.exports = {
     // this function must be first as it starts server for testing
     startServer: function(test) {
         var spawn = require('child_process').spawn;
-        testServerProcess = spawn('node', ['./lokki-server.js', '9000']);
+        testServerProcess = spawn('node', ['./lokki-server.js']);
         var serverStarted = false;
 
         testServerProcess.stdout.setEncoding('utf8');
         testServerProcess.stdout.on('data', function(data) {
-            if (!serverStarted) {
-                test.done();
-                serverStarted = true;
-            }
             var str = data.toString();
             var lines = str.split(/(\r?\n)/g);
-            console.log('Server log: ' + lines.join(''));
+            logger.trace('Server log: %s', lines.join('').trim());
         });
+
+        // Poll server until able to connect
+        var waitTime = 5; // ms
+        var http = require('http');
+        var serverTimeout = setTimeout(function serverReady() {
+            http.get('http://localhost:' + port, function() {
+                test.done();
+                serverStarted = true;
+            }).on('error', function() {
+                serverTimeout = setTimeout(serverReady, waitTime);
+            });
+        }, waitTime);
 
         testServerProcess.on('close', function(code) {
             if (!serverStarted) {
+                clearTimeout(serverTimeout);
                 test.done();
             }
-            console.log('process exit code ' + code);
+            logger.trace('process exit code ' + code);
         });
     },
 
     // execute this as last test to stop server started using startServer
     stopServer: function(test) {
-        console.log('Stopping server');
+        logger.trace('Stopping server');
         testServerProcess.kill();
         testServerProcess = {};
         test.done();
@@ -314,7 +328,7 @@ module.exports = {
         function removeAvatar(user) {
             awss3.del('avatar/' + user).on('response', function(res) {
                 if (res.statusCode !== 204 && res.statusCode !== 404) {
-                    console.log('S3 removal of avatar/testUserId failed with status ' + res.statusCode);
+                    logger.trace('S3 removal of avatar/testUserId failed with status ' + res.statusCode);
                 }
                 counter--;
                 if (counter < 1) {

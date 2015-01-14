@@ -1,4 +1,8 @@
 {
+    // Timestamp removed because Heroku adds it automatically
+    "logging": {
+        "format": "<{{title}}> {{file}}:{{line}} ({{method}}) {{message}}" 
+    },
     "redis": {
         "options": {
             "no_ready_check": true

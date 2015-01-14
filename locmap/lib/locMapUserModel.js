@@ -8,7 +8,9 @@ See LICENSE for details
 /*
     Locmap user object and related methods.
 */
+
 var db = require('../../lib/db');
+var logger = require('../../lib/logger');
 var AppleNotification = require('../../lib/appleNotificationService');
 var LocMapGoogleCloudMessagingService = require('./locMapGoogleCloudMessagingService');
 var MicrosoftPushNotificationService = require('../../lib/microsoftPushNotificationService');
@@ -101,7 +103,7 @@ var LocMapUserModel = function(userId) {
         db.hmset(LocMapUserPrefix + currentUser.data.userId, serializedData, function(error, result) {
             if (error) {
                 result = 400;
-                console.log('Error setting user data: ' + error);
+                logger.error('Error setting user data: ' + error);
             } else {
                 currentUser.exists = true;
             }
@@ -116,18 +118,18 @@ var LocMapUserModel = function(userId) {
             db.hmset(LocMapUserPrefix + currentUser.data.userId, serializedData, function(error, result) {
                 if (error) {
                     result = 400;
-                    console.log('Error setting user data fields: ' + error);
+                    logger.error('Error setting user data fields: ' + error);
                 }
                 callback(result);
             });
         } else {
-            console.log('No data given to setFields!');
+            logger.trace('No data given to setFields!');
             callback(400);
         }
     };
 
     // TODO test
-    // token is either {apn:"token"} or {gcm:"token"} or {wp8: "url"}. if these are missing then clears tokens
+    // token is either {apn:'token'} or {gcm:'token'} or {wp8: 'url'}. if these are missing then clears tokens
     this.setPushNotificationToken = function(token, callback) {
         var currentUser = this;
         currentUser.getData(function(result) {
@@ -136,13 +138,13 @@ var LocMapUserModel = function(userId) {
                 currentUser.data.gcmToken = '';
                 currentUser.data.wp8Url = '';
                 if (token.apn !== undefined) {
-                    // console.log("Storing apn token " + token.apn + " for user " + currentUser.data.userId);
+                    logger.trace('Storing apn token ' + token.apn + ' for user ' + currentUser.data.userId);
                     currentUser.data.apnToken = token.apn;
                 } else if (token.gcm !== undefined) {
-                    // console.log("Storing gcm token " + token.gcm + " for user " + currentUser.data.userId);
+                    logger.trace('Storing gcm token ' + token.gcm + ' for user ' + currentUser.data.userId);
                     currentUser.data.gcmToken = token.gcm;
                 } else if (token.wp8 !== undefined) {
-                    // console.log("Storing wp8 token " + token.wp8 + " for user " + currentUser.data.userId);
+                    logger.trace('Storing wp8 token ' + token.wp8 + ' for user ' + currentUser.data.userId);
                     currentUser.data.wp8Url = token.wp8;
                 }
                 currentUser.setData(function(result2) {
@@ -169,7 +171,7 @@ var LocMapUserModel = function(userId) {
         return undefined;
     };
 
-    // returns tokens for apple and google in format: {apn: "token"} or {gcm: "token"} or just undefined if no tokens assigned
+    // returns tokens for apple and google in format: {apn: 'token'} or {gcm: 'token'} or just undefined if no tokens assigned
     this.getPushNotificationTokens = function(callback) {
         if (this.exists) {
             return callback(extractTokens(this.data));
@@ -190,22 +192,22 @@ var LocMapUserModel = function(userId) {
         var that = this;
         this.getPushNotificationTokens(function(tokens) {
             if (tokens && tokens.apn) {
-                // console.log("Sending APN notification for user " + that.data.userId);
+                logger.trace('Sending APN notification for user ' + that.data.userId);
                 var appleNotification = new AppleNotification();
                 appleNotification.pushNotification(tokens.apn, text, payload, silent);
                 that._updateLastSentNotification(silent, addPending, 'APN', callback);
             } else if (tokens && tokens.gcm) {
-                // console.log("Sending GCM notification for user " + that.data.userId);
+                logger.trace('Sending GCM notification for user ' + that.data.userId);
                 var googleNotification = new LocMapGoogleCloudMessagingService();
                 googleNotification.pushNotification(tokens.gcm, text, payload);
                 that._updateLastSentNotification(silent, addPending, 'GCM', callback);
             } else if (tokens && tokens.wp8Url && tokens.wp8Url.length > 2) {
-                // console.log("Sending WP8 notification for user " + that.data.userId);
+                logger.trace('Sending WP8 notification for user ' + that.data.userId);
                 var ms = new MicrosoftPushNotificationService();
                 ms.pushNotification(tokens.wp8Url, text, payload);
                 that._updateLastSentNotification(silent, addPending, 'WP8', callback);
             } else {
-                console.log('No token found, not sending notification for user ' + that.data.userId);
+                logger.warn('No token found, not sending notification for user ' + that.data.userId);
             }
         });
     };
@@ -217,22 +219,22 @@ var LocMapUserModel = function(userId) {
             var lang = locMapCommon.verifyLangCode(that.data.language);
             var text = i18n.getLocalizedString(lang, textKey, par1, val1, par2, val2, par3, val3);
             if (tokens && tokens.apn) {
-                // console.log("Sending visible APN notification for user " + that.data.userId);
+                logger.trace('Sending visible APN notification for user ' + that.data.userId);
                 var appleNotification = new AppleNotification();
                 appleNotification.pushNotification(tokens.apn, text, undefined, false);
                 that._updateLastSentNotification(false, false, 'localized APN', callback);
             } else if (tokens && tokens.gcm) {
-                // console.log("Sending visible GCM notification for user " + that.data.userId);
+                logger.trace('Sending visible GCM notification for user ' + that.data.userId);
                 var googleNotification = new LocMapGoogleCloudMessagingService();
                 googleNotification.pushNotification(tokens.gcm, text);
                 that._updateLastSentNotification(false, false, 'localized GCM', callback);
             } else if (tokens && tokens.wp8Url && tokens.wp8Url.length > 2) {
-                // console.log("Sending visible WP8 notification for user " + that.data.userId);
+                logger.trace('Sending visible WP8 notification for user ' + that.data.userId);
                 var ms = new MicrosoftPushNotificationService();
                 ms.pushNotification(tokens.wp8Url, text);
                 that._updateLastSentNotification(false, false, 'localized WP8', callback);
             } else {
-                console.log('No token found, not sending notification for user ' + that.data.userId);
+                logger.warn('No token found, not sending notification for user ' + that.data.userId);
             }
         });
     };
@@ -250,14 +252,14 @@ var LocMapUserModel = function(userId) {
         }
         // Don't log notifications for intervalnotifications, too much spam..
         if (!silent || addPending) {
-            console.log('Sending ' + type + ' notification to user ' + that.data.userId);
+            logger.trace('Sending ' + type + ' notification to user ' + that.data.userId);
         }
 
         this.setFields(notifyData, function(setResult) {
             if (addPending) {
                 pendingNotifications.addNewNotification(that.data.userId, function(addResult) {
                     if (!addResult) {
-                        console.log('ERROR Failed to add pending notification for user ' + that.data.userId);
+                        logger.error('Failed to add pending notification for user ' + that.data.userId);
                     }
                     if (callback !== undefined) {
                         callback(setResult);
@@ -271,9 +273,9 @@ var LocMapUserModel = function(userId) {
 
     // must be called on initialized user
     this._generateAuthToken = function() {
-        console.log('Generating authtoken for ' + this.data.userId);
+        logger.trace('Generating authtoken for ' + this.data.userId);
         if (!this.exists) {
-            console.log('User does not exist!');
+            logger.warn('User does not exist!');
             return;
         }
 
@@ -284,7 +286,7 @@ var LocMapUserModel = function(userId) {
                 this.data.authorizationToken += chars.charAt(Math.floor(Math.random() * chars.length));
             }
         }
-        console.log('authtoken: ' + this.data.authorizationToken);
+        logger.trace('authtoken: ' + this.data.authorizationToken);
     };
 
     // Returns boolean true/false for device id match.
@@ -292,7 +294,7 @@ var LocMapUserModel = function(userId) {
     this.isMatchingDeviceId = function(deviceId) {
         var currentUser = this;
         if (!currentUser.exists) {
-            console.log('Checking device id on uninitialized user! Id: ' + currentUser.data.userId);
+            logger.trace('Checking device id on uninitialized user! Id: ' + currentUser.data.userId);
             return false;
         }
         var hashedDeviceId = locMapCommon.getSaltedHashedId(deviceId);
@@ -306,7 +308,7 @@ var LocMapUserModel = function(userId) {
     this.setLocationAndBattery = function(location, battery, callback) {
         var currentUser = this;
         if (!currentUser.exists) {
-            console.log('Setting location to uninitialized user! Id: ' + currentUser.data.userId);
+            logger.trace('Setting location to uninitialized user! Id: ' + currentUser.data.userId);
             callback(400);
             return;
         }
@@ -316,7 +318,7 @@ var LocMapUserModel = function(userId) {
     this.setVisibility = function(visibility, callback) {
         var currentUser = this;
         if (!currentUser.exists) {
-            console.log('Setting visibility to uninitialized user! Id: ' + currentUser.data.userId);
+            logger.trace('Setting visibility to uninitialized user! Id: ' + currentUser.data.userId);
             callback(400);
             return;
         }
@@ -326,7 +328,7 @@ var LocMapUserModel = function(userId) {
     this.setLanguage = function(language, callback) {
         var currentUser = this;
         if (!currentUser.exists) {
-            console.log('Setting language to uninitialized user! Id: ' + currentUser.data.userId);
+            logger.trace('Setting language to uninitialized user! Id: ' + currentUser.data.userId);
             callback(400);
             return;
         }
@@ -336,7 +338,7 @@ var LocMapUserModel = function(userId) {
     this.setAccountRecoveryMode = function(recoveryMode, callback) {
         var currentUser = this;
         if (!currentUser.exists) {
-            console.log('Setting account recovery mode to uninitialized user! Id: ' + currentUser.data.userId);
+            logger.trace('Setting account recovery mode to uninitialized user! Id: ' + currentUser.data.userId);
             callback(400);
             return;
         }
@@ -346,7 +348,7 @@ var LocMapUserModel = function(userId) {
     this.setLastDashboardRead = function(callback) {
         var currentUser = this;
         if (!currentUser.exists) {
-            console.log('Setting last dashboard read timestamp to uninitialized user! Id: ' + currentUser.data.userId);
+            logger.trace('Setting last dashboard read timestamp to uninitialized user! Id: ' + currentUser.data.userId);
             callback(400);
             return;
         }

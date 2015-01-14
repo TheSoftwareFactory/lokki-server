@@ -10,6 +10,7 @@ See LICENSE for details
  */
 
 var conf = require('../lib/config');
+var logger = require('../lib/logger');
 var LocMapRestApi = require('./lib/locMapRESTAPI');
 var locMapRestApi = new LocMapRestApi();
 var LocMapAdminApi = require('./lib/locMapAdminApi');
@@ -139,14 +140,14 @@ module.exports = function(app) {
         cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
 
         locMapRestApi.getUserDashboard(req.params.userId, cache, function(status, result) {
-            // console.log("DEBUG dashboard reply status: " + status + " contents: " + JSON.stringify(result));
+            logger.trace('Dashboard reply status: ' + status + ' contents: ' + JSON.stringify(result));
             res.send(status, result);
         });
     });
 
     // Send notification to update location to users that the current user can see.
     app.post('/api/locmap/v1/user/:userId/update/locations', usesAuthentication, function(req, res) {
-        // console.log("User " + req.params.userId + " requested location updates.");
+        logger.trace('User ' + req.params.userId + ' requested location updates.');
         var cache = new Cache();
         cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
 
@@ -159,7 +160,7 @@ module.exports = function(app) {
     // POST data contents: {osType: 'android', osVersion: '4.4.0-Kitkat SDK whatever', lokkiVersion: '1.2.3', reportTitle: 'Lokki crash NullpointerException', reportData: 'report data.'}
     // osType must be one of: android/ios/wp, other information is freeform.
     app.post('/api/locmap/v1/crashReport/:userId', usesAuthentication, function(req, res) {
-        console.log('Crashreport storage called.');
+        logger.trace('Crashreport storage called.');
         locMapRestApi.storeCrashReport(req.params.userId, req.body, function(status, result) {
             res.send(status, result);
         });
@@ -167,9 +168,10 @@ module.exports = function(app) {
 
     // Account recovery using confirmation code.
     // POST data contents: {email: user@email.zzz}
+    // TODO Implement
     /*
      app.post('/api/locmap/v1/recovery/confirmation', function(req, res) {
-     res.send(500, "Not implemented.");
+     res.send(500, 'Not implemented.');
      });
      */
 
@@ -183,6 +185,7 @@ module.exports = function(app) {
             if (status === 200) {
                 res.send(200, result);
             } else {
+                // TODO Should we return something else but 200
                 res.send(200, '<html>An error occurred, please try signing in again to get a new reset email.</html>');
             }
         });

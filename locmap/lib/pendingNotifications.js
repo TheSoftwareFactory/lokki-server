@@ -8,13 +8,14 @@ See LICENSE for details
 /*
     Helper methods for appending new entries to pending notifications list and checking and removing them.
  */
+
+var logger = require('../../lib/logger');
 var db = require('../../lib/db');
 
 var pendingNotificationsDBKey = 'pendingNotificationsList';
 
 // Verify the notification result and return de-JSONized object if we got a valid one, null otherwise.
 var verifyResult = function(result) {
-    // console.log("Res: " + JSON.stringify(result));
     var entry = null;
     // Getting range results in a list containing JSONized object, popping does not have a list.
     if (typeof result === 'object' && result.length === 1) {
@@ -25,16 +26,14 @@ var verifyResult = function(result) {
     if (entry !== null) {
         try {
             entry = JSON.parse(entry);
-            // console.log("JSON parse ok.");
-            // console.log("ts " + entry["timestamp"] + " uid " + entry["userId"]);
             if (typeof entry === 'object' && entry.hasOwnProperty('timestamp') && entry.hasOwnProperty('userId')) {
                 return entry;
             }
         } catch (exc) {
-            console.log('ERROR: Pending notification JSON parse failed.');
+            logger.error('Pending notification JSON parse failed.');
         }
     }
-    // console.log("DEBUG VERIFYRESULT No result or invalid result");
+    logger.trace('VERIFYRESULT No result or invalid result');
     return null;
 };
 
@@ -59,7 +58,7 @@ var pendingNotifications = function() {
         // Peek at the last element on the list to see if it has already passed given timeout.
         db.lrange(pendingNotificationsDBKey, -1, -1, function(error, result) {
             if (error) {
-                console.log('ERROR: Failed to read the last key on pending notifications list with error ' + error);
+                logger.error('Failed to read the last key on pending notifications list with error ' + error);
                 callback(undefined);
             } else {
                 var res = verifyResult(result);
@@ -69,7 +68,7 @@ var pendingNotifications = function() {
                     if (res.timestamp + timeout * 1000 <= now) {
                         db.rpop(pendingNotificationsDBKey, function(error2, popResult) {
                             if (error) {
-                                console.log('ERROR: Failed to pop the last key on pending notifications list with error ' + error2);
+                                logger.error('Failed to pop the last key on pending notifications list with error ' + error2);
                                 callback(undefined);
                             } else {
                                 var popRes = verifyResult(popResult);
@@ -77,21 +76,21 @@ var pendingNotifications = function() {
                                     if (popRes.timestamp + timeout * 1000 <= now) {
                                         callback(popRes);
                                     } else {
-                                        console.log('ERROR: Pending notification entry had too new timestamp, discarding.');
+                                        logger.error('Pending notification entry had too new timestamp, discarding.');
                                         callback(undefined);
                                     }
                                 } else {
-                                    console.log('ERROR: Pending notification entry was not valid.');
+                                    logger.error('Pending notification entry was not valid.');
                                     callback(undefined);
                                 }
                             }
                         });
                     } else {
-                        // console.log("DEBUG CHECKLATESTNOTIF Timeout not passed for " + JSON.stringify(res));
+                        logger.trace('DEBUG CHECKLATESTNOTIF Timeout not passed for ' + JSON.stringify(res));
                         callback(null);
                     }
                 } else {
-                    // console.log("Verify result failed, null");
+                    logger.trace('Verify result failed, null');
                     callback(null);
                 }
             }

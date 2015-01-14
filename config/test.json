@@ -6,5 +6,9 @@
         "maxPlacesLimitNormalUser": 2,
         "notificationCheckPollingInterval": 10,
         "pendingNotificationTimeout": 0
-    }
+    },
+    "logging": {
+        "level": "error"
+    },
+    "port": 9001
 }

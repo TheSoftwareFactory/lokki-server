@@ -9,6 +9,7 @@ See LICENSE for details
     LocMap specific test helpers.
  */
 
+var conf = require('../../lib/config');
 var Cache = require('../../lib/cache');
 var LocMapUserModel = require('../lib/locMapUserModel');
 
@@ -58,7 +59,7 @@ module.exports = {
 
     // Setup client with automatic tests on each response
     api: require('nodeunit-httpclient').create({
-        port: 9000,
+        port: conf.get('port'),
         path: '/api/locmap', // Base URL for requests
         status: 200 // Test each response is OK (can override later)
     }),

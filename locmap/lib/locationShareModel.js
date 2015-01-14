@@ -8,7 +8,9 @@ See LICENSE for details
 /*
  Locmap location sharing models.
  */
+
 var conf = require('../../lib/config');
+var logger = require('../../lib/logger');
 var db = require('../../lib/db');
 var LocMapCommon = require('./locMapCommon');
 var locMapCommon = new LocMapCommon();
@@ -78,7 +80,7 @@ var LocMapSharingModel = function(userId) {
         db.hmset(LocMapUserPrefix + currentUser.data.userId, serializedData, function(error, result) {
             if (error) {
                 result = 400;
-                console.log('Error setting user data: ' + error);
+                logger.error('Error setting user data: ' + error);
             } else {
                 currentUser.exists = true;
             }
@@ -89,12 +91,12 @@ var LocMapSharingModel = function(userId) {
     this.allowOtherUser = function(otherUserId, callback) {
         var currentUser = this;
         if (!currentUser.exists) {
-            console.log('Setting allowOtherUser to uninitialized locationShare! Id: ' + currentUser.data.userId);
+            logger.trace('Setting allowOtherUser to uninitialized locationShare! Id: ' + currentUser.data.userId);
             callback(400);
             return;
         }
         if (currentUser.data.canSeeMe.length >= conf.get('locMapConfig').maxAllowToSeeCount) {
-            console.log('User ' + currentUser.data.userId + ' tried to allow other users beyond limit!');
+            logger.trace('User ' + currentUser.data.userId + ' tried to allow other users beyond limit!');
             callback(403);
             return;
         }
@@ -106,7 +108,7 @@ var LocMapSharingModel = function(userId) {
     this.denyOtherUser = function(otherUserId, callback) {
         var currentUser = this;
         if (!currentUser.exists) {
-            console.log('Setting denyOtherUser to uninitialized locationShare! Id: ' + currentUser.data.userId);
+            logger.trace('Setting denyOtherUser to uninitialized locationShare! Id: ' + currentUser.data.userId);
             callback(400);
             return;
         }
@@ -124,7 +126,7 @@ var LocMapSharingModel = function(userId) {
     this.removeUserICanSee = function(otherUserId, callback) {
         var currentUser = this;
         if (!currentUser.exists) {
-            console.log('Setting addUserICanSee to uninitialized locationShare! Id: ' + currentUser.data.userId);
+            logger.trace('Setting addUserICanSee to uninitialized locationShare! Id: ' + currentUser.data.userId);
             callback(400);
             return;
         }

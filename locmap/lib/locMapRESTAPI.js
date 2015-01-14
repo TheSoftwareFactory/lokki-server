@@ -10,6 +10,7 @@ See LICENSE for details
  */
 
 var conf = require('../../lib/config');
+var logger = require('../../lib/logger');
 var LocMapUserModel = require('./locMapUserModel');
 var FloodModel = require('../../lib/floodModel');
 var LocMapSharingModel = require('./locationShareModel');
@@ -32,7 +33,7 @@ var LocMapRESTAPI = function() {
 
     // executes callback with true as a first argument if authorization succeeded.
     // executes callback with false as a first argument and error string as second one if auth failed. Third parameter is cached UserModel object
-    // expects requestBody to contain object with "authorizationToken"
+    // expects requestBody to contain object with 'authorizationToken'
     this.authorizeUser = function(userId, requestHeader, callback) {
         var user = new LocMapUserModel(userId);
         user.getData(function() {
@@ -77,7 +78,7 @@ var LocMapRESTAPI = function() {
     // Resets the specified flood counter.
     // Executes callback with true/false first argument, telling if operation was a success. Just in case caller wants to use it.
     this.resetFloodProtection = function(id, type, callback) {
-        console.log('reset called with id ' + id + ' type ' + type);
+        logger.warn('Reset called with id ' + id + ' type ' + type);
         var floodId = type + ':' + id;
         var flood = new FloodModel(floodId);
         flood.reset(callback);
@@ -125,7 +126,7 @@ var LocMapRESTAPI = function() {
         try {
             check(userData.email).isEmail();
         } catch (e) {
-            console.log('User tried signing up with invalid email: ' + userData.email);
+            logger.trace('User tried signing up with invalid email: ' + userData.email);
             callback(400, 'Invalid email address.');
             return;
         }
@@ -154,9 +155,9 @@ var LocMapRESTAPI = function() {
                         restApi._formatSignUpReplyData(userId, newUser.data.authorizationToken, function(replyResult) {
                             locMapEmail.sendSignupMail(newUser.data.email, langCode, function(emailResult) {
                                 if (emailResult) {
-                                    console.log('Signup email successfully sent to ' + newUser.data.email);
+                                    logger.trace('Signup email successfully sent to ' + newUser.data.email);
                                 } else {
-                                    console.log('FAILED Signup email sending to ' + newUser.data.email);
+                                    logger.warn('FAILED Signup email sending to ' + newUser.data.email);
                                 }
                             });
                             callback(locMapCommon.statusFromResult(replyResult), replyResult);
@@ -167,7 +168,7 @@ var LocMapRESTAPI = function() {
                 }, null);
             } else if (newUser.data.activated) {  // User has been activated already
                 if (that._isUserInRecoveryMode(newUser.data.accountRecoveryMode)) {
-                    console.log('User ' + newUser.data.userId + ' in recovery mode, signing up.');
+                    logger.trace('User ' + newUser.data.userId + ' in recovery mode, signing up.');
                     newUser.data.authorizationToken = locMapCommon.generateAuthToken();
                     newUser.data.accountRecoveryMode = 0;
                     newUser.data.language = langCode;
@@ -183,20 +184,20 @@ var LocMapRESTAPI = function() {
                         }
                     });
                 } else if (newUser.isMatchingDeviceId(userData.device_id)) { // Device id match, treat as password success and let user in.
-                    console.log('Device id match for user ' + newUser.data.userId);
+                    logger.trace('Device id match for user ' + newUser.data.userId);
                     restApi._formatSignUpReplyData(userId, newUser.data.authorizationToken, function(replyResult) {
                         callback(locMapCommon.statusFromResult(replyResult), replyResult);
                     });
                 } else { // Device id mismatch, trigger recovery process for the account.
-                    console.log('Device id mismatch for user ' + newUser.data.userId);
+                    logger.trace('Device id mismatch for user ' + newUser.data.userId);
                     locMapResetCode.createResetCode(newUser.data.userId, function(resetResult) {
                         if (typeof resetResult !== 'number') {
-                            console.log('Reset code generated for user ' + newUser.data.userId + ' ' + resetResult);
+                            logger.trace('Reset code generated for user ' + newUser.data.userId + ' ' + resetResult);
                             locMapEmail.sendResetEmail(newUser.data.email, conf.get('locMapConfig').resetLinkAddress + resetResult, newUser.data.language, function(emailResult) {
                                 if (emailResult) {
-                                    console.log('Reset link sent to ' + newUser.data.email);
+                                    logger.trace('Reset link sent to ' + newUser.data.email);
                                 } else {
-                                    console.log('FAILED to send reset link to ' + newUser.data.email);
+                                    logger.error('FAILED to send reset link to ' + newUser.data.email);
                                 }
                             });
                             callback(401, 'Signup authorization failed.');
@@ -215,9 +216,9 @@ var LocMapRESTAPI = function() {
                         restApi._formatSignUpReplyData(userId, newUser.data.authorizationToken, function(replyResult) {
                             locMapEmail.sendSignupMail(newUser.data.email, langCode, function(emailResult) {
                                 if (emailResult) {
-                                    console.log('Signup email successfully sent to ' + newUser.data.email);
+                                    logger.trace('Signup email successfully sent to ' + newUser.data.email);
                                 } else {
-                                    console.log('FAILED Signup email sending to ' + newUser.data.email);
+                                    logger.error('FAILED Signup email sending to ' + newUser.data.email);
                                 }
                             });
                             callback(locMapCommon.statusFromResult(replyResult), replyResult);
@@ -316,13 +317,14 @@ var LocMapRESTAPI = function() {
                         // Update user dashboard access timestamp.
                         user.setLastDashboardRead(function(dashUpdateResult) {
                             if (dashUpdateResult !== 'OK') {
-                                console.log('WARNING Failed to update last dashboard access for user ' + userId);
+                                logger.warn('Failed to update last dashboard access for user ' + userId);
                             }
                         });
                         callback(200, responseData);
                     });
                 });
             } else {
+                logger.warn('Failed to get dashboard for user ' + userId);
                 callback(404, 'Failed to get dashboard data for user.');
             }
         });
@@ -372,7 +374,7 @@ var LocMapRESTAPI = function() {
         try {
             check(targetEmail).isEmail();
         } catch (e) {
-            console.log('User ' + currentUserLocShare.data.userId + ' tried to allow invalid email address: ' + targetEmail);
+            logger.trace('User ' + currentUserLocShare.data.userId + ' tried to allow invalid email address: ' + targetEmail);
             callback(400);
             return;
         }
@@ -389,15 +391,15 @@ var LocMapRESTAPI = function() {
             // Non-existing user, create a stub for it with the email.
             if (otherLocShareResult === 404) {
                 var newUser = new LocMapUserModel(otherUserId);
-                console.log('Creating stub user, id: ' + otherUserId + ' email ' + cleanTargetEmail);
+                logger.trace('Creating stub user, id: ' + otherUserId + ' email ' + cleanTargetEmail);
                 newUser.data.email = cleanTargetEmail;
                 newUser.setData(function(result) {
                     if (typeof result !== 'number') {
                         locMapEmail.sendInviteEmail(cleanTargetEmail, currentUserEmail, 'en-US', function(emailResult) {
                             if (emailResult) {
-                                console.log('Invite email sent to ' + cleanTargetEmail + ', inviter: ' + currentUserEmail);
+                                logger.trace('Invite email sent to ' + cleanTargetEmail + ', inviter: ' + currentUserEmail);
                             } else {
-                                console.log('FAILED to send invite email to ' + cleanTargetEmail);
+                                logger.error('FAILED to send invite email to ' + cleanTargetEmail);
                             }
                             that._storeAllowUser(currentUserLocShare, otherLocShare, callback);
                         });
@@ -416,7 +418,7 @@ var LocMapRESTAPI = function() {
     this.allowToSeeUserLocation = function(userId, cache, targetUsers, callback) {
         // Posted emails-array gets converted to an object that just looks like an array.
         if (typeof targetUsers !== 'object' || typeof targetUsers.emails !== 'object') {
-            console.log('WARNING Invalid data for allow user.');
+            logger.warn('Invalid data for allow user.');
             callback(400, 'Invalid data.');
             return;
         }
@@ -424,7 +426,7 @@ var LocMapRESTAPI = function() {
         var counter = targetUsers.emails.length;
         var errorCount = 0;
         if (typeof counter !== 'number' || counter < 1) {
-            console.log('WARNING At least one email required for allow user.');
+            logger.warn('At least one email required for allow user.');
             callback(400, 'Invalid data.');
             return;
         }
@@ -439,7 +441,7 @@ var LocMapRESTAPI = function() {
             counter--;
             if (counter <= 0) { // All queries done.
                 if (errorCount > 0) {
-                    console.log('WARNING Failed to allow ' + errorCount + ' of ' + targetUsers.emails.length + ' users.');
+                    logger.warn('WARNING Failed to allow ' + errorCount + ' of ' + targetUsers.emails.length + ' users.');
                     callback(400);
                 } else {
                     callback(200);
@@ -513,10 +515,10 @@ var LocMapRESTAPI = function() {
                     if (locMapCommon.isLocationTimedout(user.data.location, conf.get('locMapConfig').locationNotificationTimeout)) {
                         user.sendNotLocalizedPushNotification('locationRequest', undefined, true, true);
                     } else {
-                        console.log('Skipping notification to user ' + userId + ' location not timed out.');
+                        logger.trace('Skipping notification to user ' + userId + ' location not timed out.');
                     }
                 } else {
-                    console.log('Skipping notification to user ' + userId + ' visibility set to hide.');
+                    logger.trace('Skipping notification to user ' + userId + ' visibility set to hide.');
                 }
             }
             callback(userData);
@@ -550,7 +552,7 @@ var LocMapRESTAPI = function() {
         var locShare = new LocMapSharingModel(userId);
         locShare.getData(function() {
             if (locShare.exists) {
-                // console.log("DEBUG: User " + userId + " requesting user location updates.");
+                logger.trace('User ' + userId + ' requesting user location updates.');
                 that._pollUserLocations(locShare.data.ICanSee, callback);
             } else {
                 callback(404, 'User does not exist.');
@@ -567,7 +569,7 @@ var LocMapRESTAPI = function() {
         var user = cache.get('locmapuser', userId);
 
         user.setVisibility(settingsObject.visibility, function(result) {
-            console.log('Visibility set to ' + settingsObject.visibility + ' for user ' + userId + ' with result ' + result);
+            logger.trace('Visibility set to ' + settingsObject.visibility + ' for user ' + userId + ' with result ' + result);
             callback(locMapCommon.statusFromResult(result), result);
         });
     };
@@ -582,7 +584,7 @@ var LocMapRESTAPI = function() {
         var user = cache.get('locmapuser', userId);
 
         user.setLanguage(settingsObject.language, function(result) {
-            console.log('Language set to ' + settingsObject.language + ' for user ' + userId + ' with result ' + result);
+            logger.trace('Language set to ' + settingsObject.language + ' for user ' + userId + ' with result ' + result);
             callback(locMapCommon.statusFromResult(result), result);
         });
     };
@@ -604,16 +606,16 @@ var LocMapRESTAPI = function() {
 
     /* TODO Finalize if we take account recovery by confirmation code into use.
     this.setUserAccountRecovery = function(dataObject, callback) {
-        if (typeof dataObject !== "object" || typeof dataObject.email !== "string") {
-            callback(400, "Invalid post data.");
+        if (typeof dataObject !== 'object' || typeof dataObject.email !== 'string') {
+            callback(400, 'Invalid post data.');
             return;
         }
         var userEmail = dataObject.email;
         try {
             check(userEmail).isEmail();
         } catch (e) {
-            console.log("ERROR User tried recovery with invalid email: " + userEmail);
-            callback(400, "Invalid email address.");
+            logger.error('User tried recovery with invalid email: ' + userEmail);
+            callback(400, 'Invalid email address.');
             return;
         }
         var userId = LocMapCommon.getSaltedHashedId(userEmail);
@@ -623,7 +625,7 @@ var LocMapRESTAPI = function() {
 
 
             } else {
-                callback(404, "User does not exist.");
+                callback(404, 'User does not exist.');
             }
         });
     };
@@ -635,7 +637,7 @@ var LocMapRESTAPI = function() {
             if (typeof resetData !== 'number' && typeof resetData === 'object' && typeof resetData.userId === 'string' && resetData.userId.length > 0 && typeof resetData.resetCode === 'string' && resetData.resetCode.length > 0) {
                 locMapResetCode.removeResetCode(resetId, function(removeResult) {
                     if (removeResult !== 1) {
-                        console.log('WARNING Failed to delete reset code for user ' + resetData.userId + ' (code: ' + resetId + ')');
+                        logger.warn('Failed to delete reset code for user ' + resetData.userId + ' (code: ' + resetId + ')');
                     }
                     var user = new LocMapUserModel(resetData.userId);
                     user.getData(function() {

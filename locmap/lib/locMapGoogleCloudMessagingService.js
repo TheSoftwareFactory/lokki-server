@@ -6,6 +6,7 @@ See LICENSE for details
 'use strict';
 
 var conf = require('../../lib/config');
+var logger = require('../../lib/logger');
 var GCM = require('gcm').GCM;
 
 // Implementation of google messaging service for Android
@@ -37,10 +38,10 @@ LocMapGoogleCloudMessagingService.prototype.pushNotification = function(deviceTo
         message['data.payload'] = JSON.stringify(payload);
     }
 
-    // console.log("GCM Send for device: " + deviceToken);
+    logger.trace('GCM Send for device: ' + deviceToken);
     this.gcm.send(message, function(err) {
         if (err) {
-            console.log('GoogleCloudMessagingService send error: ' + err);
+            logger.warn('GoogleCloudMessagingService send error: ' + err);
         }
     });
 
