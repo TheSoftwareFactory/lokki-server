@@ -1,4 +1,11 @@
 language: node_js
-script: "node unittest-runner.js"
+script: node unittest-runner.js
 services:
-  - redis-server
+- redis-server
+deploy:
+  provider: heroku
+  app: lokki
+  on:
+    repo: TheSoftwareFactory/lokki-server
+  api_key:
+    secure: gWWnIwTXbjjWbhp1+n58WoTyD8kSpNyt9QCN/3VVnjtFN8Pdan2Jtc95CCawg0LR6URC71qXc/eRUeDgHnkptYstnEnVzLkC9yHuKidLswuQuiwVgJreivFRZAxw7PibCxmgLYpGSkIpT4VOG4lTSiVPBL9Y+rhBNlc9WfXxz0w=
