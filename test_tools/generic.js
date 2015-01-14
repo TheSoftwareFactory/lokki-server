@@ -7,25 +7,25 @@ var Family = require('../lib/familyModel');
 
 family1 = new Family('1');
 family1.data.members = ['Miguel1', 'Miguel2'];
-family1.setData(function (result) {
+family1.setData(function(result) {
     console.log(result);
 });
 
 var miguel1 = new User('Miguel1');
 miguel1.data.family = 1;
 miguel1.data.name = 'Miguel 1';
-miguel1.setData(function (result) {
+miguel1.setData(function(result) {
     console.log('setData:', result);
 });
 
 var miguel2 = new User('Miguel2');
 miguel2.data.family = 1;
 miguel2.data.name = 'Miguel 2';
-miguel2.setData(function (result) {
+miguel2.setData(function(result) {
     console.log('setData:', result);
 });
 
-miguel1.dashboard(function (dashboard) {
+miguel1.dashboard(function(dashboard) {
         console.log('Dash:', dashboard);
     });
 

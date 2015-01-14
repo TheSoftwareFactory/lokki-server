@@ -1,9 +1,9 @@
-#!/usr/bin/env node
-
 /*
 Copyright (c) 2014-2015 F-Secure
 See LICENSE for details
 */
+
+'use strict';
 
 var reporter = require('nodeunit').reporters.default;
 
@@ -15,6 +15,6 @@ reporter.run(['locmap/test', 'test'], null, function(err) {
     var db = require('./lib/db');
     db.quit();
     if (err) {
-        process.exit(1);
+        throw err;
     }
 });

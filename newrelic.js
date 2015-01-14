@@ -12,18 +12,18 @@ exports.config = {
   /**
    * Array of application names.
    */
-  app_name : ['Lokki Server Europe'],
+  'app_name': ['Lokki Server Europe'],
   /**
    * Your New Relic license key.
    */
-  license_key : '195be57424ff13bc71904e56a7c0e330b2f5215b',
+  'license_key': '195be57424ff13bc71904e56a7c0e330b2f5215b',
 
-  logging : {
+  'logging': {
     /**
      * Level at which to log. 'trace' is most useful to New Relic when diagnosing
      * issues with the agent, 'info' and higher will impose the least overhead on
      * production applications.
      */
-    level : 'trace'
+    'level': 'trace'
   }
 };
