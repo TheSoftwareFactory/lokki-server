@@ -2,30 +2,29 @@
 Copyright (c) 2014-2015 F-Secure
 See LICENSE for details
 */
+
+'use strict';
+
 /*
  Test file: Recovery code API methods.
  */
-var helpers = require("../../test_helpers/test_helpers");
-var lmHelpers = require("../test_helpers/locMapHelpers");
 
-var locMapRecoveryCode = require('../lib/recoveryCode');
-var locMapRESTAPI = require('../lib/locMapRESTAPI');
-LocMapRestApi = new locMapRESTAPI();
+var LocMapRecoveryCode = require('../lib/recoveryCode');
 
 module.exports = {
-    setUp: function (callback) {
+    setUp: function(callback) {
         var dbSetup = require('../../lib/dbSetup');
-        dbSetup(function () {
+        dbSetup(function() {
             callback();
         });
     },
 
     createRecoveryCode: function(test) {
         test.expect(1);
-        var myId = 'deadbeef'
-        var code = new locMapRecoveryCode(myId);
+        var myId = 'deadbeef';
+        var code = new LocMapRecoveryCode(myId);
         code.createRecoveryCode(function(recoveryCode) {
-            test.equal(recoveryCode, "AA1AA");
+            test.equal(recoveryCode, 'AA1AA');
             test.done();
         });
     }

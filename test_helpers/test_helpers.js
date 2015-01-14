@@ -3,28 +3,30 @@ Copyright (c) 2014-2015 F-Secure
 See LICENSE for details
 */
 
+'use strict';
+
 var testServerProcess = {};
 
 var testPlaceTemplate = {
-    name: "TestPlace",
-    lat:  12.23,
+    name: 'TestPlace',
+    lat: 12.23,
     lon: 64.12,
     radius: 100,
-    type: "factory"
+    type: 'factory'
 };
-//TODO Add the security headers.
+
+// TODO Add the security headers.
 module.exports = {
     successResult: {
         status: 200,
-        //headers: { 'content-type': 'text/html; charset=utf-8' },
         headers: { 'content-type': 'text/html; charset=utf-8' },
         body: 'OK'
     },
 
     wrongAuthTokenResult: {
         status: 404,
-        headers: {'content-type': "text/html; charset=utf-8"},
-        body: "Authorization token is wrong!"
+        headers: {'content-type': 'text/html; charset=utf-8'},
+        body: 'Authorization token is wrong!'
     },
 
     userDoesNotExistResult: {
@@ -66,19 +68,19 @@ module.exports = {
     testPlace: testPlaceTemplate,
 
     testPlaceIncludingPlace1: {
-        name: "TestPlaceIncludingPlace1",
-        lat:  13.23,
+        name: 'TestPlaceIncludingPlace1',
+        lat: 13.23,
         lon: 65.12,
         radius: 200000,
-        type: "someType"
+        type: 'someType'
     },
 
     testPlace2: {
-        name: "TestPlace2",
-        lat:  22.23,
+        name: 'TestPlace2',
+        lat: 22.23,
         lon: 77.12,
         radius: 100,
-        type: "home"
+        type: 'home'
 
     },
 
@@ -91,7 +93,7 @@ module.exports = {
 
     // object sent by client to server which corresponds to 100m off from place1
     locationReport100MetersOffPlace1: {
-        lat: testPlaceTemplate.lat + 100/111000, //110000 is about how many meters in a degree, 1/111000 is how many degrees in 1 meter
+        lat: testPlaceTemplate.lat + 100 / 111000, // 110000 is about how many meters in a degree, 1/111000 is how many degrees in 1 meter
         lon: testPlaceTemplate.lon,
         acc: 10
     },
@@ -100,7 +102,7 @@ module.exports = {
     // it is used to test that we don't move people outside of places if accuracy is so bad that position is outside of place but accuracy circle intersects place radius circle.
     // This place also matches testPlaceIncludingPlace1
     locationReportWithBadAccuracyIncludesPlace1: {
-        lat: testPlaceTemplate.lat + 1500/111000, //110000 is about how many meters in a degree, 1/111000 is how many degrees in 1 meter
+        lat: testPlaceTemplate.lat + 1500 / 111000, // 110000 is about how many meters in a degree, 1/111000 is how many degrees in 1 meter
         lon: testPlaceTemplate.lon,
         acc: 1999
     },
@@ -117,7 +119,7 @@ module.exports = {
     locationReportAtPlace2: {
         lat: 22.23,
         lon: 77.12,
-        acc: 19 //20m is what we consider good location so 19 should be good
+        acc: 19 // 20m is what we consider good location so 19 should be good
     },
 
     // object sent by client to server which corresponds to place2
@@ -127,7 +129,7 @@ module.exports = {
         acc: 120
     },
     // object sent by client to server which is away from all defined places
-    locationReportAtNoWhere:{
+    locationReportAtNoWhere: {
         lat: 120,
         lon: 120,
         acc: 10
@@ -137,57 +139,57 @@ module.exports = {
     createUserData: {
         data: {
             name: 'user name',
-            password: "test",
-            smsConfirmationCode:"1234"
+            password: 'test',
+            smsConfirmationCode: '1234'
         }
     },
 
     // if you used createUserData to create user then you can use loginUserData to log him in
     loginUserData: {
         data: {
-            password:"test"
+            password: 'test'
         }
     },
 
 
-    //Setup client with automatic tests on each response
+    // Setup client with automatic tests on each response
     api: require('nodeunit-httpclient').create({
         port: 9000,
-        path: '/api',   //Base URL for requests
-        status: 200,    //Test each response is OK (can override later)
-        headers: {      //Test that each response must have these headers (can override later)
+        path: '/api',   // Base URL for requests
+        status: 200,    // Test each response is OK (can override later)
+        headers: {      // Test that each response must have these headers (can override later)
             'content-type': 'application/json; charset=utf-8'
         }
     }),
 
-    //Setup client with automatic tests on each response
+    // Setup client with automatic tests on each response
     apiRoot: require('nodeunit-httpclient').create({
         port: 9000,
-        path: '',   //Base URL for requests
-        status: 200,    //Test each response is OK (can override later)
-        headers: {      //Test that each response must have these headers (can override later)
+        path: '',   // Base URL for requests
+        status: 200,    // Test each response is OK (can override later)
+        headers: {      // Test that each response must have these headers (can override later)
             'content-type': 'application/json; charset=utf-8'
         }
     }),
 
     // this function must be first as it starts server for testing
-    startServer: function (test) {
+    startServer: function(test) {
         var spawn = require('child_process').spawn;
-        testServerProcess = spawn('node',  ["./lokki-server.js", "9000"]);
+        testServerProcess = spawn('node', ['./lokki-server.js', '9000']);
         var serverStarted = false;
 
         testServerProcess.stdout.setEncoding('utf8');
-        testServerProcess.stdout.on('data', function (data) {
+        testServerProcess.stdout.on('data', function(data) {
             if (!serverStarted) {
                 test.done();
                 serverStarted = true;
             }
-            var str = data.toString()
+            var str = data.toString();
             var lines = str.split(/(\r?\n)/g);
-            console.log("Server log: " + lines.join(""));
+            console.log('Server log: ' + lines.join(''));
         });
 
-        testServerProcess.on('close', function (code) {
+        testServerProcess.on('close', function(code) {
             if (!serverStarted) {
                 test.done();
             }
@@ -196,17 +198,17 @@ module.exports = {
     },
 
     // execute this as last test to stop server started using startServer
-    stopServer : function(test) {
-        console.log("Stopping server");
+    stopServer: function(test) {
+        console.log('Stopping server');
         testServerProcess.kill();
         testServerProcess = {};
         test.done();
     },
 
     // code to clean DB. calls callback when done
-    cleanDB: function (callback) {
+    cleanDB: function(callback) {
         var dbSetup = require('../lib/dbSetup');
-        dbSetup(function () {
+        dbSetup(function() {
             callback();
         });
     },
@@ -214,7 +216,7 @@ module.exports = {
     // returns new object which can be added to user settings to enable gettings notifications about place forPlaceId for user forUserId
     getUserSettingsWithEnabledNotifications: function(forUserId, forPlaceId) {
         var newSettings = {
-            language: "en",
+            language: 'en',
             placeNotifications: {
                 onCreated: true,
                 onDeleted: true
@@ -234,9 +236,9 @@ module.exports = {
 
     createAndLoginUser: function(test, userName, callback) {
         var that = this;
-        that.api.post(test, "/user/confirmPhone/" + userName, {}, that.successResult, function() { // init sms confirmation
+        that.api.post(test, '/user/confirmPhone/' + userName, {}, that.successResult, function() { // init sms confirmation
             that.api.post(test, '/user/' + userName, that.createUserData, that.successResult, function() {  // create user
-                that.api.post(test, '/login/' + userName, {data: {password:"test"}}, {body: undefined}, function(res) { // login user
+                that.api.post(test, '/login/' + userName, {data: {password: 'test'}}, {body: undefined}, function(res) { // login user
                     var authToken = JSON.parse(res.body).authorizationToken;
                     callback(authToken);
                 });
@@ -246,14 +248,14 @@ module.exports = {
 
     friend4Users: function(test, friendingUser, user1, user2, user3, user4, friendingUserToken, t1, t2, t3, t4, callback) {
         var that = this;
-        that.api.post(test, '/user/' + friendingUser + '/friend/' + user1, {headers: {authorizationtoken: friendingUserToken}}, that.successResult, function(res) {
-            that.api.post(test, '/user/' + friendingUser + '/friend/' + user2, {headers: {authorizationtoken: friendingUserToken}}, that.successResult, function(res) {
-                that.api.post(test, '/user/' + friendingUser + '/friend/' + user3, {headers: {authorizationtoken: friendingUserToken}}, that.successResult, function(res) {
-                    that.api.post(test, '/user/' + friendingUser + '/friend/' + user4, {headers: {authorizationtoken: friendingUserToken}}, that.successResult, function(res) {
-                        that.api.post(test, '/user/' + user1 + '/friend/' + friendingUser, {headers: {authorizationtoken: t1}}, that.successResult, function(res) {
-                            that.api.post(test, '/user/' + user2 + '/friend/' + friendingUser, {headers: {authorizationtoken: t2}}, that.successResult, function(res) {
-                                that.api.post(test, '/user/' + user3 + '/friend/' + friendingUser, {headers: {authorizationtoken: t3}}, that.successResult, function(res) {
-                                    that.api.post(test, '/user/' + user4 + '/friend/' + friendingUser, {headers: {authorizationtoken: t4}}, that.successResult, function(res) {
+        that.api.post(test, '/user/' + friendingUser + '/friend/' + user1, {headers: {authorizationtoken: friendingUserToken}}, that.successResult, function() {
+            that.api.post(test, '/user/' + friendingUser + '/friend/' + user2, {headers: {authorizationtoken: friendingUserToken}}, that.successResult, function() {
+                that.api.post(test, '/user/' + friendingUser + '/friend/' + user3, {headers: {authorizationtoken: friendingUserToken}}, that.successResult, function() {
+                    that.api.post(test, '/user/' + friendingUser + '/friend/' + user4, {headers: {authorizationtoken: friendingUserToken}}, that.successResult, function() {
+                        that.api.post(test, '/user/' + user1 + '/friend/' + friendingUser, {headers: {authorizationtoken: t1}}, that.successResult, function() {
+                            that.api.post(test, '/user/' + user2 + '/friend/' + friendingUser, {headers: {authorizationtoken: t2}}, that.successResult, function() {
+                                that.api.post(test, '/user/' + user3 + '/friend/' + friendingUser, {headers: {authorizationtoken: t3}}, that.successResult, function() {
+                                    that.api.post(test, '/user/' + user4 + '/friend/' + friendingUser, {headers: {authorizationtoken: t4}}, that.successResult, function() {
                                         callback();
                                     });
                                 });
@@ -268,25 +270,25 @@ module.exports = {
 
     createAndLogin4Users: function(test, user1, user2, user3, user4, callback) {
         var that = this;
-        that.api.post(test, "/user/confirmPhone/" + user1, {}, that.successResult, function() { // init sms confirmation
+        that.api.post(test, '/user/confirmPhone/' + user1, {}, that.successResult, function() { // init sms confirmation
             that.api.post(test, '/user/' + user1, that.createUserData, that.successResult, function() {  // create user
-                that.api.post(test, '/login/' + user1, {data: {password:"test"}}, {body: undefined}, function(res) { // login user
-                    var authToken1 = JSON.parse(res.body).authorizationToken;
+                that.api.post(test, '/login/' + user1, {data: {password: 'test'}}, {body: undefined}, function(login) { // login user
+                    var authToken1 = JSON.parse(login.body).authorizationToken;
 
-                    that.api.post(test, "/user/confirmPhone/" + user2, {}, that.successResult, function() { // init sms confirmation
+                    that.api.post(test, '/user/confirmPhone/' + user2, {}, that.successResult, function() { // init sms confirmation
                         that.api.post(test, '/user/' + user2, that.createUserData, that.successResult, function() {  // create user
-                            that.api.post(test, '/login/' + user2, {data: {password:"test"}}, {body: undefined}, function(res) { // login user
-                                var authToken2 = JSON.parse(res.body).authorizationToken;
+                            that.api.post(test, '/login/' + user2, {data: {password: 'test'}}, {body: undefined}, function(login2) { // login user
+                                var authToken2 = JSON.parse(login2.body).authorizationToken;
 
-                                that.api.post(test, "/user/confirmPhone/" + user3, {}, that.successResult, function() { // init sms confirmation
+                                that.api.post(test, '/user/confirmPhone/' + user3, {}, that.successResult, function() { // init sms confirmation
                                     that.api.post(test, '/user/' + user3, that.createUserData, that.successResult, function() {  // create user
-                                        that.api.post(test, '/login/' + user3, {data: {password:"test"}}, {body: undefined}, function(res) { // login user
-                                            var authToken3 = JSON.parse(res.body).authorizationToken;
+                                        that.api.post(test, '/login/' + user3, {data: {password: 'test'}}, {body: undefined}, function(login3) { // login user
+                                            var authToken3 = JSON.parse(login3.body).authorizationToken;
 
-                                            that.api.post(test, "/user/confirmPhone/" + user4, {}, that.successResult, function() { // init sms confirmation
+                                            that.api.post(test, '/user/confirmPhone/' + user4, {}, that.successResult, function() { // init sms confirmation
                                                 that.api.post(test, '/user/' + user4, that.createUserData, that.successResult, function() {  // create user
-                                                    that.api.post(test, '/login/' + user4, {data: {password:"test"}}, {body: undefined}, function(res) { // login user
-                                                        var authToken4 = JSON.parse(res.body).authorizationToken;
+                                                    that.api.post(test, '/login/' + user4, {data: {password: 'test'}}, {body: undefined}, function(login4) { // login user
+                                                        var authToken4 = JSON.parse(login4.body).authorizationToken;
                                                         callback(authToken1, authToken2, authToken3, authToken4);
                                                     });
                                                 });
@@ -305,25 +307,26 @@ module.exports = {
     cleanS3: function(callback) {
         var awss3 = require('../lib/awss3');
         // Remove only testing user avatar from S3, just in case someone runs this agains production S3.
-        var testUsers = ["testUserId", "user11"];
+        var testUsers = ['testUserId', 'user11'];
         // Counter magic to trigger callback when last call finishes.
         var counter = testUsers.length;
 
-        for (var i=0; i<testUsers.length; i++) {
+        function removeAvatar(user) {
+            awss3.del('avatar/' + user).on('response', function(res) {
+                if (res.statusCode !== 204 && res.statusCode !== 404) {
+                    console.log('S3 removal of avatar/testUserId failed with status ' + res.statusCode);
+                }
+                counter--;
+                if (counter < 1) {
+                    return callback();
+                }
+            }).end();
+        }
+
+        for (var i = 0; i < testUsers.length; i++) {
             var testUser = testUsers[i];
-            (function(user) {
-                awss3.del("avatar/" + user).on('response', function(res) {
-                    if (res.statusCode != 204 && res.statusCode != 404) {
-                        console.log("S3 removal of avatar/testUserId failed with status " + res.statusCode);
-                    }
-                    counter--;
-                    if (counter < 1) {
-                        return callback();
-                    }
-                }).end();
-            })(testUser);
+            removeAvatar(testUser);
         }
     }
 
 };
-

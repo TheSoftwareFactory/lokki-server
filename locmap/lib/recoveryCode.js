@@ -2,6 +2,9 @@
 Copyright (c) 2014-2015 F-Secure
 See LICENSE for details
 */
+
+'use strict';
+
 /*
  Recovery code API methods
 
@@ -15,20 +18,20 @@ See LICENSE for details
 var db = require('../../lib/db');
 var LocMapConfig = require('./locMapConfig');
 
-var modelPrefix = "locmaprecoverycode:"
+var modelPrefix = 'locmaprecoverycode:';
 
-var RecoveryCode = function (userId) {
+var RecoveryCode = function(userId) {
     this.exists = false; // will be true after getData or when recoverycode has been created.
     this.data = {
         userId: userId,
-        recoveryCode: ""
+        recoveryCode: ''
     };
 
     // returns confirmation SMS data or 404 if not found (through callback).
     // data is an object like defined in this.data
-    this.getRecoveryCodeData = function (callback) {
+    this.getRecoveryCodeData = function(callback) {
         var that = this;
-        db.get(modelPrefix + this.data.userId, function (error, result) {
+        db.get(modelPrefix + this.data.userId, function(error, result) {
             var finalResult = 0;
             if (result) {
                 var resultData = that._deserializeData(result);
@@ -52,7 +55,7 @@ var RecoveryCode = function (userId) {
         db.setex(modelPrefix + this.data.userId, LocMapConfig.recoveryCodeTimeout, serializedData, function(error, result) {
             if (error) {
                 result = 400;
-                console.log("Error storing user " + that.data.userId +  " recovery code");
+                console.log('Error storing user ' + that.data.userId + ' recovery code');
             } else {
                 that.exists = true;
                 result = that.data.recoveryCode;
@@ -61,10 +64,10 @@ var RecoveryCode = function (userId) {
         });
     };
 
-    ////TODO TODO FIXME Use simpler method.
+    // TODO TODO FIXME Use simpler method.
     // Ascii: 65-90 = A-Z
     this._getRandomCapitalLetter = function() {
-        var code = Math.floor(Math.random() * (90-65+1) + 65);
+        var code = Math.floor(Math.random() * (90 - 65 + 1) + 65);
         return String.fromCharCode(code);
     };
 
@@ -98,7 +101,7 @@ var RecoveryCode = function (userId) {
         return data;
     };
 
-    this._serializeData = function (data) {
+    this._serializeData = function(data) {
         var serializedData = '';
         try {
             serializedData = JSON.stringify(data);

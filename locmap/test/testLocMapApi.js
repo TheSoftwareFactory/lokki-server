@@ -2,28 +2,31 @@
 Copyright (c) 2014-2015 F-Secure
 See LICENSE for details
 */
+
+'use strict';
+
 var LocMapUserModel = require('../lib/locMapUserModel');
-var helpers = require("../../test_helpers/test_helpers");
-var lmHelpers = require("../test_helpers/locMapHelpers");
-var locMapRESTAPI = require('../lib/locMapRESTAPI');
-var LocMapRestApi = new locMapRESTAPI();
+var lmHelpers = require('../test_helpers/locMapHelpers');
+var LocMapRestAPI = require('../lib/locMapRESTAPI');
+var locMapRestApi = new LocMapRestAPI();
 
 module.exports = {
-    setUp: function (callback) {
+
+    setUp: function(callback) {
         var dbSetup = require('../../lib/dbSetup');
-        dbSetup(function () {
+        dbSetup(function() {
             callback();
         });
     },
 
     signUpStoresUserLanguage: function(test) {
         test.expect(3);
-        LocMapRestApi.signUpUser({email: "user@example.com.invalid", device_id: "dev1", language: "fi-FI"}, function(status, userData1) {
+        locMapRestApi.signUpUser({email: 'user@example.com.invalid', 'device_id': 'dev1', language: 'fi-FI'}, function(status, userData1) {
             test.equal(status, 200);
             var user = new LocMapUserModel(userData1.id);
             user.getData(function(userData) {
-                test.ok(typeof userData !== "number");
-                test.equal(user.data.language, "fi-FI");
+                test.ok(typeof userData !== 'number');
+                test.equal(user.data.language, 'fi-FI');
                 test.done();
             });
         });
@@ -31,12 +34,12 @@ module.exports = {
 
     signUpStoresShortUserLanguage: function(test) {
         test.expect(3);
-        LocMapRestApi.signUpUser({email: "user@example.com.invalid", device_id: "dev1", language: "fi"}, function(status, userData1) {
+        locMapRestApi.signUpUser({email: 'user@example.com.invalid', 'device_id': 'dev1', language: 'fi'}, function(status, userData1) {
             test.equal(status, 200);
             var user = new LocMapUserModel(userData1.id);
             user.getData(function(userData) {
-                test.ok(typeof userData !== "number");
-                test.equal(user.data.language, "fi");
+                test.ok(typeof userData !== 'number');
+                test.equal(user.data.language, 'fi');
                 test.done();
             });
         });
@@ -45,7 +48,7 @@ module.exports = {
     // Language code can be max 10 chars.
     signUpFailsTooLongUserLanguage: function(test) {
         test.expect(1);
-        LocMapRestApi.signUpUser({email: "user@example.com.invalid", device_id: "dev1", language: "12345678901"}, function(status, userData1) {
+        locMapRestApi.signUpUser({email: 'user@example.com.invalid', 'device_id': 'dev1', language: '12345678901'}, function(status) {
             test.equal(status, 400);
             test.done();
         });
@@ -54,7 +57,7 @@ module.exports = {
     // Language code can be max 10 chars.
     signUpFailsNotStringUserLanguage: function(test) {
         test.expect(1);
-        LocMapRestApi.signUpUser({email: "user@example.com.invalid", device_id: "dev1", language: {not: "string"}}, function(status, userData1) {
+        locMapRestApi.signUpUser({email: 'user@example.com.invalid', 'device_id': 'dev1', language: {not: 'string'}}, function(status) {
             test.equal(status, 400);
             test.done();
         });
@@ -63,13 +66,13 @@ module.exports = {
     // Set user language.
     setUserLanguage: function(test) {
         test.expect(5);
-        lmHelpers.createLocMapUserApi(test, LocMapRestApi, "user@example.com.invalid", "dev1", function(reply) {
-            lmHelpers.getCacheWithUser(test, LocMapRestApi, reply.id, function(cache) {
-                LocMapRestApi.setUserLanguage(reply.id, cache, {'language': 'fi-FI'}, function(langResult) {
+        lmHelpers.createLocMapUserApi(test, locMapRestApi, 'user@example.com.invalid', 'dev1', function(reply) {
+            lmHelpers.getCacheWithUser(test, locMapRestApi, reply.id, function(cache) {
+                locMapRestApi.setUserLanguage(reply.id, cache, {'language': 'fi-FI'}, function(langResult) {
                     test.equal(langResult, 200);
                     var user = new LocMapUserModel(reply.id);
                     user.getData(function(userData) {
-                        test.ok(typeof userData !== "number");
+                        test.ok(typeof userData !== 'number');
                         test.equal(user.data.language, 'fi-FI');
                         test.done();
                     });
@@ -79,15 +82,15 @@ module.exports = {
     },
 
     // Set user language short code.
-    setUserLanguage: function(test) {
+    setUserShortLanguage: function(test) {
         test.expect(5);
-        lmHelpers.createLocMapUserApi(test, LocMapRestApi, "user@example.com.invalid", "dev1", function(reply) {
-            lmHelpers.getCacheWithUser(test, LocMapRestApi, reply.id, function(cache) {
-                LocMapRestApi.setUserLanguage(reply.id, cache, {'language': 'fi'}, function(langResult) {
+        lmHelpers.createLocMapUserApi(test, locMapRestApi, 'user@example.com.invalid', 'dev1', function(reply) {
+            lmHelpers.getCacheWithUser(test, locMapRestApi, reply.id, function(cache) {
+                locMapRestApi.setUserLanguage(reply.id, cache, {'language': 'fi'}, function(langResult) {
                     test.equal(langResult, 200);
                     var user = new LocMapUserModel(reply.id);
                     user.getData(function(userData) {
-                        test.ok(typeof userData !== "number");
+                        test.ok(typeof userData !== 'number');
                         test.equal(user.data.language, 'fi');
                         test.done();
                     });
@@ -99,14 +102,14 @@ module.exports = {
     // Too long code fails.
     setUserLanguageTooLongCodeFails: function(test) {
         test.expect(5);
-        lmHelpers.createLocMapUserApi(test, LocMapRestApi, "user@example.com.invalid", "dev1", function(reply) {
-            lmHelpers.getCacheWithUser(test, LocMapRestApi, reply.id, function(cache) {
-                LocMapRestApi.setUserLanguage(reply.id, cache, {'language': 'a2345678901'}, function(langResult) {
+        lmHelpers.createLocMapUserApi(test, locMapRestApi, 'user@example.com.invalid', 'dev1', function(reply) {
+            lmHelpers.getCacheWithUser(test, locMapRestApi, reply.id, function(cache) {
+                locMapRestApi.setUserLanguage(reply.id, cache, {'language': 'a2345678901'}, function(langResult) {
                     test.equal(langResult, 400);
                     // Verify that language stays as the default.
                     var user = new LocMapUserModel(reply.id);
                     user.getData(function(userData) {
-                        test.ok(typeof userData !== "number");
+                        test.ok(typeof userData !== 'number');
                         test.equal(user.data.language, 'en-US');
                         test.done();
                     });
@@ -118,14 +121,14 @@ module.exports = {
     // Invalid type fails.
     setUserLanguageInvalidCodeFails: function(test) {
         test.expect(5);
-        lmHelpers.createLocMapUserApi(test, LocMapRestApi, "user@example.com.invalid", "dev1", function(reply) {
-            lmHelpers.getCacheWithUser(test, LocMapRestApi, reply.id, function(cache) {
-                LocMapRestApi.setUserLanguage(reply.id, cache, {'language': {not: "string"}}, function(langResult) {
+        lmHelpers.createLocMapUserApi(test, locMapRestApi, 'user@example.com.invalid', 'dev1', function(reply) {
+            lmHelpers.getCacheWithUser(test, locMapRestApi, reply.id, function(cache) {
+                locMapRestApi.setUserLanguage(reply.id, cache, {'language': {not: 'string'}}, function(langResult) {
                     test.equal(langResult, 400);
                     // Verify that language stays as the default.
                     var user = new LocMapUserModel(reply.id);
                     user.getData(function(userData) {
-                        test.ok(typeof userData !== "number");
+                        test.ok(typeof userData !== 'number');
                         test.equal(user.data.language, 'en-US');
                         test.done();
                     });
@@ -137,14 +140,14 @@ module.exports = {
     // Too short code fails.
     setUserLanguageTooShortCodeFails: function(test) {
         test.expect(5);
-        lmHelpers.createLocMapUserApi(test, LocMapRestApi, "user@example.com.invalid", "dev1", function(reply) {
-            lmHelpers.getCacheWithUser(test, LocMapRestApi, reply.id, function(cache) {
-                LocMapRestApi.setUserLanguage(reply.id, cache, {'language': 'f'}, function(langResult) {
+        lmHelpers.createLocMapUserApi(test, locMapRestApi, 'user@example.com.invalid', 'dev1', function(reply) {
+            lmHelpers.getCacheWithUser(test, locMapRestApi, reply.id, function(cache) {
+                locMapRestApi.setUserLanguage(reply.id, cache, {'language': 'f'}, function(langResult) {
                     test.equal(langResult, 400);
                     // Verify that language stays as the default.
                     var user = new LocMapUserModel(reply.id);
                     user.getData(function(userData) {
-                        test.ok(typeof userData !== "number");
+                        test.ok(typeof userData !== 'number');
                         test.equal(user.data.language, 'en-US');
                         test.done();
                     });
@@ -157,16 +160,16 @@ module.exports = {
     getDashboardSavesLastAccessTimestamp: function(test) {
         test.expect(7);
         var startTime = Date.now();
-        lmHelpers.createLocMapUserApi(test, LocMapRestApi, "user@example.com.invalid", "dev1", function(reply) {
-            lmHelpers.getCacheWithUser(test, LocMapRestApi, reply.id, function(cache) {
-                LocMapRestApi.getUserDashboard(reply.id, cache, function(status, dash) {
+        lmHelpers.createLocMapUserApi(test, locMapRestApi, 'user@example.com.invalid', 'dev1', function(reply) {
+            lmHelpers.getCacheWithUser(test, locMapRestApi, reply.id, function(cache) {
+                locMapRestApi.getUserDashboard(reply.id, cache, function(status) {
                     test.equal(status, 200);
                     var user = new LocMapUserModel(reply.id);
                     user.getData(function(userData) {
-                        test.ok(typeof userData !== "number");
-                        test.ok(typeof user.data.lastDashboardAccess === "number");
-                        test.ok(user.data.lastDashboardAccess >= startTime, "Last dashboard access time was not recent.");
-                        test.ok(user.data.lastDashboardAccess <= Date.now(), "Last dashboard access time was in the future.");
+                        test.ok(typeof userData !== 'number');
+                        test.ok(typeof user.data.lastDashboardAccess === 'number');
+                        test.ok(user.data.lastDashboardAccess >= startTime, 'Last dashboard access time was not recent.');
+                        test.ok(user.data.lastDashboardAccess <= Date.now(), 'Last dashboard access time was in the future.');
                         test.done();
                     });
                 });
