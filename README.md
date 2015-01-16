@@ -23,52 +23,24 @@ Tests can be run with:
 
 See the [Lokki Wiki](https://github.com/TheSoftwareFactory/lokki/wiki) for more information on development.
 
+## Coding style
+
+[eslint](http://eslint.org/) is used to spot mistakes and to make sure coding style is consistent. Rules used in addition to default rules can be found from `.eslintrc`. Any eslint errors will fail the Travis CI build.
+
+During development, easiest way is to make sure you won't have eslint errors is to have eslint integration in your IDE or text editor. Sublime Text 3 supports this with [SublimeLinter-eslint](https://github.com/roadhump/SublimeLinter-eslint). You can also put `eslint .` to your Git pre-commit hook to make sure you won't make commits that have lint errors.
+
 ## Files
 
-*NOTE: Incomplete. Fill as files functions are discovered.*
+Some files and directories of interest include:
 
-- `lokki-server.js`: node.js + express app, exposing REST API.
-- `lib/dbSetup.js`: setting up database for testing
-
-## Rest API
-
-*NOTE: this seems to be outdated, but left intact for now.*
-
-User API
-- create new user:
-POST /api/user/:userId
-
-- update user info:
-PUT /api/user/:userId - body should have user object with fields which need to be changed, like: {name: "My new name"}
-
-- get user info
-GET /api/user/:userId
-
-- user updates his location:
-POST /api/user/:userId/location - body should have object like: {lon:22.2, lat:12.3, acc:10}
-
-Dashboard API
-GET /api/user/:userId/dashboard
-
-Family API
-- userId invites userId2 to his family:
-POST /api/user/:userId/family/invite/:userId2
-
-- userId accepts invitation from userId2:
-POST /api/user/:userId/family/:userId2
-
-- add or delete place. body must have place object for POST
-POST|DEL /api/user/:userId/family/place/:placeId
-
-## Manual tests
-
-*NOTE: ``manual_test`` directory does not seem to exist – outdated section?*
-
-- manual tests are located in "manual_test" subdirectory. They test access against external services (Amazon AWS S3).
-    - to run them you need to set the access keys as environment variables. go to "lokki-server" folder and type "AWS_ACCESS_KEY_ID=TheKey AWS_SECRET_ACCESS_KEY=SecretKey ./node_modules/nodeunit/bin/nodeunit manual_test/testAWSS3.js"
+- `lokki-server.js`: Node.js + express app, exposing REST API. You can run the application with `node lokki-server.js`.
+- `unittest-runner.js`: Unit test runner. Unit tests are run with `node unittest-runner.js` command.
+- `lib/dbSetup.js`: Setting up database for testing.
+- `locmap/`: Folder containing logic related to location sharing.
+    - `locmap/locmap-server.js`: REST API for locmap
+    - `locmap/test`: Tests for locmap
+- `test/`: General tests
 
 ## Note
 
 Lokki is available to the open source community under Apache v2 license AS IS.
-
-This fork of the project is READ-ONLY and thus F-Secure will not respond to any pull requests, bug reports or vulnerability reports.
