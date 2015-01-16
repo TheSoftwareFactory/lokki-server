@@ -8,6 +8,9 @@ See LICENSE for details
 /*
  Test file: User API methods
  */
+
+var conf = require('../../lib/config');
+
 var lmHelpers = require('../test_helpers/locMapHelpers');
 
 var LocMapUserModel = require('../lib/locMapUserModel');
@@ -17,7 +20,6 @@ var LocMapRestApi = require('../lib/locMapRESTAPI');
 var locMapRestApi = new LocMapRestApi();
 var I18N = require('../../lib/i18n');
 var i18n = new I18N();
-var LocMapConfig = require('../lib/locMapConfig');
 
 var userEmail = 'test@example.com.invalid';
 
@@ -83,7 +85,7 @@ module.exports = {
                         var now = Date.now();
                         test.ok(typeof result !== 'number', 'Getting user account data failed.');
                         test.equal(typeof user.data.accountRecoveryMode, 'number', 'User is not in recovery mode.');
-                        test.ok(user.data.accountRecoveryMode > now - LocMapConfig.accountRecoveryModeTimeout * 1000, 'Recovery mode timed out.');
+                        test.ok(user.data.accountRecoveryMode > now - conf.get('locMapConfig').accountRecoveryModeTimeout * 1000, 'Recovery mode timed out.');
                         test.ok(user.data.accountRecoveryMode <= now, 'Recovery mode time in future.');
                         test.done();
                     });
@@ -110,7 +112,7 @@ module.exports = {
 
     recoveryModeCheckTimeoutJustOver: function(test) {
         test.expect(1);
-        var belowLimit = Date.now() - LocMapConfig.accountRecoveryModeTimeout * 1000 - 1;
+        var belowLimit = Date.now() - conf.get('locMapConfig').accountRecoveryModeTimeout * 1000 - 1;
         test.ok(!locMapRestApi._isUserInRecoveryMode(belowLimit), 'Account should not be in recovery mode.');
         test.done();
     },

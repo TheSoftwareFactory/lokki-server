@@ -9,6 +9,7 @@ See LICENSE for details
     LocMap server routes.
  */
 
+var conf = require('../lib/config');
 var LocMapRestApi = require('./lib/locMapRESTAPI');
 var locMapRestApi = new LocMapRestApi();
 var LocMapAdminApi = require('./lib/locMapAdminApi');
@@ -28,9 +29,7 @@ var usesAuthentication = function(req, res, next) {
 };
 
 var usesAdminAuthentication = function(req, res, next) {
-    // TODO get rid of this
-    // only 358405297258 can access it
-    if (req.params.userId !== '358405297258') {
+    if (req.params.userId !== conf.get('adminUserId')) {
         return res.send(404, 'Access denied');
     } else {
         next();// hack yet to enable access through browser

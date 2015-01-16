@@ -9,12 +9,12 @@ See LICENSE for details
     Logic needed for locmap RESTAPI calls.
  */
 
+var conf = require('../../lib/config');
 var LocMapUserModel = require('./locMapUserModel');
 var FloodModel = require('../../lib/floodModel');
 var LocMapSharingModel = require('./locationShareModel');
 var LocMapCommon = require('./locMapCommon');
 var locMapCommon = new LocMapCommon();
-var LocMapConfig = require('./locMapConfig');
 var LocMapCrashReports = require('./crashReports');
 var locMapCrashReports = new LocMapCrashReports();
 var LocMapEmail = require('./email');
@@ -108,7 +108,7 @@ var LocMapRESTAPI = function() {
     // Users recovery mode parameter needs to be a number that is between current time and configured ttl for recovery mode.
     this._isUserInRecoveryMode = function(recoveryMode) {
         var now = Date.now();
-        var recoveryModeTimeout = now - LocMapConfig.accountRecoveryModeTimeout * 1000;
+        var recoveryModeTimeout = now - conf.get('locMapConfig').accountRecoveryModeTimeout * 1000;
         if (typeof recoveryMode === 'number' && recoveryMode <= now && recoveryMode > recoveryModeTimeout) {
             return true;
         } else {
@@ -192,7 +192,7 @@ var LocMapRESTAPI = function() {
                     locMapResetCode.createResetCode(newUser.data.userId, function(resetResult) {
                         if (typeof resetResult !== 'number') {
                             console.log('Reset code generated for user ' + newUser.data.userId + ' ' + resetResult);
-                            locMapEmail.sendResetEmail(newUser.data.email, LocMapConfig.resetLinkAddress + resetResult, newUser.data.language, function(emailResult) {
+                            locMapEmail.sendResetEmail(newUser.data.email, conf.get('locMapConfig').resetLinkAddress + resetResult, newUser.data.language, function(emailResult) {
                                 if (emailResult) {
                                     console.log('Reset link sent to ' + newUser.data.email);
                                 } else {
@@ -510,7 +510,7 @@ var LocMapRESTAPI = function() {
         user.getData(function(userData) {
             if (typeof userData !== 'number') {
                 if (user.data.visibility) {
-                    if (locMapCommon.isLocationTimedout(user.data.location, LocMapConfig.locationNotificationTimeout)) {
+                    if (locMapCommon.isLocationTimedout(user.data.location, conf.get('locMapConfig').locationNotificationTimeout)) {
                         user.sendNotLocalizedPushNotification('locationRequest', undefined, true, true);
                     } else {
                         console.log('Skipping notification to user ' + userId + ' location not timed out.');
@@ -678,7 +678,7 @@ var LocMapRESTAPI = function() {
         }
 
         var user = cache.get('locmapuser', userId);
-        if (Object.keys(user.data.places).length >= LocMapConfig.maxPlacesLimitNormalUser) {
+        if (Object.keys(user.data.places).length >= conf.get('locMapConfig').maxPlacesLimitNormalUser) {
             callback(403, 'Place limit reached.');
             return;
         }

@@ -5,12 +5,13 @@ See LICENSE for details
 
 'use strict';
 
+var conf = require('../../lib/config');
 var GCM = require('gcm').GCM;
 
 // Implementation of google messaging service for Android
 var LocMapGoogleCloudMessagingService = function() {
     this.notifications = {};// we just store notifications here if not in production. key is token, value is array of messages for this token
-    this.gcm = new GCM('AIzaSyBoebawHMikB1pYALYz4k9ELCorM232RDk');
+    this.gcm = new GCM(conf.get('googleCloudMessagingApiKey'));
 
 };
 
@@ -19,8 +20,7 @@ LocMapGoogleCloudMessagingService.prototype = {};
 // You can define payload which will be sent also to client or leave it undefined. payload must be an object
 LocMapGoogleCloudMessagingService.prototype.pushNotification = function(deviceToken, notificationText, payload) {
     // Detect if we run unit tests (in local machine), and dont push notifications.
-    var inProduction = process.env.PORT || false;
-    if (!inProduction) {
+    if (!conf.get('pushNotifications')) {
         if (this.notifications[deviceToken] === undefined) {
             this.notifications[deviceToken] = [];
         }

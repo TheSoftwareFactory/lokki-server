@@ -6,13 +6,13 @@ See LICENSE for details
 'use strict';
 
 // lokki-server main file
+var conf = require('./lib/config');
+
 // Express application
 
 var express = require('express');
 
 var app = express();
-
-var LocMapConfig = require('./locmap/lib/locMapConfig');
 var NotificationWorker = require('./locmap/lib/notificationWorker');
 var notificationWorker = new NotificationWorker();
 
@@ -44,8 +44,7 @@ app.use('/api', function(req, res, next) {
     return next();
 });
 
-var inProduction = process.env.PORT || false;
-if (inProduction) {
+if (conf.get('neverCrash')) {
     // do not allow production server to crash
     process.on('uncaughtException', function(err) {
         // handle the error safely
@@ -76,29 +75,21 @@ require('./locmap/locmap-server')(app);
 
 // ----------------------------------------------------------------------------------------------------------------------
 // Entry point
-// Command line may contain:
-// argv[0] = node
-// argv[1] = lokki-server.js
-// argv[2] = port (9000 if missing),
 if (require.main === module) {
-    var port = process.env.PORT || 9000;
 
-    // if we provide parameter to server then it is a PORT
-    if (process.argv.length > 2) {
-        port = +process.argv[2];
-    }
+    var port = conf.get('port');
+
     app.listen(port, function() {
         console.log('Lokki-Server listening on ' + port + '\n');
     });
 
     // Not run on local server, interferes with unit tests.
     // TODO Error handling?
-    if (process.env.PORT) {
+    if (conf.get('pushNotifications')) {
         // Run pending notifications check in configured intervals.
         setInterval(function() {
             notificationWorker.doNotificationsCheck(function() {});
-        }, LocMapConfig.notificationCheckPollingInterval * 1000);
-
+        }, conf.get('locMapConfig').notificationCheckPollingInterval * 1000);
     }
 } else {
     module.exports = app; // Exports the app to importing module

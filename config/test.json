@@ -1,0 +1,10 @@
+{
+    "adminUserId": "358405297258",
+    "locMapConfig": {
+        "recoveryCodeTimeout": 1,
+        "maxAllowToSeeCount": 5,
+        "maxPlacesLimitNormalUser": 2,
+        "notificationCheckPollingInterval": 10,
+        "pendingNotificationTimeout": 0
+    }
+}

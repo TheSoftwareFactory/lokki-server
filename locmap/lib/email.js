@@ -9,10 +9,10 @@ See LICENSE for details
  * Email helper library for Locmap
  */
 
+var conf = require('../../lib/config');
 var LocMapCommon = require('./locMapCommon');
 var locMapCommon = new LocMapCommon();
 
-var noReplyAddress = 'no-reply@example.com';
 var I18N = require('../../lib/i18n');
 var i18n = new I18N();
 
@@ -20,13 +20,11 @@ var LocMapEmail = function() {
     this.emails = [];
 
     this._sendEmail = function(emailObj, callback) {
-        var inProduction = process.env.PORT || false;
-        console.log('sendEmail, production: ' + inProduction);
-        if (inProduction) {
-            console.log('In production, using sendgrid to send email.');
+        if (conf.get('sendEmails')) {
+            console.log('Using sendgrid to send email.');
             var sendgrid = require('sendgrid')(
-               process.env.SENDGRID_USERNAME,
-               process.env.SENDGRID_PASSWORD
+                conf.get('sendGrid').username,
+                conf.get('sendGrid').password
             );
             var email = new sendgrid.Email(emailObj);
             sendgrid.send(email, function(err) {
@@ -39,7 +37,7 @@ var LocMapEmail = function() {
                 }
             });
         } else {
-            console.log('Unittesting, saving email locally.');
+            console.log('Saving email locally.');
             this.emails.push(emailObj);
             callback(true);
         }
@@ -53,7 +51,7 @@ var LocMapEmail = function() {
 
         var emailObj = {
             to: targetEmail,
-            from: noReplyAddress,
+            from: conf.get('senderEmail'),
             subject: subject,
             text: messageText
         };
@@ -70,7 +68,7 @@ var LocMapEmail = function() {
         //    LocMapCommon.messageTexts.inviteEmailText2 + inviterEmail + LocMapCommon.messageTexts.inviteEmailText3;
         var emailObj = {
             to: targetEmail,
-            from: noReplyAddress,
+            from: conf.get('senderEmail'),
             subject: subject,
             text: messageText
         };
@@ -91,7 +89,7 @@ var LocMapEmail = function() {
         var messageText = i18n.getLocalizedString(lang, 'reset.emailText', 'resetLink', resetLink);
          var emailObj = {
             to: targetEmail,
-            from: noReplyAddress,
+            from: conf.get('senderEmail'),
             subject: subject,
             text: messageText
          };

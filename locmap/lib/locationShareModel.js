@@ -8,10 +8,10 @@ See LICENSE for details
 /*
  Locmap location sharing models.
  */
+var conf = require('../../lib/config');
 var db = require('../../lib/db');
 var LocMapCommon = require('./locMapCommon');
 var locMapCommon = new LocMapCommon();
-var LocMapConfig = require('./locMapConfig');
 
 var LocMapUserPrefix = 'locmapsharemodel:';
 
@@ -93,7 +93,7 @@ var LocMapSharingModel = function(userId) {
             callback(400);
             return;
         }
-        if (currentUser.data.canSeeMe.length >= LocMapConfig.maxAllowToSeeCount) {
+        if (currentUser.data.canSeeMe.length >= conf.get('locMapConfig').maxAllowToSeeCount) {
             console.log('User ' + currentUser.data.userId + ' tried to allow other users beyond limit!');
             callback(403);
             return;

@@ -10,8 +10,8 @@ See LICENSE for details
     and checks if user needs to be polled with a visible notification.
  */
 
+var conf = require('../../lib/config');
 var db = require('../../lib/db');
-var LocMapConfig = require('./locMapConfig');
 var PendingNotifications = require('./pendingNotifications');
 var pendingNotifications = new PendingNotifications();
 var LocMapUserModel = require('./locMapUserModel');
@@ -39,9 +39,9 @@ var checkNotifications = function() {
                 // Check if user has received a visible notification recently.
                 if (typeof user.data.lastVisibleNotification === 'number') {
                     var now = Date.now();
-                    // console.log("Comparison: " + (user.data.lastVisibleNotification + LocMapConfig.visibleNotificationLimit*1000) + " now: " + now);
+                    // console.log("Comparison: " + (user.data.lastVisibleNotification + conf.get('locMapConfig').visibleNotificationLimit*1000) + " now: " + now);
 
-                    if (user.data.lastVisibleNotification + LocMapConfig.visibleNotificationLimit * 1000 >= now) {
+                    if (user.data.lastVisibleNotification + conf.get('locMapConfig').visibleNotificationLimit * 1000 >= now) {
                         recentVisibleNotification = true;
                     }
                 }
@@ -89,10 +89,10 @@ var checkNotifications = function() {
 
     this.doNotificationsCheck = function(callback) {
         // Acquire lock for the check. This prevents multiple instances from doing the upkeep simultaneously.
-        db.set(lockDBKey, 'anyvalue', 'NX', 'EX', LocMapConfig.notificationCheckPollingInterval, function(error, result) {
+        db.set(lockDBKey, 'anyvalue', 'NX', 'EX', conf.get('locMapConfig').notificationCheckPollingInterval, function(error, result) {
             if (result === 'OK') {
                 // console.log("DEBUG: CHECKNOTIF: Acquired upkeep lock.");
-                pendingNotifications.getTimedOutNotifications(LocMapConfig.pendingNotificationTimeout, function(notifications) {
+                pendingNotifications.getTimedOutNotifications(conf.get('locMapConfig').pendingNotificationTimeout, function(notifications) {
                     if (notifications.length > 0) {
                         var cleanNotifications = checkNotify._cleanNotifications(notifications);
                         var count = 0;

@@ -5,8 +5,8 @@ See LICENSE for details
 
 'use strict';
 
+var conf = require('../../lib/config');
 var db = require('../../lib/db');
-var LocMapConfig = require('./locMapConfig');
 var LocMapUserModel = require('./locMapUserModel');
 var LocMapCommon = require('./locMapCommon');
 var locMapCommon = new LocMapCommon();
@@ -23,9 +23,9 @@ var IntervalNotifications = function() {
             // Only visible users should get notified.
             if (user.data.visibility) {
                 // Users have not updated their location recently.
-                if (locMapCommon.isLocationTimedout(user.data.location, LocMapConfig.backgroundNotificationLocationAgeLimit)) {
+                if (locMapCommon.isLocationTimedout(user.data.location, conf.get('locMapConfig').backgroundNotificationLocationAgeLimit)) {
                     // User has accessed their dashboard recently.
-                    if (user.data.lastDashboardAccess >= Date.now() - (LocMapConfig.backgroundNotificationUserActivityAgeLimit * 1000)) {
+                    if (user.data.lastDashboardAccess >= Date.now() - (conf.get('locMapConfig').backgroundNotificationUserActivityAgeLimit * 1000)) {
                         // APN and GCM users should get notified. WP8 client is not currently using notifications.
                         if (user.data.apnToken || user.data.gcmToken) {
                             return 0;
@@ -93,7 +93,7 @@ var IntervalNotifications = function() {
 
     this.doIntervalNotifications = function(callback) {
         // Acquire lock for interval notification. Prevents multiple processes/threads from running this at the same time.
-        db.set(lockDBKey, 'lockvalue', 'NX', 'EX', LocMapConfig.backgroundNotificationInterval, function(error, result) {
+        db.set(lockDBKey, 'lockvalue', 'NX', 'EX', conf.get('locMapConfig').backgroundNotificationInterval, function(error, result) {
             if (result === 'OK') {
                 // console.log("DEBUG: INTERVALNOTIF: Acquired lock.");
                 var userCount = 0;
