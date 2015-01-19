@@ -1,0 +1,7 @@
+{
+    "redis": {
+        "options": {
+            "no_ready_check": true
+        }
+    }
+}

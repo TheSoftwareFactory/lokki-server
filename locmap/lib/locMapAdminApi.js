@@ -5,11 +5,11 @@ See LICENSE for details
 
 'use strict';
 
+var conf = require('../../lib/config');
 var LocMapUserModel = require('./locMapUserModel');
 var LocMapSharingModel = require('./locationShareModel');
 var LocMapCrashReports = require('./crashReports');
 var locMapCrashReports = new LocMapCrashReports();
-var LocMapConfig = require('./locMapConfig');
 var LocMapCommon = require('./locMapCommon');
 var locMapCommon = new LocMapCommon();
 var db = require('../../lib/db');
@@ -42,7 +42,7 @@ var LocMapAdminApi = function() {
             callback(400);
             return;
         }
-        if (LocMapConfig.adminAccountRecoveryAllowedEmails.indexOf(targetEmail) === -1) {
+        if (conf.get('locMapConfig').adminAccountRecoveryAllowedEmails.indexOf(targetEmail) === -1) {
             console.log('Admin account recovery mode attempted on non-allowed email: ' + targetEmail);
             callback(401);
             return;

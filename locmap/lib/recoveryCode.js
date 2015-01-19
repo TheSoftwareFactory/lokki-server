@@ -15,8 +15,9 @@ See LICENSE for details
  - 404: Confirmation code not found
 
  */
+
+var conf = require('../../lib/config');
 var db = require('../../lib/db');
-var LocMapConfig = require('./locMapConfig');
 
 var modelPrefix = 'locmaprecoverycode:';
 
@@ -52,7 +53,7 @@ var RecoveryCode = function(userId) {
         // Always generate new recovery code
         this.data.recoveryCode = this._generateRecoveryCode();
         var serializedData = this._serializeData(this.data);
-        db.setex(modelPrefix + this.data.userId, LocMapConfig.recoveryCodeTimeout, serializedData, function(error, result) {
+        db.setex(modelPrefix + this.data.userId, conf.get('locMapConfig').recoveryCodeTimeout, serializedData, function(error, result) {
             if (error) {
                 result = 400;
                 console.log('Error storing user ' + that.data.userId + ' recovery code');
@@ -80,8 +81,7 @@ var RecoveryCode = function(userId) {
     // Code format, two capital letters, one number, two capital letters: AB9CD
     this._generateRecoveryCode = function() {
         // Detect if we run unit tests (in local machine), and return AA1AA. Otherwise, generate random code.
-        var inProduction = process.env.PORT || false;
-        if (!inProduction) {
+        if (conf.get('env') === 'test') {
             return 'AA1AA';
         } else {
             var recoveryCode = this._getRandomCapitalLetter();

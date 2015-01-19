@@ -55,7 +55,7 @@ module.exports = {
 
     resetUserAccount: function(test) {
         test.expect(6);
-        var email = '1@r.ru';
+        var email = 'admin@example.com';
         lmHelpers.createLocMapUser(test, email, 'dev1', function(auth, reply) {
             var userId = reply.id;
              lmHelpers.api.post(test, '/v1/admin/358405297258/accountRecovery', {data: {email: email}}, function() {
