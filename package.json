@@ -10,6 +10,7 @@
     "convict": "^0.6.1",
     "redis": "x",
     "sendgrid": "0.4.x",
+    "tracer": "^0.7.3",
     "validator": "2.0.x"
   },
   "devDependencies": {

@@ -17,6 +17,7 @@ See LICENSE for details
  */
 
 var conf = require('../../lib/config');
+var logger = require('../../lib/logger');
 var db = require('../../lib/db');
 
 var modelPrefix = 'locmaprecoverycode:';
@@ -56,7 +57,7 @@ var RecoveryCode = function(userId) {
         db.setex(modelPrefix + this.data.userId, conf.get('locMapConfig').recoveryCodeTimeout, serializedData, function(error, result) {
             if (error) {
                 result = 400;
-                console.log('Error storing user ' + that.data.userId + ' recovery code');
+                logger.error('Error storing user ' + that.data.userId + ' recovery code');
             } else {
                 that.exists = true;
                 result = that.data.recoveryCode;

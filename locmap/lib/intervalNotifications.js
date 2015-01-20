@@ -6,6 +6,7 @@ See LICENSE for details
 'use strict';
 
 var conf = require('../../lib/config');
+var logger = require('../../lib/logger');
 var db = require('../../lib/db');
 var LocMapUserModel = require('./locMapUserModel');
 var LocMapCommon = require('./locMapCommon');
@@ -95,22 +96,22 @@ var IntervalNotifications = function() {
         // Acquire lock for interval notification. Prevents multiple processes/threads from running this at the same time.
         db.set(lockDBKey, 'lockvalue', 'NX', 'EX', conf.get('locMapConfig').backgroundNotificationInterval, function(error, result) {
             if (result === 'OK') {
-                // console.log("DEBUG: INTERVALNOTIF: Acquired lock.");
+                logger.trace('INTERVALNOTIF: Acquired lock.');
                 var userCount = 0;
                 db.keys('locmapusers:*', function(err, users) {
                     if (err) {
-                        console.log('ERROR: Failed to get locmap users from db.');
+                        logger.error('Failed to get locmap users from db.');
                         callback(-1);
                     } else {
                         userCount = users.length;
                         intervalNotifications._loopUsers(users, function(notifyResults) {
-                            console.log('IntervalNotify sent ' + notifyResults[0] + ' notifications. Checked ' + userCount + ' users. ' + intervalNotifications._formatNotifyResultLogLine(notifyResults));
+                            logger.trace('IntervalNotify sent ' + notifyResults[0] + ' notifications. Checked ' + userCount + ' users. ' + intervalNotifications._formatNotifyResultLogLine(notifyResults));
                             callback(notifyResults[0]);
                         });
                     }
                 });
             } else {
-                // console.log("DEBUG: INTERVALNOTIF: Failed to acquire lock.");
+                logger.trace('INTERVALNOTIF: Failed to acquire lock.');
                 callback(undefined);
             }
         });

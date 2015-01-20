@@ -6,8 +6,11 @@ See LICENSE for details
 'use strict';
 
 process.env.NODE_ENV = 'test';
-
 var reporter = require('nodeunit').reporters.default;
+
+process.on('uncaughtException', function(err) {
+    throw err;
+});
 
 global.lokkiUnitTestingMode = {};// just inform everyone that we are in "run unittests" mode
 

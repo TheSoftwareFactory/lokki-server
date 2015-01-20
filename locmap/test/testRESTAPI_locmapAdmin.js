@@ -40,7 +40,6 @@ module.exports = {
             var report = {'osType': osType, osVersion: 'foobar', lokkiVersion: '3.0.0', reportTitle: 'title', reportData: 'data'};
             var authWithData = JSON.parse(JSON.stringify(auth));
             authWithData.data = report;
-            console.log('User created. posting report.');
             lmHelpers.api.post(test, '/v1/crashReport/' + reply.id, authWithData, function() {
                 var now = new Date();
                 var year = now.getFullYear();

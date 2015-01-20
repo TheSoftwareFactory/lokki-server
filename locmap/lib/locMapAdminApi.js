@@ -6,6 +6,7 @@ See LICENSE for details
 'use strict';
 
 var conf = require('../../lib/config');
+var logger = require('../../lib/logger');
 var LocMapUserModel = require('./locMapUserModel');
 var LocMapSharingModel = require('./locationShareModel');
 var LocMapCrashReports = require('./crashReports');
@@ -38,12 +39,12 @@ var LocMapAdminApi = function() {
         try {
             check(targetEmail).isEmail();
         } catch (e) {
-            console.log('Admin account recovery mode attempted on invalid email: ' + targetEmail);
+            logger.warn('Admin account recovery mode attempted on invalid email: ' + targetEmail);
             callback(400);
             return;
         }
         if (conf.get('locMapConfig').adminAccountRecoveryAllowedEmails.indexOf(targetEmail) === -1) {
-            console.log('Admin account recovery mode attempted on non-allowed email: ' + targetEmail);
+            logger.warn('Admin account recovery mode attempted on non-allowed email: ' + targetEmail);
             callback(401);
             return;
         }
@@ -52,10 +53,11 @@ var LocMapAdminApi = function() {
         user.getData(function() {
             if (user.exists) {
                 user.setAccountRecoveryMode(Date.now(), function(result) {
-                    console.log('Admin setting account ' + targetEmail + ' to account recovery mode.');
+                    logger.info('Admin setting account ' + targetEmail + ' to account recovery mode.');
                     callback(locMapCommon.statusFromResult(result), result);
                 });
             } else {
+                logger.trace('User ' + userId + ' not found.');
                 callback(404);
             }
         });
@@ -190,7 +192,7 @@ var LocMapAdminApi = function() {
         var statsStruct = locMapCommon.getDefaultStatsDict();
         db.keys('locmapusers:*', function(err, users) {
             if (err) {
-                console.log('Failed to get locmap users from db.');
+                logger.warn('Failed to get locmap users from db.');
                 callback(500, statsStruct);
                 return;
             }
