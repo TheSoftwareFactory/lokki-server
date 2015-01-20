@@ -35,6 +35,10 @@ See the [Lokki main repository](https://github.com/TheSoftwareFactory/lokki) for
 
 During development, easiest way is to make sure you won't have eslint errors is to have eslint integration in your IDE or text editor. Sublime Text 3 supports this with [SublimeLinter-eslint](https://github.com/roadhump/SublimeLinter-eslint). You can also put `eslint .` to your Git pre-commit hook to make sure you won't make commits that have lint errors.
 
+## Deployment
+
+This repository has been configured to use Heroku for continuous delivery. Whenever a new commit is pushed to this repository Travis CI will run tests and eslint to ensure that commit doesn't break anything. After successfully running all tests Travis will deploy the lokki-server to [Heroku](http://lokki.herokuapp.com).
+
 ## Files
 
 Some files and directories of interest include:
