@@ -9,7 +9,6 @@ See LICENSE for details
 var conf = require('./lib/config');
 
 // Express application
-
 var express = require('express');
 
 var app = express();
@@ -51,29 +50,16 @@ if (conf.get('neverCrash')) {
         console.error('uncaughtException:', err);
         console.error(err.stack);
     });
-
 }
-
-// ----------------------------------------------------------------------------------------------------------------------
-// Static files
-// app.use('/files/', express.static('./files'));
 
 // Root site
 app.get('/', function(req, res) {
     res.send('Welcome to Lokki!<br/><br/>');
 });
 
-
-// Loader.io verification site
-app.get('/loaderio-710d023d2917f19101bd5b71de132345', function(req, res) {
-    res.send('loaderio-710d023d2917f19101bd5b71de132345');
-});
-
 // Import LocMap routes
 require('./locmap/locmap-server')(app);
 
-
-// ----------------------------------------------------------------------------------------------------------------------
 // Entry point
 if (require.main === module) {
 
