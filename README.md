@@ -27,7 +27,7 @@ Tests can be run with (always uses `NODE_ENV=test`):
 
     $ node unittest-runner.js
 
-See the [Lokki Wiki](https://github.com/TheSoftwareFactory/lokki/wiki) for more information on development.
+See the [Lokki main repository](https://github.com/TheSoftwareFactory/lokki) for more information on development.
 
 ## Coding style
 
