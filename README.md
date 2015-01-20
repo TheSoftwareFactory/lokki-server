@@ -29,7 +29,7 @@ Tests can be run with (always uses `NODE_ENV=test`):
 
 See the [Lokki main repository](https://github.com/TheSoftwareFactory/lokki) for more information on development.
 
-## Coding style
+### Coding style
 
 [eslint](http://eslint.org/) is used to spot mistakes and to make sure coding style is consistent. Rules used in addition to default rules can be found from `.eslintrc`. Any eslint errors will fail the Travis CI build.
 
