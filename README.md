@@ -17,13 +17,19 @@ This will install JavaScript dependencies of the project. If you have your Redis
 
     $ node lokki-server.js
 
-Tests can be run with:
+Server can be run with different configurations by setting `NODE_ENV` environment variable (`development` is used by default). For example:
+
+    $ NODE_ENV=production node lokki-server.js
+
+Server loads matching configuration from `config/` directory – see `lib/config.js` for details about all available configuration options.
+
+Tests can be run with (always uses `NODE_ENV=test`):
 
     $ node unittest-runner.js
 
-See the [Lokki Wiki](https://github.com/TheSoftwareFactory/lokki/wiki) for more information on development.
+See the [Lokki main repository](https://github.com/TheSoftwareFactory/lokki) for more information on development.
 
-## Coding style
+### Coding style
 
 [eslint](http://eslint.org/) is used to spot mistakes and to make sure coding style is consistent. Rules used in addition to default rules can be found from `.eslintrc`. Any eslint errors will fail the Travis CI build.
 
