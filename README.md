@@ -17,7 +17,13 @@ This will install JavaScript dependencies of the project. If you have your Redis
 
     $ node lokki-server.js
 
-Tests can be run with:
+Server can be run with different configurations by setting `NODE_ENV` environment variable (`development` is used by default). For example:
+
+    $ NODE_ENV=production node lokki-server.js
+
+Server loads matching configuration from `config/` directory – see `lib/config.js` for details about all available configuration options.
+
+Tests can be run with (always uses `NODE_ENV=test`):
 
     $ node unittest-runner.js
 
