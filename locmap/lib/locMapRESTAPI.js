@@ -193,7 +193,7 @@ var LocMapRESTAPI = function() {
                     locMapResetCode.createResetCode(newUser.data.userId, function(resetResult) {
                         if (typeof resetResult !== 'number') {
                             logger.trace('Reset code generated for user ' + newUser.data.userId + ' ' + resetResult);
-                            locMapEmail.sendResetEmail(newUser.data.email, conf.get('locMapConfig').resetLinkAddress + resetResult, newUser.data.language, function(emailResult) {
+                            locMapEmail.sendResetEmail(newUser.data.email, conf.get('locMapConfig').baseUrl + '/reset/' + resetResult, newUser.data.language, function(emailResult) {
                                 if (emailResult) {
                                     logger.trace('Reset link sent to ' + newUser.data.email);
                                 } else {

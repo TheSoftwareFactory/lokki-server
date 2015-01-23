@@ -5,7 +5,8 @@
         "maxAllowToSeeCount": 5,
         "maxPlacesLimitNormalUser": 2,
         "notificationCheckPollingInterval": 10,
-        "pendingNotificationTimeout": 0
+        "pendingNotificationTimeout": 0,
+        "baseUrl": "http://localhost:9001"
     },
     "logging": {
         "level": "error"
