@@ -10,7 +10,7 @@
     },
     "sendEmails": true,
     "locMapConfig": {
-        "resetLinkAddress": "http://lokki.herokuapp.com"
+        "baseUrl": "http://lokki.herokuapp.com"
     },
     "neverCrash": true,
     "pushNotifications": true
