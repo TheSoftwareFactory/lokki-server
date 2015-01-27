@@ -41,7 +41,7 @@ LocMapGoogleCloudMessagingService.prototype.pushNotification = function(deviceTo
     logger.trace('GCM Send for device: ' + deviceToken);
     this.gcm.send(message, function(err) {
         if (err) {
-            logger.error(err);
+            logger.error(err + ' Sending message: ' + message);
         }
     });
 
