@@ -39,6 +39,13 @@ During development, easiest way is to make sure you won't have eslint errors is 
 
 This repository has been configured to use Heroku for continuous delivery. Whenever a new commit is pushed to this repository Travis CI will run tests and eslint to ensure that commit doesn't break anything. After successfully running all tests Travis will deploy the lokki-server to [Heroku](http://lokki.herokuapp.com).
 
+If you're deploying your version of the server, you want to take note of few things:
+
+- Application is transferring location data over network, so you should use HTTPS.
+- There are a few configuration variables you want to change – at least `adminUserId`, `googleCloudMessagingApiKey` and `redis.url`. If you want email to work, set `sendGrid.username` and `sendGrid.password` too. All of these can be provided as an environment variable, see `lib/config.js` for details.
+
+Setting up your own server is pretty simple, as the repository includes `Procfile` needed to run the application in Heroku – just enable the required addons (some kind of Redis server and SendGrid) and set the configuration variables.
+
 ## Files
 
 Some files and directories of interest include:
