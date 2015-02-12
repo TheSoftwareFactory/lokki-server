@@ -548,6 +548,20 @@ module.exports = {
         });
     },
 
+    // Create multiple places with same name
+    createMultiplePlacesWithSameNameShouldError: function(test) {
+        test.expect(4);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function(auth1, reply1) {
+            var authWithPlace = JSON.parse(JSON.stringify(auth1));
+            authWithPlace.data = lmHelpers.locMapPlace1;
+            lmHelpers.api.post(test, '/v1/user/' + reply1.id + '/place', authWithPlace, function() {
+                lmHelpers.api.post(test, '/v1/user/' + reply1.id + '/place', authWithPlace, {status: 400}, function() {
+                    test.done();
+                });
+            });
+        });
+    },
+
     // Place creation has a limit.
     createPlacesLimit: function(test) {
         test.expect(9);
