@@ -685,6 +685,13 @@ var LocMapRESTAPI = function() {
             return;
         }
 
+        for (var key in user.data.places) {
+            if (user.data.places[key].name === strippedPlace.name) {
+                callback(400, 'Place name already in use');
+                return;
+            }
+        }
+
         var placeId = uuid.v4();
         user.data.places[placeId] = strippedPlace;
         user.setData(function(result) {
