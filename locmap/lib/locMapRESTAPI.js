@@ -681,13 +681,13 @@ var LocMapRESTAPI = function() {
 
         var user = cache.get('locmapuser', userId);
         if (Object.keys(user.data.places).length >= conf.get('locMapConfig').maxPlacesLimitNormalUser) {
-            callback(403, 'Place limit reached.');
+            callback(403, 'place_limit_reached');
             return;
         }
 
         for (var key in user.data.places) {
             if (user.data.places[key].name === strippedPlace.name) {
-                callback(400, 'Place name already in use');
+                callback(403, 'place_name_already_in_use');
                 return;
             }
         }
