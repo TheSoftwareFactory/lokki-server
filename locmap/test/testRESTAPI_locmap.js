@@ -555,7 +555,7 @@ module.exports = {
             var authWithPlace = JSON.parse(JSON.stringify(auth1));
             authWithPlace.data = lmHelpers.locMapPlace1;
             lmHelpers.api.post(test, '/v1/user/' + reply1.id + '/place', authWithPlace, function() {
-                lmHelpers.api.post(test, '/v1/user/' + reply1.id + '/place', authWithPlace, {status: 400}, function() {
+                lmHelpers.api.post(test, '/v1/user/' + reply1.id + '/place', authWithPlace, {status: 403}, function() {
                     test.done();
                 });
             });
