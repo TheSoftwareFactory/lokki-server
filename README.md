@@ -58,6 +58,36 @@ Some files and directories of interest include:
     - `locmap/test`: Tests for locmap
 - `test/`: General tests
 
+## Location-Map REST API
+
+The base URL is /api/locmap/v1/
+
+##### User Resources
+- [`POST` /user/:userId/location](./locmap/docs/user.md#post-useruseridlocation)
+- [`POST` /user/:userId/allow](./locmap/docs/user.md#post-useruseridallow)
+- [`DELETE` /user/:userId/allow/:targetUserId](./locmap/docs/user.md#delete-useruseridallowtargetuserid)
+- [`PUT` /user/:userId/visibility](./locmap/docs/user.md#put-useruseridvisibility)
+- [`PUT` /user/:userId/language](./locmap/docs/user.md#put-useruseridlanguage)
+- [`POST` /user/:userId/apnToken](./locmap/docs/user.md#post-useruseridapntoken)
+- [`POST` /user/:userId/gcmToken](./locmap/docs/user.md#post-useruseridgcmtoken)
+- [`POST` /user/:userId/wp8NotificationURL](./locmap/docs/user.md#post-useruseridwp8notificationurl)
+- [`GET` /user/:userId/dashboard](./locmap/docs/user.md#get-useruseriddashboard)
+- [`POST` /user/:userId/update/locations](./locmap/docs/user.md#post-useruseridupdatelocations)
+- [`POST` /user/:userId/place](./locmap/docs/user.md#post-useruseridplace)
+- [`PUT` /user/:userId/place/:placeId](./locmap/docs/user.md#put-useruseridplaceplaceid)
+- [`DELETE` /user/:userId/place/:placeId](./locmap/docs/user.md#delete-useruseridplaceplaceid)
+- [`GET` /user/:userId/places](./locmap/docs/user.md#get-useruseridplaces)
+
+##### Admin Resources
+- [`GET` /admin/:userId/crashReport/:osType/:year/:month](./locmap/docs/admin.md#get-adminuseridcrashreportostypeyearmonth)
+- [`POST` /admin/:userId/accountRecovery](./locmap/docs/admin.md#post-adminuseridaccountrecovery)
+- [`GET` /admin/:userId/userStats](./locmap/docs/admin.md#get-adminuseriduserstats)
+
+##### Miscellaneous Resources
+- [`POST` /signup](./locmap/docs/misc.md#post-signup)
+- [`POST` /crashReport/:userId](./locmap/docs/misc.md#post-crashreportuserid)
+- [`GET` /reset/:resetid](./locmap/docs/misc.md#get-resetresetid)
+
 ## Note
 
 Lokki is available to the open source community under Apache v2 license AS IS.
