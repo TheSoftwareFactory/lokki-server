@@ -30,7 +30,6 @@ Puts account into recovery mode
 ###Parameters
 - **userId** _(required)_ - Id of current user (must be admin)
 - **request body** _(required)_ - Included in this body is:
-	#####body
 	- 'email' - Email of the account
 
 ###Return

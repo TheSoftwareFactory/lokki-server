@@ -16,7 +16,6 @@ Update user location
 - **userId** _(required)_ - Id of current user
 - **request cache** _(required)_ - Current cache of user (from authorization step)
 - **request body** _(required)_ - Included in this body is:
-	#####body
 	- 'location' - New location of user
 	- 'battery' - Battery status of user 
 
@@ -32,7 +31,6 @@ Allow another user(s) to see user's location
 - **userId** _(required)_ - Id of current user
 - **request cache** _(required)_ - Current cache of user (from authorization step)
 - **request body** _(required)_ - Included in this body is:
-	#####body
 	- 'emails' - Object containing users' emails we are giving permission to 
 		- Format - {integer: email}
 
@@ -63,7 +61,6 @@ Toggle the user's global visibility
 - **userId** _(required)_ - Id of current user
 - **request cache** _(required)_ - Current cache of user (from authorization step)
 - **request body** _(required)_ - Included in this body is:
-	#####body
 	- 'visibility' - boolean value describing visibility
 
 
@@ -79,7 +76,6 @@ Set the user's language
 - **userId** _(required)_ - Id of current user
 - **request cache** _(required)_ - Current cache of user (from authorization step)
 - **request body** _(required)_ - Included in this body is:
-	#####body
 	- 'language' - string value describing language
 
 
@@ -95,7 +91,6 @@ Set the user's remote iOS notification token
 - **userId** _(required)_ - Id of current user
 - **request cache** _(required)_ - Current cache of user (from authorization step)
 - **request body** _(required)_ - Included in this body is:
-	#####body
 	- 'apnToken' - iOS apn token
 		- **warning** If body.apnToken is undefined, stop sending notifications
 
@@ -112,7 +107,6 @@ Set the user's remote android notification token
 - **userId** _(required)_ - Id of current user
 - **request cache** _(required)_ - Current cache of user (from authorization step)
 - **request body** _(required)_ - Included in this body is:
-	#####body
 	- 'gcmToken' - android notification token
 		- **warning** If body.gcmToken is undefined, stop sending notifications
 
@@ -129,7 +123,6 @@ Set the user's remote Windows Phone 8 notification token
 - **userId** _(required)_ - Id of current user
 - **request cache** _(required)_ - Current cache of user (from authorization step)
 - **request body** _(required)_ - Included in this body is:
-	#####body
 	- 'wp8' - android notification token
 		- **warning** If body.wp8 is undefined, stop sending notifications
 
@@ -175,7 +168,6 @@ Store a new place for current user
 - **userId** _(required)_ - Id of current user
 - **request cache** _(required)_ - Current cache of user (from authorization step)
 - **request body** _(required)_ - Included in this body is:
-	#####body
 	- 'name' - The name of the place
 	- 'lat' - Latitude of place
 	- 'lon' - Longitude of place
@@ -198,7 +190,6 @@ Update existing place
 - **request cache** _(required)_ - Current cache of user (from authorization step)
 - **placeId** _(required)_ - Id of place to update
 - **request body** _(required)_ - Included in this body is:
-	#####body
 	- 'name' - The name of the place
 	- 'lat' - Latitude of place
 	- 'lon' - Longitude of place
