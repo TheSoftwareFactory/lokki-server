@@ -1,9 +1,9 @@
 #Signup
 
-##Description
+**Description**
+
 Signup API Calls
 
-***
 
 ##`POST` /signup
 Signup new user
@@ -17,18 +17,15 @@ Signup new user
 ###Return
 - Returns status and result of action
 
-***
 
 #CrashReport
 
 ##Description
 Crash Report Calls
 
-***
 ##Requires Authentication
 * Requires valid User ID when querying API
 
-***
 
 ##`POST` /crashReport/:userId
 Store crash report for user
@@ -45,14 +42,12 @@ Store crash report for user
 ###Return
 - Returns status and result of action
 
-***
 
 #Account Reset
 
 ##Description
 Account Reset Calls
 
-***
 
 ##`GET` /reset/:resetId
 Account reset/recovery using confirmation code

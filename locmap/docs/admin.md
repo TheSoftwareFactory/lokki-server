@@ -3,11 +3,9 @@
 ##Description
 Administrative API calls
 
-***
 ##Requires Admin Authentication
 * Requires Admin Authentication to access any of the below methods
 
-***
 
 ##`GET` /admin/:userId/crashReport/:osType/:year/:month
 Get crash reports for given OS and time period
@@ -22,7 +20,6 @@ Get crash reports for given OS and time period
 ###Return
 - Returns status and result of action
 
-***
 
 ##`POST` /admin/:userId/accountRecovery
 Puts account into recovery mode
@@ -35,7 +32,6 @@ Puts account into recovery mode
 ###Return
 - Returns status and result of action
 
-***
 
 ##`GET` /admin/:userId/userStats
 Gets current stats of users in db
