@@ -1,9 +1,11 @@
 #Admin Resources
 
-##Description
+**Description**
+
 Administrative API calls
 
-##Requires Admin Authentication
+**Requires Admin Authentication**
+
 * Requires Admin Authentication to access any of the below methods
 
 
