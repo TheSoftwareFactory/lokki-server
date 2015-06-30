@@ -1,2 +1,16 @@
 {
+    "logging": {
+        "format": "<{{title}}> {{file}}:{{line}} ({{method}}) {{message}}" 
+    },
+    "redis": {
+        "options": {
+            "no_ready_check": true
+        }
+    },
+    "sendEmails": true,
+    "locMapConfig": {
+        "baseUrl": "https://lokki-dev.herokuapp.com"
+    },
+    "neverCrash": true,
+    "pushNotifications": true
 }

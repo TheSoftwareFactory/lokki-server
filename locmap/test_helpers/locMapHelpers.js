@@ -42,7 +42,9 @@ module.exports = {
             var reply = {};
             try {
                 reply = JSON.parse(res.body);
-            } catch (e) {}
+            } catch (error) {
+                // JSON error
+            }
             callback({'headers': {'authorizationtoken': reply.authorizationtoken}}, reply);
         });
     },

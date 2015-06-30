@@ -1,5 +1,4 @@
 {
-    // Timestamp removed because Heroku adds it automatically
     "logging": {
         "format": "<{{title}}> {{file}}:{{line}} ({{method}}) {{message}}" 
     },
@@ -10,7 +9,7 @@
     },
     "sendEmails": true,
     "locMapConfig": {
-        "baseUrl": "http://lokki.herokuapp.com"
+        "baseUrl": "https://lokki-production.herokuapp.com"
     },
     "neverCrash": true,
     "pushNotifications": true

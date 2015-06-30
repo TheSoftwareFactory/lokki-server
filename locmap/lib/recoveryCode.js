@@ -66,7 +66,7 @@ var RecoveryCode = function(userId) {
         });
     };
 
-    // TODO TODO FIXME Use simpler method.
+    // TODO FIXME Use simpler method.
     // Ascii: 65-90 = A-Z
     this._getRandomCapitalLetter = function() {
         var code = Math.floor(Math.random() * (90 - 65 + 1) + 65);
@@ -98,7 +98,9 @@ var RecoveryCode = function(userId) {
         var data = {};
         try {
             data = JSON.parse(rawData);
-        } catch (e) {}
+        } catch (error) {
+            logger.error('Error while deserializing a recovery code: ' + error);
+        }
         return data;
     };
 
@@ -106,7 +108,9 @@ var RecoveryCode = function(userId) {
         var serializedData = '';
         try {
             serializedData = JSON.stringify(data);
-        } catch (error) {}
+        } catch (error) {
+            logger.error('Error while serializing a recovery code: ' + error);
+        }
         return serializedData;
     };
 

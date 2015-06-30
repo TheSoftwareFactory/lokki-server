@@ -13,7 +13,7 @@ cache:
 sudo: false
 deploy:
   provider: heroku
-  app: lokki
+  app: lokki-dev
   on:
     repo: TheSoftwareFactory/lokki-server
   api_key:

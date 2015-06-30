@@ -65,7 +65,9 @@ var ResetCode = function() {
         var data = {};
         try {
             data = JSON.parse(rawData);
-        } catch (e) {}
+        } catch (error) {
+            logger.error('Error while deserializing a reset code: ' + error);
+        }
         return data;
     };
 
@@ -73,7 +75,9 @@ var ResetCode = function() {
         var serializedData = '';
         try {
             serializedData = JSON.stringify(data);
-        } catch (error) {}
+        } catch (error) {
+            logger.error('Error while serializing a reset code: ' + error);
+        }
         return serializedData;
     };
 
