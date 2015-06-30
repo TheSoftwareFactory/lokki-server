@@ -37,6 +37,7 @@ var LocMapSharingModel = function(userId) {
                 try {
                     newData[key] = JSON.stringify(data[key]);
                 } catch (error) {
+                    logger.error('Error while serializing location sharing data: ' + error);
                 }
             }
         }
@@ -52,7 +53,8 @@ var LocMapSharingModel = function(userId) {
                         if (jsonFields.indexOf(key) !== -1) {
                             result[key] = JSON.parse(result[key]);
                         }
-                    } catch (error) {
+                    } catch (e) {
+                        logger.error('Error while getting location sharing data: ' + e);
                     }
                 }
                 result.userId = currentUser.data.userId;

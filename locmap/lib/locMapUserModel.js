@@ -56,6 +56,7 @@ var LocMapUserModel = function(userId) {
                 try {
                     newData[key] = JSON.stringify(data[key]);
                 } catch (error) {
+                    logger.error('Error while serializing user data: ' + error);
                 }
             }
         }
@@ -72,7 +73,8 @@ var LocMapUserModel = function(userId) {
                         if (jsonFields.indexOf(key) !== -1) {
                             result[key] = JSON.parse(result[key]);
                         }
-                    } catch (error) {
+                    } catch (e) {
+                        logger.error('Error while getting user data: ' + e);
                     }
                 }
                 result.userId = currentUser.data.userId;
