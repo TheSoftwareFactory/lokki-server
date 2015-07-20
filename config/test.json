@@ -1,5 +1,6 @@
 {
     "adminUserId": "358405297258",
+    "sendInviteEmails": true,
     "locMapConfig": {
         "recoveryCodeTimeout": 1,
         "maxAllowToSeeCount": 5,

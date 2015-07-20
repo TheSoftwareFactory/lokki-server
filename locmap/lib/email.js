@@ -59,18 +59,23 @@ var LocMapEmail = function() {
     };
 
     this.sendInviteEmail = function(targetEmail, inviterEmail, langCode, callback) {
-        logger.trace('SendInviteEmail with ' + targetEmail + ' ' + inviterEmail + ' ' + langCode);
-        var lang = locMapCommon.verifyLangCode(langCode);
-        var subject = i18n.getLocalizedString(lang, 'invite.userInvitedToLokkiEmailSubject');
-        var messageText = i18n.getLocalizedString(lang, 'invite.userInvitedToLokkiEmailText', 'targetUser', targetEmail, 'senderUser', inviterEmail);
+        if (conf.get('sendInviteEmails')) {
+            logger.trace('SendInviteEmail with ' + targetEmail + ' ' + inviterEmail + ' ' + langCode);
+            var lang = locMapCommon.verifyLangCode(langCode);
+            var subject = i18n.getLocalizedString(lang, 'invite.userInvitedToLokkiEmailSubject');
+            var messageText = i18n.getLocalizedString(lang, 'invite.userInvitedToLokkiEmailText', 'targetUser', targetEmail, 'senderUser', inviterEmail);
 
-        var emailObj = {
-            to: targetEmail,
-            from: conf.get('senderEmail'),
-            subject: subject,
-            text: messageText
-        };
-        this._sendEmail(emailObj, callback);
+                var emailObj = {
+                    to: targetEmail,
+                    from: conf.get('senderEmail'),
+                    subject: subject,
+                    text: messageText
+                };
+            this._sendEmail(emailObj, callback);
+        } else {
+            logger.trace('SendInviteEmail disabled. Target: ' + targetEmail + ' Inviter: ' + inviterEmail + ' Lang: ' + langCode);
+            callback(true);
+        }
     };
 
     /*
