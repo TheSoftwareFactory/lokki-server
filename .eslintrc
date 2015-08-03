@@ -18,7 +18,7 @@
         "space-after-keywords": 2,
         "space-before-blocks": 2,
         "space-in-parens": 2,
-        "spaced-line-comment": 2,
+        "spaced-comment": 2,
         "no-underscore-dangle": 0
     }
 }
