@@ -2,7 +2,7 @@
 Copyright (c) 2014-2015 F-Secure
 See LICENSE for details
 */
-// build test on tarvis
+
 'use strict';
 
 var conf = require('../lib/config');
