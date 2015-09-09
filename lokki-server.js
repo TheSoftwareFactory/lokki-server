@@ -18,10 +18,19 @@ var notificationWorker = new NotificationWorker();
 
 var methodOverride = require('method-override');
 
+var bodyParser = require('body-parser');
+
 app.use(express.logger('dev')); // 'default', 'short', 'tiny', 'dev'
 app.use(express.compress()); // gzip
 app.use(methodOverride());
-app.use(express.bodyParser());
+
+//app.use(bodyParser());
+
+// parse application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({extended: true}));
+
+//parse application/json
+app.use(bodyParser.json());
 
 // Security related headers to all paths
 app.use(function(req, res, next) {

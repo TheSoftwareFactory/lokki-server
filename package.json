@@ -12,7 +12,8 @@
     "sendgrid": "0.4.x",
     "tracer": "^0.7.3",
     "validator": "2.0.x",
-    "method-override": "2.3.5"
+    "method-override": "2.3.5",
+    "body-parser": "~1.13.3"
   },
   "devDependencies": {
     "nodeunit": "0.9.x",
