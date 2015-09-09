@@ -11,7 +11,8 @@
     "redis": "x",
     "sendgrid": "0.4.x",
     "tracer": "^0.7.3",
-    "validator": "2.0.x"
+    "validator": "2.0.x",
+    "method-override": "2.3.5"
   },
   "devDependencies": {
     "nodeunit": "0.9.x",
