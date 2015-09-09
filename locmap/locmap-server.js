@@ -80,7 +80,7 @@ module.exports = function(app) {
     });
 
     // Stop another user from seeing current users position
-    app.del('/api/locmap/v1/user/:userId/allow/:targetUserId', usesAuthentication, function(req, res) {
+    app.delete('/api/locmap/v1/user/:userId/allow/:targetUserId', usesAuthentication, function(req, res) {
         var cache = new Cache();
         cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
 
@@ -220,7 +220,7 @@ module.exports = function(app) {
 
     // Remove a place
     // Returns 200
-    app.del('/api/locmap/v1/user/:userId/place/:placeId', usesAuthentication, function(req, res) {
+    app.delete('/api/locmap/v1/user/:userId/place/:placeId', usesAuthentication, function(req, res) {
         var cache = new Cache();
         cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
 
