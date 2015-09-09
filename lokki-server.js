@@ -16,7 +16,7 @@ var app = express();
 var NotificationWorker = require('./locmap/lib/notificationWorker');
 var notificationWorker = new NotificationWorker();
 
-//var methodOverride = require('method-override');
+// var methodOverride = require('method-override');
 
 app.use(express.logger('dev')); // 'default', 'short', 'tiny', 'dev'
 app.use(express.compress()); // gzip
