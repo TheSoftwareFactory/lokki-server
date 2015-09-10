@@ -22,7 +22,7 @@ var db = require('../../lib/db');
 
 var modelPrefix = 'locmaprecoverycode:';
 
-var RecoveryCode = function(userId) {
+var RecoveryCode = function (userId) {
     this.exists = false; // will be true after getData or when recoverycode has been created.
     this.data = {
         userId: userId,
@@ -31,12 +31,13 @@ var RecoveryCode = function(userId) {
 
     // returns confirmation SMS data or 404 if not found (through callback).
     // data is an object like defined in this.data
-    this.getRecoveryCodeData = function(callback) {
-        var that = this;
-        db.get(modelPrefix + this.data.userId, function(error, result) {
+    this.getRecoveryCodeData = function (callback) {
+        var that = this,
+            resultData;
+        db.get(modelPrefix + this.data.userId, function (error, result) {
             var finalResult = 0;
             if (result) {
-                var resultData = that._deserializeData(result);
+                resultData = that._deserializeData(result);
                 resultData.userId = that.data.userId;
                 that.data.recoveryCode = resultData.recoveryCode;
                 that.exists = true;
@@ -49,52 +50,54 @@ var RecoveryCode = function(userId) {
         });
     };
 
-    this.createRecoveryCode = function(callback) {
-        var that = this;
+    this.createRecoveryCode = function (callback) {
+        var that = this,
+            serializedData;
         // Always generate new recovery code
         this.data.recoveryCode = this._generateRecoveryCode();
-        var serializedData = this._serializeData(this.data);
-        db.setex(modelPrefix + this.data.userId, conf.get('locMapConfig').recoveryCodeTimeout, serializedData, function(error, result) {
-            if (error) {
-                result = 400;
-                logger.error('Error storing user ' + that.data.userId + ' recovery code');
-            } else {
-                that.exists = true;
-                result = that.data.recoveryCode;
-            }
-            callback(result);
-        });
+        serializedData = this._serializeData(this.data);
+        db.setex(modelPrefix + this.data.userId, conf.get('locMapConfig').recoveryCodeTimeout,
+            serializedData, function (error, result) {
+                if (error) {
+                    result = 400;
+                    logger.error('Error storing user ' + that.data.userId + ' recovery code');
+                } else {
+                    that.exists = true;
+                    result = that.data.recoveryCode;
+                }
+                callback(result);
+            });
     };
 
     // TODO FIXME Use simpler method.
     // Ascii: 65-90 = A-Z
-    this._getRandomCapitalLetter = function() {
+    this._getRandomCapitalLetter = function () {
         var code = Math.floor(Math.random() * (90 - 65 + 1) + 65);
         return String.fromCharCode(code);
     };
 
-    // 0-9
-    this._getRandomNumber = function() {
-        var number = Math.floor(Math.random() * (9 - 0 + 1) + 0);
+    // 0-9: Math.random() * (9 - 0 + 1) + 0)
+    this._getRandomNumber = function () {
+        var number = Math.floor(Math.random() * (9 + 1));
         return number.toString();
     };
 
     // Code format, two capital letters, one number, two capital letters: AB9CD
-    this._generateRecoveryCode = function() {
-        // Detect if we run unit tests (in local machine), and return AA1AA. Otherwise, generate random code.
+    this._generateRecoveryCode = function () {
+        //Detect if we run unit tests (in local machine), and return AA1AA.
+        //Otherwise, generate random code.
         if (conf.get('env') === 'test') {
             return 'AA1AA';
-        } else {
-            var recoveryCode = this._getRandomCapitalLetter();
-            recoveryCode += this._getRandomCapitalLetter();
-            recoveryCode += this._getRandomNumber();
-            recoveryCode += this._getRandomCapitalLetter();
-            recoveryCode += this._getRandomCapitalLetter();
-            return recoveryCode;
         }
+        var recoveryCode = this._getRandomCapitalLetter();
+        recoveryCode += this._getRandomCapitalLetter();
+        recoveryCode += this._getRandomNumber();
+        recoveryCode += this._getRandomCapitalLetter();
+        recoveryCode += this._getRandomCapitalLetter();
+        return recoveryCode;
     };
 
-    this._deserializeData = function(rawData) {
+    this._deserializeData = function (rawData) {
         var data = {};
         try {
             data = JSON.parse(rawData);
@@ -104,7 +107,7 @@ var RecoveryCode = function(userId) {
         return data;
     };
 
-    this._serializeData = function(data) {
+    this._serializeData = function (data) {
         var serializedData = '';
         try {
             serializedData = JSON.stringify(data);

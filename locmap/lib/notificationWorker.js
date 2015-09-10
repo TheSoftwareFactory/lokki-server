@@ -19,12 +19,12 @@ var LocMapUserModel = require('./locMapUserModel');
 
 var lockDBKey = 'pendingNotificationCheckLock';
 
-var checkNotifications = function() {
+var checkNotifications = function () {
     var checkNotify = this;
 
-    this._checkAndNotifyUser = function(userId, notificationTime, callback) {
+    this._checkAndNotifyUser = function (userId, notificationTime, callback) {
         var user = new LocMapUserModel(userId);
-        user.getData(function() {
+        user.getData(function () {
             if (user.exists) {
                 var recentLocationUpdate = false;
                 var recentVisibleNotification = false;
@@ -57,7 +57,7 @@ var checkNotifications = function() {
 
                 // Send notification if users location has not updated recently, or they have not been sent a notification rencently.
                 if (!recentLocationUpdate && !recentVisibleNotification && hasCorrectDevice && isVisible) {
-                    user.sendLocalizedPushNotification('notify.friendLocationRequestLokkiStart', function() {
+                    user.sendLocalizedPushNotification('notify.friendLocationRequestLokkiStart', function () {
                         logger.trace('Visible notification sent to user ' + user.data.userId);
                         callback(true);
                     });
@@ -71,7 +71,7 @@ var checkNotifications = function() {
     };
 
     // Clean notifications list so that only one notification per user is left.
-    this._cleanNotifications = function(notifications) {
+    this._cleanNotifications = function (notifications) {
         var uniqueNotifications = [];
         var userIds = {};
         for (var i = 0; i < notifications.length; i++) {
@@ -86,17 +86,17 @@ var checkNotifications = function() {
         return uniqueNotifications;
     };
 
-    this.doNotificationsCheck = function(callback) {
+    this.doNotificationsCheck = function (callback) {
         // Acquire lock for the check. This prevents multiple instances from doing the upkeep simultaneously.
-        db.set(lockDBKey, 'anyvalue', 'NX', 'EX', conf.get('locMapConfig').notificationCheckPollingInterval, function(error, result) {
+        db.set(lockDBKey, 'anyvalue', 'NX', 'EX', conf.get('locMapConfig').notificationCheckPollingInterval, function (error, result) {
             if (result === 'OK') {
-                pendingNotifications.getTimedOutNotifications(conf.get('locMapConfig').pendingNotificationTimeout, function(notifications) {
+                pendingNotifications.getTimedOutNotifications(conf.get('locMapConfig').pendingNotificationTimeout, function (notifications) {
                     if (notifications.length > 0) {
                         var cleanNotifications = checkNotify._cleanNotifications(notifications);
                         var count = 0;
                         var notifyCount = 0;
 
-                        var notifiedCallback = function(notified) {
+                        var notifiedCallback = function (notified) {
                             if (notified) {
                                 notifyCount++;
                             }

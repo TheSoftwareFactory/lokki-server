@@ -19,14 +19,14 @@ var targetUser = 'targetuser@example.com';
 var senderUser = 'senderuser@example.com';
 
 module.exports = {
-    setUp: function(callback) {
+    setUp: function (callback) {
         locMapEmail = new LocMapEmail();
         callback();
     },
 
-    testSignupEmailSend: function(test) {
+    testSignupEmailSend: function (test) {
         test.expect(3);
-        locMapEmail.sendSignupMail(targetUser, 'en-US', function(result) {
+        locMapEmail.sendSignupMail(targetUser, 'en-US', function (result) {
             test.ok(result);
             test.equal(locMapEmail.emails.length, 1);
             test.deepEqual(locMapEmail.emails[0], {to: targetUser, from: noReply,
@@ -36,22 +36,23 @@ module.exports = {
         });
     },
 
-    testInviteEmailSend: function(test) {
+    testInviteEmailSend: function (test) {
         test.expect(3);
-        locMapEmail.sendInviteEmail(targetUser, senderUser, 'en-US', function(result) {
+        locMapEmail.sendInviteEmail(targetUser, senderUser, 'en-US', function (result) {
             test.ok(result);
             test.equal(locMapEmail.emails.length, 1);
             test.deepEqual(locMapEmail.emails[0], {to: targetUser, from: noReply,
                 subject: i18n.getLocalizedString('en-US', 'invite.userInvitedToLokkiEmailSubject'),
-                text: i18n.getLocalizedString('en-US', 'invite.userInvitedToLokkiEmailText', 'targetUser', targetUser, 'senderUser', senderUser)});
+                text: i18n.getLocalizedString('en-US', 'invite.userInvitedToLokkiEmailText',
+                    'targetUser', targetUser, 'senderUser', senderUser)});
             test.done();
         });
     },
 
-    testResetEmailSend: function(test) {
+    testResetEmailSend: function (test) {
         test.expect(3);
         var resetLink = 'https://lokki-server.example.com/api/reset/deadbeef';
-        locMapEmail.sendResetEmail(targetUser, resetLink, 'en-US', function(result) {
+        locMapEmail.sendResetEmail(targetUser, resetLink, 'en-US', function (result) {
             test.ok(result);
             test.equal(locMapEmail.emails.length, 1);
             test.deepEqual(locMapEmail.emails[0], {to: targetUser, from: noReply,
