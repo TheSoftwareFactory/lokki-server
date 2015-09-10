@@ -13,22 +13,23 @@ var db = require('../../lib/db');
 
 var crashReportPrefix = 'locmapcrash:';
 
-var CrashReports = function() {
+var CrashReports = function () {
 
     // userId is used to differentiate reports, as timestamp alone can conflict.
-    this.store = function(userId, osType, reportObject, callback) {
-        var date = new Date();
+    this.store = function (userId, osType, reportObject, callback) {
+        var date = new Date(),
         // We can get all reports per month with the same hgetall redis call.
-        var key = crashReportPrefix + osType + ':' + date.getFullYear() + ':' + (date.getMonth() + 1);
-        // Field differentiates within the key, using unix time in milliseconds, should be good enough for now.
-        var field = userId + ':' + date.getTime();
-
-        var data = {
-            timestamp: date.getTime(),
-            osType: osType,
-            report: reportObject
-        };
-        db.hset(key, field, JSON.stringify(data), function(error) {
+            key = crashReportPrefix + osType + ':' +
+                date.getFullYear() + ':' + (date.getMonth() + 1),
+        // Field differentiates within the key, using
+        // unix time in milliseconds, should be good enough for now.
+            field = userId + ':' + date.getTime(),
+            data = {
+                timestamp: date.getTime(),
+                osType: osType,
+                report: reportObject
+            };
+        db.hset(key, field, JSON.stringify(data), function (error) {
             if (error) {
                 callback(400, 'Database write failed');
             } else {
@@ -37,18 +38,19 @@ var CrashReports = function() {
         });
     };
 
-    this.getMonth = function(osType, year, month, callback) {
-        var redisKey = crashReportPrefix + osType + ':' + year + ':' + month;
-        var reports = {};
-        db.hgetall(redisKey, function(error, result) {
+    this.getMonth = function (osType, year, month, callback) {
+        var redisKey = crashReportPrefix + osType + ':' + year + ':' + month,
+            reports = {};
+        db.hgetall(redisKey, function (error, result) {
+            var key, item, date, isoStamp = null;
             if (result) {
-                for (var key in result) {
+                for (key in result) {
                     if (result.hasOwnProperty(key)) {
                         if (result[key] !== null && result[key] !== undefined) {
-                            var item = JSON.parse(result[key]);
+                            item = JSON.parse(result[key]);
                             // Attempt to convert timestamp to human readable format.
-                            var date = new Date(item.timestamp);
-                            var isoStamp = date.toISOString();
+                            date = new Date(item.timestamp);
+                            isoStamp = date.toISOString();
                             item.timestamp = isoStamp;
                             reports[isoStamp + ' ' + key] = item;
                         }
