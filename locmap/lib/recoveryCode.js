@@ -84,8 +84,8 @@ var RecoveryCode = function (userId) {
 
     // Code format, two capital letters, one number, two capital letters: AB9CD
     this._generateRecoveryCode = function () {
-        //Detect if we run unit tests (in local machine), and return AA1AA.
-        //Otherwise, generate random code.
+        // Detect if we run unit tests (in local machine), and return AA1AA.
+        // Otherwise, generate random code.
         if (conf.get('env') === 'test') {
             return 'AA1AA';
         }

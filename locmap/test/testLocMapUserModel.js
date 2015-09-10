@@ -16,7 +16,7 @@ var AppleNotification = require('../../lib/appleNotificationService');
 var GoogleCloudMessagingService = require('../../locmap/lib/locMapGoogleCloudMessagingService');
 
 // data from mocked pushNotification in format:
-//[{token: token, text: text}, {token2: token2, text2: text2}]
+// [{token: token, text: text}, {token2: token2, text2: text2}]
 var pushedNotifications = [];
 var pushedNotificationsGcm = [];
 

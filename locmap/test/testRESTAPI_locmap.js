@@ -488,7 +488,7 @@ module.exports = {
     },
 
     // Test signup with an existing user
-    //(should return existing stuff without changes if device id matches.)
+    // (should return existing stuff without changes if device id matches.)
     existingUserSignupValidDeviceid: function (test) {
         test.expect(5);
         lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
@@ -646,7 +646,7 @@ module.exports = {
                             lmHelpers.api.post(test, '/v1/user/' + reply1.id + '/place',
                                 authWithPlace, {status: 403}, function () {
                                     // Verify that only the places added before hitting limit
-                                    //exist on user places.
+                                    // exist on user places.
                                     lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/places',
                                         auth1, function (result) {
                                             test.equal(Object.keys(result.data).length, 2);
@@ -681,7 +681,7 @@ module.exports = {
                                     lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/places',
                                         auth1, function (placesResult2) {
                                             // Verify that number of places is still one,
-                                            //and that the place is the latest.
+                                            // and that the place is the latest.
                                             test.equal(Object.keys(placesResult2.data).length, 1);
                                             test.deepEqual(placesResult2.data[placeId1],
                                                 lmHelpers.locMapPlace2);

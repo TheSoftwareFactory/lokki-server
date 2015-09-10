@@ -17,8 +17,8 @@ var locMapRestApi = new LocMapRestApi();
 var AppleNotification = require('../../lib/appleNotificationService');
 var LocMapGoogleCloudMessagingService = require('../lib/locMapGoogleCloudMessagingService');
 
-//data from mocked pushNotification in format:
-//[{token: token, text: text}, {token2: token2, text2: text2}]
+// data from mocked pushNotification in format:
+// [{token: token, text: text}, {token2: token2, text2: text2}]
 var pushedNotifications = [];
 var pushedNotificationsGcm = [];
 

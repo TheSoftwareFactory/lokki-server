@@ -15,8 +15,8 @@ var db = require('../../lib/db');
 
 var pendingNotificationsDBKey = 'pendingNotificationsList';
 
-//Verify the notification result and return de-JSONized object if we got a valid one,
-//null otherwise.
+// Verify the notification result and return de-JSONized object if we got a valid one,
+// null otherwise.
 var verifyResult = function (result) {
     var entry = null;
     // Getting range results in a list containing JSONized object, popping does not have a list.

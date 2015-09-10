@@ -13,8 +13,8 @@ var intervalNotifications = new IntervalNotifications();
 
 var AppleNotification = require('../../lib/appleNotificationService');
 
-//data from mocked pushNotification in format:
-//[{token: token, text: text}, {token2: token2, text2: text2}]
+// data from mocked pushNotification in format:
+// [{token: token, text: text}, {token2: token2, text2: text2}]
 var pushedNotifications = [];
 
 // mock it to verify that we send notifications
@@ -177,8 +177,8 @@ module.exports = {
             });
     },
 
-    //Verify that calling doIntervalNotifications uses lock
-    //that prevents multiple calls within timeout.
+    // Verify that calling doIntervalNotifications uses lock
+    // that prevents multiple calls within timeout.
     doIntervalNotificationsLocking: function (test) {
         test.expect(2);
         intervalNotifications.doIntervalNotifications(function (result1) {
