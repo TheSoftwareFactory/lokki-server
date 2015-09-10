@@ -19,6 +19,7 @@
         "space-before-blocks": 2,
         "space-in-parens": 2,
         "spaced-comment": 2,
-        "no-underscore-dangle": 0
+        "no-underscore-dangle": 0,
+        "no-warning-comments": [0, { "terms": ["todo"], "location": "start" }]
     }
 }
