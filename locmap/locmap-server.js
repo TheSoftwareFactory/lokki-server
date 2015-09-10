@@ -29,7 +29,7 @@ var usesAuthentication = function(req, res, next) {
     });
 };
 
-var usesAdminAuthentication = function(req, res, next) {
+var usesAdminAuthentication = function (req, res, next) {
     if (req.params.userId !== conf.get('adminUserId')) {
         return res.send(404, 'Access denied');
     } else {
@@ -48,49 +48,49 @@ var usesAdminAuthentication = function(req, res, next) {
     });
 };
 
-module.exports = function(app) {
+module.exports = function (app) {
     // Create new user to locmap
     // POST body: {email: 'user@example.com', device_id: 'permanentdeviceid', langCode: 'fi-FI'}
     // langCode is optional and defaults to en-US if not given. Format with two letters is also accepted: 'fi'
     // Reply: 200, {id: 'userId', authorizationtoken: 'mytoken', icansee: ['userId2', 'userId3'], canseeme: ['userId4']}
-    app.post('/api/locmap/v1/signup', function(req, res) {
-        locMapRestApi.signUpUser(req.body, function(status, result) {
+    app.post('/api/locmap/v1/signup', function (req, res) {
+        locMapRestApi.signUpUser(req.body, function (status, result) {
             res.send(status, result);
         });
     });
 
     // Update user location
-    app.post('/api/locmap/v1/user/:userId/location', usesAuthentication, function(req, res) {
+    app.post('/api/locmap/v1/user/:userId/location', usesAuthentication, function (req, res) {
         var cache = new Cache();
         cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
 
-        locMapRestApi.changeUserLocation(req.params.userId, cache, req.body, function(status, result) {
+        locMapRestApi.changeUserLocation(req.params.userId, cache, req.body, function (status, result) {
             res.send(status, result);
         });
     });
 
     // Allow another to see current users position
-    app.post('/api/locmap/v1/user/:userId/allow', usesAuthentication, function(req, res) {
+    app.post('/api/locmap/v1/user/:userId/allow', usesAuthentication, function (req, res) {
         var cache = new Cache();
         cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
 
-        locMapRestApi.allowToSeeUserLocation(req.params.userId, cache, req.body, function(status, result) {
+        locMapRestApi.allowToSeeUserLocation(req.params.userId, cache, req.body, function (status, result) {
             res.send(status, result);
         });
     });
 
     // Stop another user from seeing current users position
-    app.delete('/api/locmap/v1/user/:userId/allow/:targetUserId', usesAuthentication, function(req, res) {
+    app.delete('/api/locmap/v1/user/:userId/allow/:targetUserId', usesAuthentication, function (req, res) {
         var cache = new Cache();
         cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
 
-        locMapRestApi.denyToSeeUserLocation(req.params.userId, cache, req.params.targetUserId, function(status, result) {
+        locMapRestApi.denyToSeeUserLocation(req.params.userId, cache, req.params.targetUserId, function (status, result) {
             res.send(status, result);
         });
     });
 
     // Toggle user global visibility
-    app.put('/api/locmap/v1/user/:userId/visibility', usesAuthentication, function(req, res) {
+    app.put('/api/locmap/v1/user/:userId/visibility', usesAuthentication, function (req, res) {
         var cache = new Cache();
         cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
 
@@ -100,7 +100,7 @@ module.exports = function(app) {
     });
 
     // Set user language.
-    app.put('/api/locmap/v1/user/:userId/language', usesAuthentication, function(req, res) {
+    app.put('/api/locmap/v1/user/:userId/language', usesAuthentication, function (req, res) {
         var cache = new Cache();
         cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
 
@@ -111,8 +111,8 @@ module.exports = function(app) {
 
     // Set user's ios remote notification token.
     // apnToken must be in body.apnToken. if body.apnToken is undefined - stops sending notifications
-    app.post('/api/locmap/v1/user/:userId/apnToken', usesAuthentication, function(req, res) {
-        locMapRestApi.setUserApnToken(req.params.userId, req.body.apnToken, function(status, result) {
+    app.post('/api/locmap/v1/user/:userId/apnToken', usesAuthentication, function (req, res) {
+        locMapRestApi.setUserApnToken(req.params.userId, req.body.apnToken, function (status, result) {
             res.send(status, result);
         });
     });

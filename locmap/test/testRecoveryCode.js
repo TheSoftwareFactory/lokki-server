@@ -12,18 +12,18 @@ See LICENSE for details
 var LocMapRecoveryCode = require('../lib/recoveryCode');
 
 module.exports = {
-    setUp: function(callback) {
+    setUp: function (callback) {
         var dbSetup = require('../../lib/dbSetup');
-        dbSetup(function() {
+        dbSetup(function () {
             callback();
         });
     },
 
-    createRecoveryCode: function(test) {
+    createRecoveryCode: function (test) {
         test.expect(1);
-        var myId = 'deadbeef';
-        var code = new LocMapRecoveryCode(myId);
-        code.createRecoveryCode(function(recoveryCode) {
+        var myId = 'deadbeef',
+            code = new LocMapRecoveryCode(myId);
+        code.createRecoveryCode(function (recoveryCode) {
             test.equal(recoveryCode, 'AA1AA');
             test.done();
         });
