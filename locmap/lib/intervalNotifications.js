@@ -30,7 +30,7 @@ var IntervalNotifications = function () {
                     if (user.data.lastDashboardAccess >= Date.now() - (conf.get('locMapConfig').
                         backgroundNotificationUserActivityAgeLimit * 1000)) {
                         // APN and GCM users should get notified.
-                        //WP8 client is not currently using notifications.
+                        // WP8 client is not currently using notifications.
                         if (user.data.apnToken || user.data.gcmToken) {
                             return 0;
                         }
