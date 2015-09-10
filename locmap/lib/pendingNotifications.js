@@ -6,7 +6,8 @@ See LICENSE for details
 'use strict';
 
 /*
-    Helper methods for appending new entries to pending notifications list and checking and removing them.
+    Helper methods for appending new entries to pending notifications list
+    and checking and removing them.
  */
 
 var logger = require('../../lib/logger');
@@ -14,8 +15,9 @@ var db = require('../../lib/db');
 
 var pendingNotificationsDBKey = 'pendingNotificationsList';
 
-// Verify the notification result and return de-JSONized object if we got a valid one, null otherwise.
-var verifyResult = function(result) {
+// Verify the notification result and return de-JSONized object if we got a valid one,
+// null otherwise.
+var verifyResult = function (result) {
     var entry = null;
     // Getting range results in a list containing JSONized object, popping does not have a list.
     if (typeof result === 'object' && result.length === 1) {
@@ -26,7 +28,8 @@ var verifyResult = function(result) {
     if (entry !== null) {
         try {
             entry = JSON.parse(entry);
-            if (typeof entry === 'object' && entry.hasOwnProperty('timestamp') && entry.hasOwnProperty('userId')) {
+            if (typeof entry === 'object' && entry.hasOwnProperty('timestamp') &&
+                    entry.hasOwnProperty('userId')) {
                 return entry;
             }
         } catch (exc) {
@@ -37,38 +40,44 @@ var verifyResult = function(result) {
     return null;
 };
 
-var pendingNotifications = function() {
+var pendingNotifications = function () {
     var pendingNotif = this;
 
     // Add a new notification to the pending check list.
-    this.addNewNotification = function(userId, callback) {
+    this.addNewNotification = function (userId, callback) {
         // New notifications are put to the beginning of the Redis list.
         var notificationObject = {timestamp: Date.now(), userId: userId};
-        db.lpush(pendingNotificationsDBKey, JSON.stringify(notificationObject), function(error, result) {
-            if (error || result < 1) {
-                callback(false);
-            } else {
-                callback(true);
-            }
-        });
+        db.lpush(pendingNotificationsDBKey, JSON.stringify(notificationObject),
+            function (error, result) {
+                if (error || result < 1) {
+                    callback(false);
+                } else {
+                    callback(true);
+                }
+            });
     };
 
-    this._checkLastNotification = function(timeout, callback) {
+    this._checkLastNotification = function (timeout, callback) {
         // Oldest notifications are read from the end of the Redis list.
         // Peek at the last element on the list to see if it has already passed given timeout.
-        db.lrange(pendingNotificationsDBKey, -1, -1, function(error, result) {
+        db.lrange(pendingNotificationsDBKey, -1, -1, function (error, result) {
             if (error) {
-                logger.error('Failed to read the last key on pending notifications list with error ' + error);
+                logger.error(
+                    'Failed to read the last key on pending notifications list with error ' +
+                        error
+                );
                 callback(undefined);
             } else {
-                var res = verifyResult(result);
+                var res = verifyResult(result),
+                    now;
                 if (res !== null) {
                     // Check timestamp.
-                    var now = Date.now();
+                    now = Date.now();
                     if (res.timestamp + timeout * 1000 <= now) {
-                        db.rpop(pendingNotificationsDBKey, function(error2, popResult) {
+                        db.rpop(pendingNotificationsDBKey, function (error2, popResult) {
                             if (error) {
-                                logger.error('Failed to pop the last key on pending notifications list with error ' + error2);
+                                logger.error('Failed to pop the last key on pending ' +
+                                    'notifications list with error ' + error2);
                                 callback(undefined);
                             } else {
                                 var popRes = verifyResult(popResult);
@@ -76,7 +85,8 @@ var pendingNotifications = function() {
                                     if (popRes.timestamp + timeout * 1000 <= now) {
                                         callback(popRes);
                                     } else {
-                                        logger.error('Pending notification entry had too new timestamp, discarding.');
+                                        logger.error('Pending notification entry had too new' +
+                                            'timestamp, discarding.');
                                         callback(undefined);
                                     }
                                 } else {
@@ -86,7 +96,8 @@ var pendingNotifications = function() {
                             }
                         });
                     } else {
-                        logger.trace('DEBUG CHECKLATESTNOTIF Timeout not passed for ' + JSON.stringify(res));
+                        logger.trace('DEBUG CHECKLATESTNOTIF Timeout not passed for ' +
+                            JSON.stringify(res));
                         callback(null);
                     }
                 } else {
@@ -98,23 +109,24 @@ var pendingNotifications = function() {
     };
 
     // Helper method for looping based on the result of previous call.
-    this._checkNotificationsLoop = function(timeout, resultsList, callback) {
-        pendingNotif._checkLastNotification(timeout, function(result) {
+    this._checkNotificationsLoop = function (timeout, resultsList, callback) {
+        pendingNotif._checkLastNotification(timeout, function (result) {
             if (result !== null && result !== undefined) {
                 resultsList.push(result);
                 pendingNotif._checkNotificationsLoop(timeout, resultsList, callback);
             } else {
-               callback(resultsList);
+                callback(resultsList);
             }
         });
     };
 
-    // Check the oldest notification from the queue and pop & return if it has passed the timeout period.
+    // Check the oldest notification from the queue and pop & return if it has passed
+    // the timeout period.
     // Returns the notification objects in a list. Empty list if no notifications were found.
     // NOTE: Is not thread safe, don't use simultaneously from multiple threads/processes!
-    this.getTimedOutNotifications = function(timeout, callback) {
+    this.getTimedOutNotifications = function (timeout, callback) {
         var results = [];
-        pendingNotif._checkNotificationsLoop(timeout, results, function() {
+        pendingNotif._checkNotificationsLoop(timeout, results, function () {
             callback(results);
         });
     };

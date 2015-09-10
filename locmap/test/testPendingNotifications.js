@@ -13,41 +13,41 @@ var PendingNotifications = require('../lib/pendingNotifications');
 var pendingNotifications = new PendingNotifications();
 
 module.exports = {
-    setUp: function(callback) {
+    setUp: function (callback) {
         var dbSetup = require('../../lib/dbSetup');
-        dbSetup(function() {
+        dbSetup(function () {
             callback();
         });
     },
 
-    createAndCheckPendingNotification: function(test) {
+    createAndCheckPendingNotification: function (test) {
         test.expect(2);
-        pendingNotifications.addNewNotification('user1', function(result) {
+        pendingNotifications.addNewNotification('user1', function (result) {
             test.equal(result, true, 'Failed to add new notification.');
             // Negative timeout makes sure we get even the new items.
-            pendingNotifications.getTimedOutNotifications(-1, function(notificationResults) {
+            pendingNotifications.getTimedOutNotifications(-1, function (notificationResults) {
                 test.equal(notificationResults.length, 1);
                 test.done();
             });
         });
     },
 
-    checkEmptyNotifications: function(test) {
+    checkEmptyNotifications: function (test) {
         test.expect(1);
-        pendingNotifications.getTimedOutNotifications(1, function(results) {
+        pendingNotifications.getTimedOutNotifications(1, function (results) {
             test.deepEqual(results, []);
             test.done();
         });
     },
 
-    createAndCheckMultiplependingNotifications: function(test) {
+    createAndCheckMultiplependingNotifications: function (test) {
         test.expect(3);
-        pendingNotifications.addNewNotification('user1', function(result) {
+        pendingNotifications.addNewNotification('user1', function (result) {
             test.equal(result, true, 'Failed to add new notification.');
-            pendingNotifications.addNewNotification('user2', function(result2) {
+            pendingNotifications.addNewNotification('user2', function (result2) {
                 test.equal(result2, true, 'Failed to add new notification.');
                 // Negative timeout makes sure we get even the new items.
-                pendingNotifications.getTimedOutNotifications(-1, function(notificationResults) {
+                pendingNotifications.getTimedOutNotifications(-1, function (notificationResults) {
                     test.equal(notificationResults.length, 2);
                     test.done();
                 });
@@ -55,13 +55,13 @@ module.exports = {
         });
     },
 
-    leaveNotTimedOutNotification: function(test) {
+    leaveNotTimedOutNotification: function (test) {
         test.expect(3);
-        pendingNotifications.addNewNotification('user1', function(result) {
+        pendingNotifications.addNewNotification('user1', function (result) {
             test.equal(result, true, 'Failed to add new notification.');
-            pendingNotifications.getTimedOutNotifications(60, function(notificationResults) {
+            pendingNotifications.getTimedOutNotifications(60, function (notificationResults) {
                 test.deepEqual(notificationResults, []);
-                pendingNotifications.getTimedOutNotifications(-1, function(notificationResults2) {
+                pendingNotifications.getTimedOutNotifications(-1, function (notificationResults2) {
                     test.equal(notificationResults2.length, 1);
                     test.done();
                 });
