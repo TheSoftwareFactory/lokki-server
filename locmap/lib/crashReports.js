@@ -13,10 +13,10 @@ var db = require('../../lib/db');
 
 var crashReportPrefix = 'locmapcrash:';
 
-var CrashReports = function() {
+var CrashReports = function () {
 
     // userId is used to differentiate reports, as timestamp alone can conflict.
-    this.store = function(userId, osType, reportObject, callback) {
+    this.store = function (userId, osType, reportObject, callback) {
         var date = new Date(),
         // We can get all reports per month with the same hgetall redis call.
             key = crashReportPrefix + osType + ':' +
@@ -29,7 +29,7 @@ var CrashReports = function() {
                 osType: osType,
                 report: reportObject
             };
-        db.hset(key, field, JSON.stringify(data), function(error) {
+        db.hset(key, field, JSON.stringify(data), function (error) {
             if (error) {
                 callback(400, 'Database write failed');
             } else {
@@ -38,10 +38,10 @@ var CrashReports = function() {
         });
     };
 
-    this.getMonth = function(osType, year, month, callback) {
+    this.getMonth = function (osType, year, month, callback) {
         var redisKey = crashReportPrefix + osType + ':' + year + ':' + month,
             reports = {};
-        db.hgetall(redisKey, function(error, result) {
+        db.hgetall(redisKey, function (error, result) {
             var key, item, date, isoStamp = null;
             if (result) {
                 for (key in result) {

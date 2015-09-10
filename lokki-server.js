@@ -33,7 +33,7 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 
 // Security related headers to all paths
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
     // Force browser not to guess type but use content-type exactly.
     // Requires content-type headers to be correctly set.
     res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -49,7 +49,7 @@ app.use(function(req, res, next) {
 });
 
 // Security headers for /api (JSON-related)
-app.use('/api', function(req, res, next) {
+app.use('/api', function (req, res, next) {
     // Browser shows reply as downloadable instead of injecting into page.
     res.setHeader('Content-Disposition', 'attachment; filename="json-response.txt');
     return next();
@@ -57,7 +57,7 @@ app.use('/api', function(req, res, next) {
 
 if (conf.get('neverCrash')) {
     // do not allow production server to crash
-    process.on('uncaughtException', function(err) {
+    process.on('uncaughtException', function (err) {
         // handle the error safely
         logger.error('uncaughtException:', err);
         logger.error(err.stack);
@@ -65,7 +65,7 @@ if (conf.get('neverCrash')) {
 }
 
 // Root site
-app.get('/', function(req, res) {
+app.get('/', function (req, res) {
     res.send('Welcome to Lokki!<br/><br/>');
 });
 
@@ -77,7 +77,7 @@ if (require.main === module) {
 
     var port = conf.get('port');
 
-    app.listen(port, function() {
+    app.listen(port, function () {
         logger.info('Lokki-Server listening on %d', port);
     });
 
@@ -85,8 +85,8 @@ if (require.main === module) {
     // TODO Error handling?
     if (conf.get('pushNotifications')) {
         // Run pending notifications check in configured intervals.
-        setInterval(function() {
-            notificationWorker.doNotificationsCheck(function() {});
+        setInterval(function () {
+            notificationWorker.doNotificationsCheck(function () {});
         }, conf.get('locMapConfig').notificationCheckPollingInterval * 1000);
     }
 } else {
