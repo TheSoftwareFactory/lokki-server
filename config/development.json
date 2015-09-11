@@ -9,9 +9,10 @@
     },
     "sendEmails": false,
     "locMapConfig": {
-        "baseUrl": "https://lokki-dev.herokuapp.com"
+        "baseUrl": "https://lokki-dev.herokuapp.com",
+        "maxPlacesLimitNormalUser": 10
     },
     "neverCrash": true,
-    "pushNotifications": true,
-    "maxPlacesLimitNormalUser": 10
+    "pushNotifications": true
+
 }
