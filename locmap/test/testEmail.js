@@ -31,7 +31,8 @@ module.exports = {
             test.equal(locMapEmail.emails.length, 1);
             test.deepEqual(locMapEmail.emails[0], {to: targetUser, from: noReply,
                 subject: i18n.getLocalizedString('en-US', 'signup.userEmailSubject'),
-                text: i18n.getLocalizedString('en-US', 'signup.userEmailText')});
+                text: i18n.getLocalizedString('en-US', 'signup.userEmailText',
+                    'targetUser', targetUser)});
             test.done();
         });
     },
