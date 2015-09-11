@@ -20,7 +20,7 @@
     "notification.friendRemoved" : "Lokki-ystävä poistettu: %friendName%",
     "notification.friendDeclinedInvitation" : "%friendName% kieltäytyi Lokki-ystäväkutsustasi",
     "signup.userEmailSubject" : "Tervetuloa Lokkiin!",
-    "signup.userEmailText" : "Tervetuloa Lokki 3.0 -sovellukseen ja kiitos rekisteröitymisestä!",
+    "signup.userEmailText" : "Tervetuloa Lokkiin, sovellukseen jonka avulla voit jakaa sijaintisi helposti, turvallisesti ja ilmaiseksi. Olet onnistuneesti rekisteröitynyt käyttäjäksi <b>%targetUser%</b> ja voit nyt kirjautua sisään sovellukseen.",
     "invite.userInvitedToLokkiEmailSubject" : "Liity seuraani Lokkiin!",
     "invite.userInvitedToLokkiEmailText" : "Hei %targetUser%!\n\nYstäväsi %senderUser% on kutsunut sinut Lokkiin.",
     "reset.emailSubject": "Vahvista Lokki -rekisteröityminen",
