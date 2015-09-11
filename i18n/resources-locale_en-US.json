@@ -20,7 +20,7 @@
     "notification.friendRemoved" : "Lokki friend removed: %friendName%",
     "notification.friendDeclinedInvitation" : "%friendName% declined your Lokki friend invitation",
     "signup.userEmailSubject" : "Welcome to Lokki!",
-    "signup.userEmailText" : "Welcome to Lokki and thank you for signing up!",
+    "signup.userEmailText" : "Welcome to Lokki, the private location sharing app that's easy, secure, and free! You have successfully registered as <b>%targetUser%</b> and are now able to log in.",
     "invite.userInvitedToLokkiEmailSubject" : "Join me on Lokki!",
     "invite.userInvitedToLokkiEmailText" : "Hello %targetUser%!\n\nYour friend %senderUser% is inviting you to Lokki.",
     "reset.emailSubject": "Confirm Lokki sign-up",
