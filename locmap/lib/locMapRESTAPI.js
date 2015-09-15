@@ -117,116 +117,143 @@ var LocMapRESTAPI = function() {
         }
     };
 
-    this.signUpUser = function(userData, callback) {
-        var that = this;
+    this.initializeUser = function(user, langCode, deviceId) {
+        user.data.deviceId = locMapCommon.getSaltedHashedId(deviceId);
+        user.data.language = langCode;
+        user.data.authorizationToken = locMapCommon.generateAuthToken();
+    }
+
+    this.getLanguage = function(userData) {
+        if (!userData.language) {
+            return 'en-US';
+        } else {
+            if (typeof userData.language === 'string' && userData.language.length < 11 && userData.language.length > 1) {
+                return userData.language;
+            } else {
+                return null;
+            }
+        }
+    }
+
+    this.signUpNonexistentUser = function(newUser, callback, userId) {
+        newUser.data.activated = true;
+        newUser.setData(function(result) {
+            if (typeof result !== 'number') {
+                restApi._formatSignUpReplyData(userId, newUser.data.authorizationToken, function(replyResult) {
+                    locMapEmail.sendSignupMail(newUser.data.email, newUser.data.language, function(emailResult) {
+                        if (emailResult) {
+                            logger.trace('Signup email successfully sent to ' + newUser.data.email);
+                        } else {
+                            logger.warn('FAILED Signup email sending to ' + newUser.data.email);
+                        }
+                    });
+                    callback(locMapCommon.statusFromResult(replyResult), replyResult);
+                });
+            } else {
+                callback(400, 'Signup error.');
+            }
+        }, null);
+    }
+
+    this.signUpActivatedUser = function(newUser, userData, callback, langCode, userId) {
+        if (this._isUserInRecoveryMode(newUser.data.accountRecoveryMode)) {
+            logger.trace('User ' + newUser.data.userId + ' in recovery mode, signing up.');
+            newUser.data.accountRecoveryMode = 0;
+            this.initializeUser(newUser, langCode, userData.device_id);
+            newUser.setData(function(result) {
+                if (typeof result !== 'number') {
+                    restApi._formatSignUpReplyData(userId, newUser.data.authorizationToken, function(replyResult) {
+                        // TODO Send some email?
+                        callback(locMapCommon.statusFromResult(replyResult), replyResult);
+                    });
+                } else {
+                    callback(400, 'Signup error.');
+                }
+            });
+        } else if (newUser.isMatchingDeviceId(userData.device_id)) { // Device id match, treat as password success and let user in.
+            logger.trace('Device id match for user ' + newUser.data.userId);
+            restApi._formatSignUpReplyData(userId, newUser.data.authorizationToken, function(replyResult) {
+                callback(locMapCommon.statusFromResult(replyResult), replyResult);
+            });
+        } else { // Device id mismatch, trigger recovery process for the account.
+            logger.trace('Device id mismatch for user ' + newUser.data.userId);
+            locMapResetCode.createResetCode(newUser.data.userId, function(resetResult) {
+                if (typeof resetResult !== 'number') {
+                    logger.trace('Reset code generated for user ' + newUser.data.userId + ' ' + resetResult);
+                    locMapEmail.sendResetEmail(newUser.data.email, conf.get('locMapConfig').baseUrl + '/reset/' + resetResult, newUser.data.language, function(emailResult) {
+                        if (emailResult) {
+                            logger.trace('Reset link sent to ' + newUser.data.email);
+                        } else {
+                            logger.error('FAILED to send reset link to ' + newUser.data.email);
+                        }
+                    });
+                    callback(401, 'Signup authorization failed.');
+                } else {
+                    callback(400, 'Signup error.');
+                }
+            });
+        }
+    }
+
+    this.signUpNonactivatedUser = function(newUser, userData, callback, userId) {
+        newUser.data.activated = true;
+        newUser.setData(function(result) {
+            if (typeof result !== 'number') {
+                restApi._formatSignUpReplyData(userId, newUser.data.authorizationToken, function(replyResult) {
+                    locMapEmail.sendSignupMail(newUser.data.email, newUser.data.language, function(emailResult) {
+                        if (emailResult) {
+                            logger.trace('Signup email successfully sent to ' + newUser.data.email);
+                        } else {
+                            logger.error('FAILED Signup email sending to ' + newUser.data.email);
+                        }
+                    });
+                    callback(locMapCommon.statusFromResult(replyResult), replyResult);
+                });
+            } else {
+                callback(result, 'Failed to save new user data.');
+            }
+        }, null);
+    }
+
+    this.prepareSigningUp = function(userData, callback, langCode) {
         if (typeof userData !== 'object' || typeof userData.email !== 'string' || typeof userData.device_id !== 'string') {
             callback(400, 'Invalid data.');
-            return;
+            return false;
         }
         try {
             check(userData.email).isEmail();
         } catch (e) {
             logger.trace('User tried signing up with invalid email: ' + userData.email);
             callback(400, 'Invalid email address.');
+            return false;
+        }
+        return true;
+    }
+
+    this.signUpUser = function(userData, callback) {
+        var langCode = 'en-US';
+        if(!this.prepareSigningUp(userData, callback, langCode)) {
             return;
         }
-        var cleanEmail = userData.email.toLowerCase();
-        // TODO Make sure device_id is not empty!!
-        var langCode = 'en-US';
-        if (userData.language) {
-            if (typeof userData.language === 'string' && userData.language.length < 11 && userData.language.length > 1) {
-                langCode = userData.language;
-            } else {
-                callback(400, 'Invalid language code.');
-                return;
-            }
+        var langCode = this.getLanguage(userData);
+        if(langCode == null) {
+            callback(400, 'Invalid language code.');
+            return false;
         }
+        var cleanEmail = userData.email.toLowerCase();
         var userId = locMapCommon.getSaltedHashedId(cleanEmail);
         var newUser = new LocMapUserModel(userId);
+        var context = this;
         newUser.getData(function() {
             if (!newUser.exists) {
                 newUser.data.email = cleanEmail;
-                newUser.data.deviceId = locMapCommon.getSaltedHashedId(userData.device_id);
-                newUser.data.authorizationToken = locMapCommon.generateAuthToken();
-                newUser.data.language = langCode;
-                newUser.data.activated = true;
-                newUser.setData(function(result) {
-                    if (typeof result !== 'number') {
-                        restApi._formatSignUpReplyData(userId, newUser.data.authorizationToken, function(replyResult) {
-                            locMapEmail.sendSignupMail(newUser.data.email, langCode, function(emailResult) {
-                                if (emailResult) {
-                                    logger.trace('Signup email successfully sent to ' + newUser.data.email);
-                                } else {
-                                    logger.warn('FAILED Signup email sending to ' + newUser.data.email);
-                                }
-                            });
-                            callback(locMapCommon.statusFromResult(replyResult), replyResult);
-                        });
-                    } else {
-                        callback(400, 'Signup error.');
-                    }
-                }, null);
+                context.initializeUser(newUser, langCode, userData.device_id);
+                context.signUpNonexistentUser(newUser, callback, userId);
             } else if (newUser.data.activated) {  // User has been activated already
-                if (that._isUserInRecoveryMode(newUser.data.accountRecoveryMode)) {
-                    logger.trace('User ' + newUser.data.userId + ' in recovery mode, signing up.');
-                    newUser.data.authorizationToken = locMapCommon.generateAuthToken();
-                    newUser.data.accountRecoveryMode = 0;
-                    newUser.data.language = langCode;
-                    newUser.data.deviceId = locMapCommon.getSaltedHashedId(userData.device_id);
-                    newUser.setData(function(result) {
-                        if (typeof result !== 'number') {
-                            restApi._formatSignUpReplyData(userId, newUser.data.authorizationToken, function(replyResult) {
-                                // TODO Send some email?
-                                callback(locMapCommon.statusFromResult(replyResult), replyResult);
-                            });
-                        } else {
-                            callback(400, 'Signup error.');
-                        }
-                    });
-                } else if (newUser.isMatchingDeviceId(userData.device_id)) { // Device id match, treat as password success and let user in.
-                    logger.trace('Device id match for user ' + newUser.data.userId);
-                    restApi._formatSignUpReplyData(userId, newUser.data.authorizationToken, function(replyResult) {
-                        callback(locMapCommon.statusFromResult(replyResult), replyResult);
-                    });
-                } else { // Device id mismatch, trigger recovery process for the account.
-                    logger.trace('Device id mismatch for user ' + newUser.data.userId);
-                    locMapResetCode.createResetCode(newUser.data.userId, function(resetResult) {
-                        if (typeof resetResult !== 'number') {
-                            logger.trace('Reset code generated for user ' + newUser.data.userId + ' ' + resetResult);
-                            locMapEmail.sendResetEmail(newUser.data.email, conf.get('locMapConfig').baseUrl + '/reset/' + resetResult, newUser.data.language, function(emailResult) {
-                                if (emailResult) {
-                                    logger.trace('Reset link sent to ' + newUser.data.email);
-                                } else {
-                                    logger.error('FAILED to send reset link to ' + newUser.data.email);
-                                }
-                            });
-                            callback(401, 'Signup authorization failed.');
-                        } else {
-                            callback(400, 'Signup error.');
-                        }
-                    });
-                }
+                context.signUpActivatedUser(newUser, userData, callback, langCode, userId);
             } else {  // User has not been activated ('stub' user) -> Normal signup without overwriting the email.
-                newUser.data.deviceId = locMapCommon.getSaltedHashedId(userData.device_id);
-                newUser.data.authorizationToken = locMapCommon.generateAuthToken();
-                newUser.data.language = langCode;
-                newUser.data.activated = true;
-                newUser.setData(function(result) {
-                    if (typeof result !== 'number') {
-                        restApi._formatSignUpReplyData(userId, newUser.data.authorizationToken, function(replyResult) {
-                            locMapEmail.sendSignupMail(newUser.data.email, langCode, function(emailResult) {
-                                if (emailResult) {
-                                    logger.trace('Signup email successfully sent to ' + newUser.data.email);
-                                } else {
-                                    logger.error('FAILED Signup email sending to ' + newUser.data.email);
-                                }
-                            });
-                            callback(locMapCommon.statusFromResult(replyResult), replyResult);
-                        });
-                    } else {
-                        callback(result, 'Failed to save new user data.');
-                    }
-                }, null);
+                context.initializeUser(newUser, langCode, userData.device_id);
+                context.signUpNonactivatedUser(newUser, userData, callback, userId);
             }
         });
     };
