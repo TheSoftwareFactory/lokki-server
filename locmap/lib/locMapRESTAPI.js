@@ -126,13 +126,11 @@ var LocMapRESTAPI = function() {
     this.getLanguage = function(userData) {
         if (!userData.language) {
             return 'en-US';
-        } else {
-            if (typeof userData.language === 'string' && userData.language.length < 11 && userData.language.length > 1) {
-                return userData.language;
-            } else {
-                return null;
-            }
         }
+        if (typeof userData.language === 'string' && userData.language.length < 11 && userData.language.length > 1) {
+            return userData.language;
+        }
+        return null;
     }
 
     this.signUpNonexistentUser = function(newUser, callback, userId) {
@@ -232,11 +230,11 @@ var LocMapRESTAPI = function() {
 
     this.signUpUser = function(userData, callback) {
         var langCode = 'en-US';
-        if(!this.prepareSigningUp(userData, callback, langCode)) {
+        if (!this.prepareSigningUp(userData, callback, langCode)) {
             return;
         }
         var langCode = this.getLanguage(userData);
-        if(langCode == null) {
+        if (langCode === null) {
             callback(400, 'Invalid language code.');
             return false;
         }
