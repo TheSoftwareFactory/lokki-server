@@ -213,7 +213,7 @@ var LocMapRESTAPI = function() {
         }, null);
     }
 
-    this.prepareSigningUp = function(userData, callback, langCode) {
+    this.prepareSigningUp = function(userData, callback) {
         if (typeof userData !== 'object' || typeof userData.email !== 'string' || typeof userData.device_id !== 'string') {
             callback(400, 'Invalid data.');
             return false;
@@ -229,8 +229,7 @@ var LocMapRESTAPI = function() {
     }
 
     this.signUpUser = function(userData, callback) {
-        var langCode = 'en-US';
-        if (!this.prepareSigningUp(userData, callback, langCode)) {
+        if (!this.prepareSigningUp(userData, callback)) {
             return;
         }
         var langCode = this.getLanguage(userData);
