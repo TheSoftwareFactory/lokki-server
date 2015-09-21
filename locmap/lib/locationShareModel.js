@@ -68,6 +68,11 @@ var LocMapSharingModel = function(userId) {
         });
     };
 
+    /** Sets and saves the data of this locShare
+    @param callback Callback function
+    @param data     The data values to set in this locShare (see: this.data)
+    Callback param  "OK" if successful, else error code
+    */
     this.setData = function(callback, data) {
         var currentUser = this;
         if (data !== null) {
@@ -80,6 +85,7 @@ var LocMapSharingModel = function(userId) {
 
         var serializedData = currentUser._serializeData(currentUser.data);
         db.hmset(LocMapUserPrefix + currentUser.data.userId, serializedData, function(error, result) {
+
             if (error) {
                 result = 400;
                 logger.error('Error setting user data: ' + error);
@@ -137,6 +143,35 @@ var LocMapSharingModel = function(userId) {
         currentUser.setData(callback, null);
     };
 
+    /** Adds a user to logged in user's ignore list
+    @param otherUserId  Encrypted ID of the user to be blocked
+    @param callback     Callback function
+    Callback param      "OK" if ignoring successful, else error code
+    */
+    this.ignoreOtherUser = function(otherUserId, callback) {
+        var currentUser = this;
+
+        currentUser.data.ignored = locMapCommon.addUniqueItemToArray(currentUser.data.ignored, otherUserId);
+        currentUser.setData(callback, null)
+    }
+
+    /** Removes a user from the logged in user's ignore list
+    @param otherUserId  Encrypted ID of the user to be unblocked
+    @param callback     Callback function
+    Callback param      "OK" if ignoring successful, else error code
+    */
+    this.showOtherUser = function(otherUserId, callback) {
+        var currentUser = this;
+
+        if (!currentUser.exists) {
+            logger.trace('Setting ignored user to uninitialized locationShare! Id: ' + currentUser.data.userId);
+            callback(400);
+            return;
+        }
+
+        currentUser.data.ignored = locMapCommon.removeItemFromArray(currentUser.data.ignored, otherUserId);
+        currentUser.setData(callback, null);
+    }
 };
 
 module.exports = LocMapSharingModel;

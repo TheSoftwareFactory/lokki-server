@@ -190,6 +190,36 @@ module.exports = {
         });
     },
 
+    // Allowing another user adds them to icansee and idmapping in contacts.
+    allowAnotherUserContacts: function (test) {
+        test.expect(9);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+            lmHelpers.createLocMapUser(test, testUserEmail2, 'dev2', function (auth2, reply2) {
+                auth1.data = {emails: [testUserEmail2]};
+                lmHelpers.api.post(test, '/v1/user/' + reply1.id + '/allow', auth1, function () {
+
+                    // Verify that icansee list for user2 contains user1
+                    lmHelpers.api.get(test, '/v1/user/' + reply2.id + '/contacts', auth2,
+                        function (res) {
+                            var expected = {canseeme: [], icansee: [], ignored: [], idmapping: []};
+                            expected.idmapping[reply1.id] = testUserEmail;
+                            expected.icansee[reply1.id] = {location: {}, visibility: true, battery: ''}
+                            test.deepEqual(res.data, expected);
+
+                            // Verify that canseeme list for user1 contains user2
+                            lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/contacts', auth1,
+                                function (res2) {
+                                    var expected = {canseeme: [reply2.id], icansee: [], ignored: [], idmapping: []};
+                                    expected.idmapping[reply2.id] = testUserEmail2;
+                                    test.deepEqual(res2.data, expected);
+                                    test.done();
+                                });
+                        });
+                });
+            });
+        });
+    },
+
     // Multiple allow users do not create duplicate entries.
     allowAnotherUserMultiple: function (test) {
         test.expect(10);
@@ -343,7 +373,7 @@ module.exports = {
     },
 
     // Dashboard shows allowed users battery status.
-    userDashboardAllowedUserBattetyStatus: function (test) {
+    userDashboardAllowedUserBatteryStatus: function (test) {
         test.expect(8);
         lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
             lmHelpers.createLocMapUser(test, testUserEmail2, 'dev2', function (auth2, reply2) {
@@ -446,6 +476,84 @@ module.exports = {
                         });
                 });
             });
+        });
+    },
+
+    // Ignoring another user adds them to ignore list in contacts
+    ignoreAnotherUser: function (test) {
+        test.expect(7);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+            lmHelpers.createLocMapUser(test, testUserEmail2, 'dev2', function (auth2, reply2) {
+                auth1.data = {ids: [reply2.id]};
+
+                lmHelpers.api.post(test, '/v1/user/' + reply1.id + '/ignore', auth1, function () {
+                    //Verify that the ignore list for user 1 contains user 2
+                    lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/contacts', auth1, function (res) {
+                        var expected = {canseeme: [], icansee: [], ignored: [reply2.id], idmapping: []};
+                        test.deepEqual(res.data, expected);
+                        test.done();
+                    });
+                });
+            });
+        });
+    },
+
+    // Unignoring another user removes them from ignore list in contacts
+    unignoreAnotherUser: function (test) {
+        test.expect(8);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+            lmHelpers.createLocMapUser(test, testUserEmail2, 'dev2', function (auth2, reply2) {
+                auth1.data = {ids: [reply2.id]};
+
+                lmHelpers.api.post(test, '/v1/user/' + reply1.id + '/ignore', auth1, function () {
+                    lmHelpers.api.del(test, '/v1/user/' + reply1.id + '/ignore/' + reply2.id, auth1, function () {
+                        //Verify that the ignore list for user 1 doesn't contain user 2
+                        lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/contacts', auth1, function (res) {
+                            var expected = {canseeme: [], icansee: [], ignored: [], idmapping: []};
+                            test.deepEqual(res.data, expected);
+                            test.done();
+                        });
+                    });
+                });
+            });
+        });
+    },
+
+    // Multiple ignore users do not create duplicate entries.
+    ignoreAnotherUserMultiple: function (test) {
+        test.expect(8);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+            lmHelpers.createLocMapUser(test, testUserEmail2, 'dev2', function (auth2, reply2) {
+                auth1.data = {ids: [reply2.id]};
+                lmHelpers.api.post(test, '/v1/user/' + reply1.id + '/ignore', auth1, function () {
+                    lmHelpers.api.post(test, '/v1/user/' + reply1.id + '/ignore', auth1,
+                        function () {
+                            // Verify that ignore list for user1 contains user2 only once.
+                            lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/contacts', auth1, function (res) {
+                                var expected = {canseeme: [], icansee: [], ignored: [reply2.id], idmapping: []};
+                                test.deepEqual(res.data, expected);
+                                test.done();
+                            });
+                        });
+                });
+            });
+        });
+    },
+
+    // Cannot ignore own user.
+    cannotIgnoreSelf: function (test) {
+        test.expect(5);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+            var authWithEmail = JSON.parse(JSON.stringify(auth1));
+            authWithEmail.data = {ids: [reply1.id]};
+            lmHelpers.api.post(test, '/v1/user/' + reply1.id + '/ignore', authWithEmail,
+                {status: 400}, function () {
+                    lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/contacts', auth1,
+                        function (res) {
+                            test.deepEqual(res.data.ignored, []);
+                            test.done();
+                        });
+                });
         });
     },
 
