@@ -68,10 +68,10 @@ var LocMapSharingModel = function(userId) {
         });
     };
 
-    /** Sets and saves the data of this locShare
-    @param callback Callback function
-    @param data     The data values to set in this locShare (see: this.data)
-    Callback param  "OK" if successful, else error code
+    /* Sets and saves the data of this locShare
+    param data          The data values to set in this locShare (see: this.data)
+    callback callback   Callback function
+    param               "OK" if successful, else error code
     */
     this.setData = function(callback, data) {
         var currentUser = this;
@@ -143,10 +143,10 @@ var LocMapSharingModel = function(userId) {
         currentUser.setData(callback, null);
     };
 
-    /** Adds a user to logged in user's ignore list
-    @param otherUserId  Encrypted ID of the user to be blocked
-    @param callback     Callback function
-    Callback param      "OK" if ignoring successful, else error code
+    /* Adds a user to logged in user's ignore list
+    param otherUserId   Encrypted ID of the user to be blocked
+    callback callback   Callback function
+    param               "OK" if ignoring successful, else error code
     */
     this.ignoreOtherUser = function(otherUserId, callback) {
         var currentUser = this;
@@ -155,10 +155,10 @@ var LocMapSharingModel = function(userId) {
         currentUser.setData(callback, null)
     }
 
-    /** Removes a user from the logged in user's ignore list
-    @param otherUserId  Encrypted ID of the user to be unblocked
-    @param callback     Callback function
-    Callback param      "OK" if ignoring successful, else error code
+    /* Removes a user from the logged in user's ignore list
+    param otherUserId   Encrypted ID of the user to be unblocked
+    callback callback   Callback function
+    param               "OK" if ignoring successful, else error code
     */
     this.showOtherUser = function(otherUserId, callback) {
         var currentUser = this;

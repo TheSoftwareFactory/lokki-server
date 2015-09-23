@@ -510,11 +510,11 @@ var LocMapRESTAPI = function() {
         });
     };
 
-    /** Helper function for ignoring users
-    @param  currentUserLocShare The locationShareModel for the currently logged in user
-    @param  targetUserId        The encrypted user ID of the user to be ignored
-    @param  callback            The function which is called when this function finishes
-    Callback param              "OK" if ignoring successful, else error code
+    /* Helper function for ignoring users
+    param currentUserLocShare   The locationShareModel for the currently logged in user
+    param targetUserId          The encrypted user ID of the user to be ignored
+    callback callback           The function which is called when this function finishes
+    param                       "OK" if ignoring successful, else error code
     */
     this._ignore = function(currentUserLocShare, targetUserID, callback) {
         var that = this;
@@ -526,19 +526,18 @@ var LocMapRESTAPI = function() {
         }
 
         // Add the user to an email list
-        currentUserLocShare.ignoreOtherUser(targetUserID, function (ignoreResult){
-        logger.log("ignore result" + ignoreResult);
+        currentUserLocShare.ignoreOtherUser(targetUserID, function (ignoreResult) {
             callback(ignoreResult);
         });
     }
 
-    /** Adds user(s) to logged in user's ignore list
-    @param userId       The encrypted ID of the logged in user
-    @param targetUsers  A JS object containing an array of encrypted user ids to be blocked named 'ids'
-    @param callback     Callback function
+    /* Adds user(s) to logged in user's ignore list
+    param userId        The encrypted ID of the logged in user
+    param targetUsers   A JS object containing an array of encrypted user ids to be blocked named 'ids'
+    param callback      Callback function
     Callback param      numeric result code
     */
-    this.ignoreUser = function(userId, targetUsers, callback){
+    this.ignoreUser = function(userId, targetUsers, callback) {
         // Check that the request contains a properly formatted list of objects
         if (typeof targetUsers !== 'object' || typeof targetUsers.ids !== 'object') {
             logger.warn('Invalid data for ignoring user.');
@@ -561,7 +560,7 @@ var LocMapRESTAPI = function() {
 
         // Helper function for email loop below
         function handleIgnoreResult(ignoreResult) {
-            if (ignoreResult !== "OK") {
+            if (ignoreResult !== 'OK') {
                 errorCount++;
             }
             counter--;
@@ -588,11 +587,11 @@ var LocMapRESTAPI = function() {
         });
     }
 
-    /** Removes a user from the logged in user's ignore list
-    @param userId           The encrypted ID of the logged in user
-    @param targetUserId     The encrypted ID of the user to be unignored
-    @param callback         Callback function
-    Callback param          Numeric result code
+    /* Removes a user from the logged in user's ignore list
+    param userId        The encrypted ID of the logged in user
+    param targetUserId  The encrypted ID of the user to be unignored
+    callback callback   Callback function
+    param               Numeric result code
     */
     this.unIgnoreUser = function(userId, targetUserId, callback) {
         // Load user sharing data
@@ -839,9 +838,9 @@ var LocMapRESTAPI = function() {
     };
 
     /* Get user contacts.
-    @param userId   Encrypted ID of the user whose contacts are being fetched
-    @param callback Callback function
-    Callback param  A JS object containing arrays of IDs the user can see (icansee), IDs who can see the user (canseeme),
+    param userId        Encrypted ID of the user whose contacts are being fetched
+    callback callback   Callback function
+    param               A JS object containing arrays of IDs the user can see (icansee), IDs who can see the user (canseeme),
         IDs the user is ignoring (ignored), and ID mapping for the first two (id: email)
     */
     this.getUserContacts = function(userId, callback) {
@@ -849,24 +848,23 @@ var LocMapRESTAPI = function() {
         var responseData = {};
         // Load contact data from server
         var locShare = new LocMapSharingModel(userId);
-        locShare.getData(function (locShareResult){
+        locShare.getData(function (locShareResult) {
             if (typeof locShareResult !== 'number') {
                 responseData.canseeme = locShare.data.canSeeMe; // Set people who can see user
                 responseData.ignored = locShare.data.ignored; // Set people who the user doesn't want to see
                 // Get shared data for all users we can see (location, visibility, battery)
                 that._getUserShareData(locShare.data.ICanSee, function(ICanSeeData) {
                     responseData.icansee = ICanSeeData; // Set people the user can see
-                    //Map IDs to emails
+                    // Map IDs to emails
                     that._generateIdMapping(locShare.data.ICanSee, locShare.data.canSeeMe, function(idMappingData) {
                         responseData.idmapping = idMappingData;
 
-                        //Send everything back
+                        // Send everything back
                         callback(200, responseData);
                     });
 
                 });
-            }
-            else {
+            } else {
                 logger.warn('Failed to get contact for user ' + userId);
                 callback(404, 'Failed to get contact data for user.');
             }

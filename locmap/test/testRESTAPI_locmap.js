@@ -487,7 +487,7 @@ module.exports = {
                 auth1.data = {ids: [reply2.id]};
 
                 lmHelpers.api.post(test, '/v1/user/' + reply1.id + '/ignore', auth1, function () {
-                    //Verify that the ignore list for user 1 contains user 2
+                    // Verify that the ignore list for user 1 contains user 2
                     lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/contacts', auth1, function (res) {
                         var expected = {canseeme: [], icansee: [], ignored: [reply2.id], idmapping: []};
                         test.deepEqual(res.data, expected);
@@ -507,7 +507,7 @@ module.exports = {
 
                 lmHelpers.api.post(test, '/v1/user/' + reply1.id + '/ignore', auth1, function () {
                     lmHelpers.api.del(test, '/v1/user/' + reply1.id + '/ignore/' + reply2.id, auth1, function () {
-                        //Verify that the ignore list for user 1 doesn't contain user 2
+                        // Verify that the ignore list for user 1 doesn't contain user 2
                         lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/contacts', auth1, function (res) {
                             var expected = {canseeme: [], icansee: [], ignored: [], idmapping: []};
                             test.deepEqual(res.data, expected);
