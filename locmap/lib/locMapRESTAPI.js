@@ -510,6 +510,109 @@ var LocMapRESTAPI = function() {
         });
     };
 
+    /* Helper function for ignoring users
+    param currentUserLocShare   The locationShareModel for the currently logged in user
+    param targetUserId          The encrypted user ID of the user to be ignored
+    callback callback           The function which is called when this function finishes
+    param                       "OK" if ignoring successful, else error code
+    */
+    this._ignore = function(currentUserLocShare, targetUserID, callback) {
+        var that = this;
+
+        // Can't ignore self!
+        if (currentUserLocShare.data.userId === targetUserID) {
+            callback(400);
+            return;
+        }
+
+        // Add the user to an email list
+        currentUserLocShare.ignoreOtherUser(targetUserID, function (ignoreResult) {
+            callback(ignoreResult);
+        });
+    }
+
+    /* Adds user(s) to logged in user's ignore list
+    param userId        The encrypted ID of the logged in user
+    param targetUsers   A JS object containing an array of encrypted user ids to be blocked named 'ids'
+    param callback      Callback function
+    Callback param      numeric result code
+    */
+    this.ignoreUser = function(userId, targetUsers, callback) {
+        // Check that the request contains a properly formatted list of objects
+        if (typeof targetUsers !== 'object' || typeof targetUsers.ids !== 'object') {
+            logger.warn('Invalid data for ignoring user.');
+            callback(400, 'Invalid data.');
+            return;
+        }
+
+        var that = this;
+        var counter = targetUsers.ids.length;
+        var errorCount = 0;
+        // Invalid parameter length
+        if (typeof counter !== 'number' || counter < 1) {
+            logger.warn('At least one id required for ignoring user.');
+            callback(400, 'Invalid data.');
+            return;
+        }
+
+        // Get currently logged in user's locShare
+        var currentUserLocShare = new LocMapSharingModel(userId);
+
+        // Helper function for email loop below
+        function handleIgnoreResult(ignoreResult) {
+            if (ignoreResult !== 'OK') {
+                errorCount++;
+            }
+            counter--;
+            if (counter <= 0) { // All queries done.
+                if (errorCount > 0) {
+                    logger.warn('WARNING Failed to ignore ' + errorCount + ' of ' + targetUsers.ids.length + ' users.');
+                    callback(400);
+                } else {
+                    callback(200);
+                }
+            }
+        }
+
+        // Load user sharing data from db
+        currentUserLocShare.getData(function() {
+            if (currentUserLocShare.exists) {
+                // Loop through all ids in list and ignore them
+                for (var i = 0; i < targetUsers.ids.length; ++i) {
+                    that._ignore(currentUserLocShare, targetUsers.ids[i], handleIgnoreResult);
+                }
+            } else {
+                callback(404, 'User not found.');
+            }
+        });
+    }
+
+    /* Removes a user from the logged in user's ignore list
+    param userId        The encrypted ID of the logged in user
+    param targetUserId  The encrypted ID of the user to be unignored
+    callback callback   Callback function
+    param               Numeric result code
+    */
+    this.unIgnoreUser = function(userId, targetUserId, callback) {
+        // Load user sharing data
+        var myLocShare = new LocMapSharingModel(userId);
+        myLocShare.getData(function() {
+            if (myLocShare.exists) {
+                // unignore target user
+                myLocShare.showOtherUser(targetUserId, function (unignoreResult) {
+                    if (unignoreResult !== 'OK') {
+                        callback(unignoreResult);
+                    } else {
+                        callback(200);
+                    }
+                });
+
+            } else {
+                callback(404, 'User does not exist.');
+            }
+        });
+    };
+
     this.setUserApnToken = function(userId, apnToken, callback) {
         var user = new LocMapUserModel(userId);
         user.setPushNotificationToken({apn: apnToken}, function(result) {
@@ -730,7 +833,42 @@ var LocMapRESTAPI = function() {
     // Get user places.
     this.getUserPlaces = function(userId, cache, callback) {
         var user = cache.get('locmapuser', userId);
+
         callback(200, user.data.places);
+    };
+
+    /* Get user contacts.
+    param userId        Encrypted ID of the user whose contacts are being fetched
+    callback callback   Callback function
+    param               A JS object containing arrays of IDs the user can see (icansee), IDs who can see the user (canseeme),
+        IDs the user is ignoring (ignored), and ID mapping for the first two (id: email)
+    */
+    this.getUserContacts = function(userId, callback) {
+        var that = this;
+        var responseData = {};
+        // Load contact data from server
+        var locShare = new LocMapSharingModel(userId);
+        locShare.getData(function (locShareResult) {
+            if (typeof locShareResult !== 'number') {
+                responseData.canseeme = locShare.data.canSeeMe; // Set people who can see user
+                responseData.ignored = locShare.data.ignored; // Set people who the user doesn't want to see
+                // Get shared data for all users we can see (location, visibility, battery)
+                that._getUserShareData(locShare.data.ICanSee, function(ICanSeeData) {
+                    responseData.icansee = ICanSeeData; // Set people the user can see
+                    // Map IDs to emails
+                    that._generateIdMapping(locShare.data.ICanSee, locShare.data.canSeeMe, function(idMappingData) {
+                        responseData.idmapping = idMappingData;
+
+                        // Send everything back
+                        callback(200, responseData);
+                    });
+
+                });
+            } else {
+                logger.warn('Failed to get contact for user ' + userId);
+                callback(404, 'Failed to get contact data for user.');
+            }
+        });
     };
 
     // Modify an existing place.

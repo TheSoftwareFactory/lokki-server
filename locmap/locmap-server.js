@@ -97,6 +97,23 @@ module.exports = function (app) {
                 });
         });
 
+    // Prevent self from seeing another user's position
+    app['post']('/api/locmap/v1/user/:userId/ignore', usesAuthentication, function (req, res) {
+
+        locMapRestApi.ignoreUser(req.params.userId, req.body, function (status, result) {
+                res.send(status, result);
+        });
+    });
+
+    // Allow self to see an ignored user's position
+    app['delete']('/api/locmap/v1/user/:userId/ignore/:targetUserId', usesAuthentication, function (req, res) {
+
+        locMapRestApi.unIgnoreUser(req.params.userId, req.params.targetUserId,
+            function (status, result) {
+                res.send(status, result);
+            });
+    });
+
     // Toggle user global visibility
     app.put('/api/locmap/v1/user/:userId/visibility', usesAuthentication, function (req, res) {
         var cache = new Cache();
@@ -259,6 +276,15 @@ module.exports = function (app) {
         cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
 
         locMapRestApi.getUserPlaces(req.params.userId, cache, function (status, result) {
+            res.send(status, result);
+        });
+    });
+
+    // Get all user's contacts.
+    // Returns contacts in the same format as Dashboard
+    app.get('/api/locmap/v1/user/:userId/contacts', usesAuthentication, function (req, res) {
+
+        locMapRestApi.getUserContacts(req.params.userId, function (status, result) {
             res.send(status, result);
         });
     });
