@@ -49,7 +49,7 @@ module.exports = {
         locMapResetCode.createResetCode(userId, function (resetCode) {
             test.equal(typeof resetCode, 'string');
             test.equal(resetCode.length, 80);
-            locMapResetCode.getResetCodeData(resetCode, function (resetCodeData) {
+            locMapResetCode.getResetCodeData(userId, resetCode, function (resetCodeData) {
                 test.deepEqual(resetCodeData, {resetCode: resetCode, userId: userId});
                 test.done();
             });
@@ -60,9 +60,9 @@ module.exports = {
         test.expect(2);
         var userId = 'deadbeef';
         locMapResetCode.createResetCode(userId, function (resetCode) {
-            locMapResetCode.removeResetCode(resetCode, function (result) {
+            locMapResetCode.removeResetCode(userId, function (result) {
                 test.equal(result, 1, 'One reset code key should have been removed.');
-                locMapResetCode.getResetCodeData(resetCode, function (resetCodeData) {
+                locMapResetCode.getResetCodeData(userId, resetCode, function (resetCodeData) {
                     test.equal(resetCodeData, 404, 'Reset code was not deleted.');
                     test.done();
                 });
@@ -78,7 +78,7 @@ module.exports = {
             locMapResetCode.createResetCode(userId, function (resetCode) {
                 test.equal(typeof resetCode, 'string', 'Invalid type for reset code.');
                 test.equal(resetCode.length, 80, 'Wrong length for reset code.');
-                locMapRestApi.resetUserAccountToRecoveryMode(resetCode, function (status) {
+                locMapRestApi.resetUserAccountToRecoveryMode(userId, resetCode, function (status) {
                     test.equal(status, 200, 'Reset account call failed.');
                     var user = new LocMapUserModel(userId);
                     user.getData(function (result) {
@@ -105,7 +105,7 @@ module.exports = {
             locMapResetCode.createResetCode(userId, function (resetCode) {
                 test.equal(typeof resetCode, 'string', 'Invalid type for reset code.');
                 test.equal(resetCode.length, 80, 'Wrong length for reset code.');
-                locMapRestApi.resetUserAccountToRecoveryMode(resetCode, function (status, result) {
+                locMapRestApi.resetUserAccountToRecoveryMode(userId, resetCode, function (status, result) {
                     test.equal(status, 200, 'Reset account call failed.');
                     test.equal(result, i18n.getLocalizedString('en-US', 'reset.serverMessage'));
                     test.done();
@@ -150,13 +150,39 @@ module.exports = {
         lmHelpers.createLocMapUserApi(test, locMapRestApi, userEmail, 'dev1', function (userData) {
             var userId = userData.id;
             locMapResetCode.createResetCode(userId, function (resetCode) {
-                locMapRestApi.resetUserAccountToRecoveryMode(resetCode, function (status) {
+                locMapRestApi.resetUserAccountToRecoveryMode(userId, resetCode, function (status) {
                     test.equal(status, 200, 'Reset account call failed.');
-                    locMapResetCode.getResetCodeData(resetCode, function (codeData) {
+                    locMapResetCode.getResetCodeData(userId, resetCode, function (codeData) {
                         test.equal(codeData, 404, 'Reset code still exists.');
                         test.done();
                     });
                 });
+            });
+        });
+    },
+
+    // Reset code is removed from database after a second one is created.
+    resetRemovedAfterAnother: function (test) {
+        test.expect(4);
+        lmHelpers.createLocMapUserApi(test, locMapRestApi, userEmail, 'dev1', function (userData) {
+            var userId = userData.id;
+            locMapResetCode.createResetCode(userId, function (resetCode) {
+                locMapResetCode.createResetCode(userId, function (resetCode2) {
+                    // Test that old code no longer works
+                    locMapRestApi.resetUserAccountToRecoveryMode(userId, resetCode, function (status) {
+                        test.equal(status, 403, 'Reset account call should have failed.');
+                        // Test that db doesn't have old code
+                        locMapResetCode.getResetCodeData(userId, resetCode, function (codeData) {
+                            test.equal(codeData, 403, 'Old reset code exists.');
+                            // Test that new reset code works
+                            locMapRestApi.resetUserAccountToRecoveryMode(userId, resetCode2, function (status) {
+                                test.equal(status, 200, 'Reset account call failed.');
+                                test.done();
+                            });
+                        });
+                    });
+                });
+
             });
         });
     },
@@ -167,7 +193,7 @@ module.exports = {
         lmHelpers.createLocMapUserApi(test, locMapRestApi, userEmail, 'dev1', function (userData) {
             var userId = userData.id;
             locMapResetCode.createResetCode(userId, function (resetCode) {
-                locMapRestApi.resetUserAccountToRecoveryMode(resetCode, function (status) {
+                locMapRestApi.resetUserAccountToRecoveryMode(userId, resetCode, function (status) {
                     test.equal(status, 200, 'Reset account call failed.');
                     var user = new LocMapUserModel(userId);
                     user.getData(function (result) {
