@@ -7,7 +7,7 @@
             "no_ready_check": true
         }
     },
-    "sendEmails": false,
+    "sendEmails": true,
     "locMapConfig": {
         "baseUrl": "https://lokki-dev.herokuapp.com",
         "maxPlacesLimitNormalUser": 10
