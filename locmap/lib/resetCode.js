@@ -25,11 +25,14 @@ var modelPrefix = 'locmapresetcode:';
 var ResetCode = function () {
     // Returns reset code data if successful, or number if failed.
     // Reset code data: {resetCode: 'abcdef1234', userId: 'theid'}
-    this.getResetCodeData = function (resetCode, callback) {
+    this.getResetCodeData = function (userId, resetCode, callback) {
         var that = this;
-        db.get(modelPrefix + resetCode, function (error, result) {
+        db.get(modelPrefix + userId, function (error, result) {
             if (result) {
                 result = that._deserializeData(result);
+                if (result.resetCode !== resetCode) {
+                    result = 403;
+                }
             } else {
                 result = 404;
             }
@@ -37,8 +40,8 @@ var ResetCode = function () {
         });
     };
 
-    this.removeResetCode = function (resetCode, callback) {
-        db.del(modelPrefix + resetCode, function (error, result) {
+    this.removeResetCode = function (userId, callback) {
+        db.del(modelPrefix + userId, function (error, result) {
             if (error) {
                 result = -1;
             }
@@ -50,7 +53,7 @@ var ResetCode = function () {
         var resetCode = locMapCommon.generateResetToken(),
             data = {resetCode: resetCode, userId: userId},
             serializedData = this._serializeData(data);
-        db.setex(modelPrefix + resetCode, conf.get('locMapConfig').resetCodeTimeout,
+        db.setex(modelPrefix + userId, conf.get('locMapConfig').resetCodeTimeout,
             serializedData, function (error, result) {
                 if (error) {
                     result = 400;
