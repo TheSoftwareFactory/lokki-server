@@ -178,7 +178,7 @@ var LocMapRESTAPI = function() {
             locMapResetCode.createResetCode(newUser.data.userId, function(resetResult) {
                 if (typeof resetResult !== 'number') {
                     logger.trace('Reset code generated for user ' + newUser.data.userId + ' ' + resetResult);
-                    locMapEmail.sendResetEmail(newUser.data.email, conf.get('locMapConfig').baseUrl + '/reset/' + newUser.data.userId + '/' + resetResult, newUser.data.language, function(emailResult) {
+                    locMapEmail.sendResetEmail(newUser.data.email, conf.get('locMapConfig').baseUrl + '/reset/' + resetResult, newUser.data.language, function(emailResult) {
                         if (emailResult) {
                             logger.trace('Reset link sent to ' + newUser.data.email);
                         } else {
@@ -759,10 +759,10 @@ var LocMapRESTAPI = function() {
     */
 
     // Reset link clicked, check the code and set corresponding user to recovery mode.
-    this.resetUserAccountToRecoveryMode = function(userId, resetId, callback) {
-        locMapResetCode.getResetCodeData(userId, resetId, function(resetData) {
+    this.resetUserAccountToRecoveryMode = function(resetId, callback) {
+        locMapResetCode.getResetCodeData(resetId, function(resetData) {
             if (typeof resetData !== 'number' && typeof resetData === 'object' && typeof resetData.userId === 'string' && resetData.userId.length > 0 && typeof resetData.resetCode === 'string' && resetData.resetCode.length > 0) {
-                locMapResetCode.removeResetCode(userId, function(removeResult) {
+                locMapResetCode.removeResetCode(resetId, function(removeResult) {
                     if (removeResult !== 1) {
                         logger.warn('Failed to delete reset code for user ' + resetData.userId + ' (code: ' + resetId + ')');
                     }
@@ -782,8 +782,6 @@ var LocMapRESTAPI = function() {
                         }
                     });
                 });
-            } else if (resetData === 403) {
-                callback(403, 'Invalid reset code');
             } else {
                 callback(404, 'Reset code not found.');
             }

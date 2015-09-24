@@ -211,8 +211,8 @@ module.exports = function (app) {
      */
 
     // Account recovery using reset link.
-    app.get('/reset/:userId/:resetId', function (req, res) {
-        locMapRestApi.resetUserAccountToRecoveryMode(req.params.userId, req.params.resetId, function (status, result) {
+    app.get('/reset/:resetId', function (req, res) {
+        locMapRestApi.resetUserAccountToRecoveryMode(req.params.resetId, function (status, result) {
             // Remove forcing content to load as a file.
             res.removeHeader('Content-Disposition');
             // Make sure response is provided as html.
