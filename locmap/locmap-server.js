@@ -289,6 +289,13 @@ module.exports = function (app) {
         });
     });
 
+    // Removes a contact, deleting the user and the contact from each other's location shares
+    app['delete']('/api/locmap/v1/user/:userId/contacts/:targetUserId', usesAuthentication, function (req, res) {
+        locMapRestApi.deleteContact(req.params.userId, req.params.targetUserId, function (status, result) {
+            res.send(status, result);
+        });
+    });
+
     // // ADMIN calls
     // Get crash reports for chosen os and time period.
     app.get('/api/locmap/v1/admin/:userId/crashReport/:osType/:year/:month',
