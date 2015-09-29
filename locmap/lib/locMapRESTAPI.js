@@ -873,6 +873,91 @@ var LocMapRESTAPI = function() {
         });
     };
 
+    /* Deletes a contact from the current user
+    param userId        The current user
+    param targetUserId  The contact to be removed
+    callback callback   Callback function
+    param               Result status code and explanation
+    */
+    this.deleteContact = function(userId, targetUserId, callback) {
+        logger.debug('delete contact');
+        var that = this;
+        var currentUserLocShare = new LocMapSharingModel(userId);
+
+        // Deletes the target user from the current user's locShare's canSeeMe list
+        function checkAndDeleteCanSeeMe(callback) {
+            if (currentUserLocShare.data.canSeeMe.indexOf(targetUserId) !== -1) {
+                that.denyToSeeUserLocation(userId, null, targetUserId, callback);
+            } else {
+                callback(200, 'Nothing to delete');
+            }
+        };
+
+        // Deletes the target user from the current user's locShare's ICanSee list
+        function checkAndDeleteICanSee(callback) {
+            if (currentUserLocShare.data.ICanSee.indexOf(targetUserId) !== -1) {
+                that.denyToSeeUserLocation(targetUserId, null, userId, callback);
+            } else {
+                callback(200, 'Nothing to delete');
+            }
+        };
+
+        // Deletes the target user from the current user's locShare's ignore list
+        function checkAndDeleteIgnoredUser(callback) {
+            if (currentUserLocShare.data.ignored.indexOf(targetUserId) !== -1) {
+                that.unIgnoreUser(userId, targetUserId, callback);
+            } else {
+                callback(200, 'Nothing to delete');
+            }
+        }
+
+        // Deletes the current user from the target user's locShare's ignore list
+        function checkAndDeleteSelfFromIgnored(callback) {
+            var targetUserLocShare = new LocMapSharingModel(userId);
+            targetUserLocShare.getData(function (locShareResult) {
+
+                if (typeof locShareResult !== 'number') {
+                    if (targetUserLocShare.data.ignored.indexOf(userId) !== -1) {
+                        that.unIgnoreUser(targetUserId, userId, callback);
+                    } else {
+                        callback(200, 'Nothing to delete');
+                    }
+                } else {
+                    callback(404, 'Target user did not exist');
+                }
+            });
+        }
+
+        currentUserLocShare.getData(function (locShareResult) {
+            if (typeof locShareResult !== 'number') {
+                // Run the four helper functions above in order
+
+                checkAndDeleteCanSeeMe(function (status1, result1) {
+                    if (status1 !== 200) {
+                        callback(status1, result1);
+                    } else {
+                        checkAndDeleteICanSee(function (status2, result2) {
+                            if (status2 !== 200) {
+                                callback(status2, result2);
+                            } else {
+                                checkAndDeleteIgnoredUser(function (status3, result3) {
+                                    if (status3 !== 200) {
+                                        callback(status3, result3);
+                                    } else {
+                                        checkAndDeleteSelfFromIgnored(callback);
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
+            } else {
+                logger.warn('Failed to delete contact ' + targetUserId + ' for user ' + userId);
+                callback(404, 'Failed to delete contact data for user.');
+            }
+        });
+    }
+
     // Modify an existing place.
     this.modifyUserPlace = function(userId, cache, placeId, placeObj, callback) {
         // Verify place data.
