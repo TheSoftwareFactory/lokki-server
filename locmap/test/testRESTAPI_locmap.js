@@ -86,6 +86,25 @@ module.exports = {
             });
         });
     },
+    //User Renames contacts
+    userRenameContacts:function (test) {
+        test.expect(4);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth, reply) {
+        auth.data = 'userName';
+
+             lmHelpers.api.post(test, '/v1/user/' + reply.id + '/rename/' + 'testUserId',
+                 auth, function () {
+                   lmHelpers.api.get(test, '/v1/user/' + reply.id + '/contacts', auth,
+                   function (res) {
+                       var expected = {canseeme: [], icansee: [], ignored: [], idmapping: []};
+                       expected.nameMapping= {'testUserId':'userName'};
+                       test.deepEqual(res.data, expected);
+                       test.done();
+                   });
+                 });
+             });
+        },
+
 
     // User dashboard requires authentication.
     userDashboardAuthentication: function (test) {

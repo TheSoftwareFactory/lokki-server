@@ -852,6 +852,7 @@ var LocMapRESTAPI = function() {
         var locShare = new LocMapSharingModel(userId);
         locShare.getData(function (locShareResult) {
             if (typeof locShareResult !== 'number') {
+                responseData.nameMapping= locShare.data.nameMapping;//Map User name on the server
                 responseData.canseeme = locShare.data.canSeeMe; // Set people who can see user
                 responseData.ignored = locShare.data.ignored; // Set people who the user doesn't want to see
                 // Get shared data for all users we can see (location, visibility, battery)
@@ -872,6 +873,23 @@ var LocMapRESTAPI = function() {
             }
         });
     };
+    /*rename contacts funtion */
+    this.nameUser = function(userId, targetUserId , name, callback){
+        logger.debug('name contact');
+        var that = this;
+        var currentUserLocShare = new LocMapSharingModel(userId);
+        currentUserLocShare.getData(function (locShareResult) {
+            if (typeof locShareResult !== 'number') {
+                currentUserLocShare.addContactsName(otherUserId,userName,callback);
+            }
+            else{
+                logger.warn('Failed to rename contacts ' + userId);
+                callback(404, 'Failed to rename contacts.');
+            }
+
+        }
+
+    }
 
     /* Deletes a contact from the current user
     param userId        The current user

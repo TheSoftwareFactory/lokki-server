@@ -105,6 +105,7 @@ module.exports = function (app) {
         });
     });
 
+
     // Allow self to see an ignored user's position
     app['delete']('/api/locmap/v1/user/:userId/ignore/:targetUserId', usesAuthentication, function (req, res) {
 
@@ -113,6 +114,13 @@ module.exports = function (app) {
                 res.send(status, result);
             });
     });
+    //rename contacts
+    app.post('/api/locmap/v1/user/:userId/rename/:targetUserId',usesAuthentication ,function(req , res){
+        locMapRestApi.nameUser(userId, targetUserId , req.body,
+            function (status, result){
+                res.send(status, result);
+        })
+    })
 
     // Toggle user global visibility
     app.put('/api/locmap/v1/user/:userId/visibility', usesAuthentication, function (req, res) {
