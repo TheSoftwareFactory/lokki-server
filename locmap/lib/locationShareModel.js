@@ -22,6 +22,7 @@ var jsonFields = ['canSeeMe', 'ICanSee', 'ignored']; // List of model fields tha
 var LocMapSharingModel = function(userId) {
     this.data = {
         userId: userId,
+        nameMapping:{},
         canSeeMe: [],
         ICanSee: [],
         ignored: []
@@ -142,6 +143,17 @@ var LocMapSharingModel = function(userId) {
         currentUser.data.ICanSee = locMapCommon.removeItemFromArray(currentUser.data.ICanSee, otherUserId);
         currentUser.setData(callback, null);
     };
+    this.addContactsName = function(otherUserId,userName,callback){
+        var currentUser = this;
+        if (!currentUser.exists) {
+            logger.trace('Setting userNames to uninitialized locationShare! Id: ' + currentUser.data.userId);
+            callback(400);
+            return;
+        }
+        currentUser.data.nameMapping[otherUserId] = userName;
+        currentUser.setData(callback, null);
+    }
+
 
     /* Adds a user to logged in user's ignore list
     param otherUserId   Encrypted ID of the user to be blocked
