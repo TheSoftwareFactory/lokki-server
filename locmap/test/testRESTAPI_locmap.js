@@ -557,6 +557,75 @@ module.exports = {
         });
     },
 
+    // Contacts can be deleted.
+    deleteContact: function (test) {
+        test.expect(14);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+            lmHelpers.createLocMapUser(test, testUserEmail2, 'dev2', function (auth2, reply2) {
+                auth1.data = {emails: [testUserEmail2]};
+                auth2.data = {emails: [testUserEmail]};
+                // Allow both users to see each other
+                lmHelpers.api.post(test, '/v1/user/' + reply1.id + '/allow', auth1, function () {
+                    lmHelpers.api.post(test, '/v1/user/' + reply2.id + '/allow', auth2, function () {
+                        // Ignore user 2
+                        auth1.data = {ids: [reply2.id]};
+                        lmHelpers.api.post(test, '/v1/user/' + reply1.id + '/ignore', auth1, function () {
+                            // Verify that user1 can see and can be seen by user2 and that user 2 is on 1's ignore list
+                            lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/contacts', auth1,
+                                function (res) {
+                                    var expected = {canseeme: [reply2.id], icansee: [], ignored: [reply2.id], idmapping: []};
+                                    expected.idmapping[reply2.id] = testUserEmail2;
+                                    expected.icansee[reply2.id] = {location: {}, visibility: true, battery: ''}
+                                    test.deepEqual(res.data, expected);
+                                    // Delete user 2 from contacts
+                                    auth1.data = undefined;
+                                    lmHelpers.api.del(test, '/v1/user/' + reply1.id + '/contacts/' + reply2.id, auth1, function () {
+                                            // Verify that user 1's contact list is clear
+                                            lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/contacts', auth1, function (res2) {
+                                                var expected2 = {canseeme: [], icansee: [], ignored: [], idmapping: []};
+                                                test.deepEqual(res2.data, expected2);
+                                                // Verify that user 2's contact list is clear
+                                                lmHelpers.api.get(test, '/v1/user/' + reply2.id + '/contacts', auth2, function (res3) {
+                                                    test.deepEqual(res3.data, expected2);
+                                                    test.done();
+                                                });
+                                            });
+                                    });
+                                });
+                        });
+                    });
+                });
+            });
+        });
+    },
+
+    // User can delete a stub contact
+    deleteStubContact: function (test) {
+        test.expect(8);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+            auth1.data = {emails: [testStubUser]};
+            lmHelpers.api.post(test, '/v1/user/' + reply1.id + '/allow', auth1, function () {
+                // Verify that user1 can see and can be seen by user2 and that user 2 is on 1's ignore list
+                lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/contacts', auth1,
+                    function (res) {
+                        var expected = {canseeme: ['b4b265d4a1a7f40c631e4dd003510ebf43f32135'], icansee: [], ignored: [], idmapping: []};
+                        expected.idmapping['b4b265d4a1a7f40c631e4dd003510ebf43f32135'] = testStubUser;
+                        test.deepEqual(res.data, expected);
+                        // Delete user 2 from contacts
+                        auth1.data = undefined;
+                        lmHelpers.api.del(test, '/v1/user/' + reply1.id + '/contacts/' + 'b4b265d4a1a7f40c631e4dd003510ebf43f32135', auth1, function () {
+                                // Verify that user 1's contact list is clear
+                                lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/contacts', auth1, function (res2) {
+                                    var expected2 = {canseeme: [], icansee: [], ignored: [], idmapping: []};
+                                    test.deepEqual(res2.data, expected2);
+                                    test.done();
+                                });
+                        });
+                    });
+            });
+        });
+    },
+
     // Stub users cannot be authorized.
     stubUserDashboardFails: function (test) {
         test.expect(6);
