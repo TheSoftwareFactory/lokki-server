@@ -403,7 +403,7 @@ var LocMapRESTAPI = function() {
             return;
         }
         var cleanTargetEmail = targetEmail.toLowerCase();
-        if(cleanTargetEmail.length > conf.get('locMapConfig').maxEmailLength) {
+        if (cleanTargetEmail.length > conf.get('locMapConfig').maxEmailLength) {
             logger.trace('User ' + currentUserLocShare.data.userId + ' tried to add email address of length ' + cleanTargetEmail.length);
             callback(403);
             return;
@@ -820,7 +820,7 @@ var LocMapRESTAPI = function() {
             return;
         }
 
-        if(strippedPlace.name.length > conf.get('locMapConfig').maxPlaceNameLength) {
+        if (strippedPlace.name.length > conf.get('locMapConfig').maxPlaceNameLength) {
             callback(403, 'place_name_too_long');
             return;
         }
