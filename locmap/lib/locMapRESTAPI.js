@@ -986,6 +986,10 @@ var LocMapRESTAPI = function() {
             callback(400, 'Place object is wrong!');
             return;
         }
+        if (strippedPlace.name.length > conf.get('locMapConfig').maxPlaceNameLength) {
+            callback(403, 'place_name_too_long');
+            return;
+        }
 
         var user = cache.get('locmapuser', userId);
         if (user.data.places.hasOwnProperty(placeId)) {
