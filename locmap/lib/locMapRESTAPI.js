@@ -852,7 +852,7 @@ var LocMapRESTAPI = function() {
         var locShare = new LocMapSharingModel(userId);
         locShare.getData(function (locShareResult) {
             if (typeof locShareResult !== 'number') {
-                responseData.nameMapping= locShare.data.nameMapping;//Map User name on the server
+                responseData.nameMapping = JSON.parse(locShare.data.nameMapping);// Set mapped names
                 responseData.canseeme = locShare.data.canSeeMe; // Set people who can see user
                 responseData.ignored = locShare.data.ignored; // Set people who the user doesn't want to see
                 // Get shared data for all users we can see (location, visibility, battery)
@@ -873,21 +873,45 @@ var LocMapRESTAPI = function() {
             }
         });
     };
-    /*rename contacts funtion */
-    this.nameUser = function(userId, targetUserId , name, callback){
+
+    /* Assigns a user-defined name to a contact
+    param userId    Currently logged in user
+    param targetUserId  Contact to rename
+    param name      New contact name
+    callback callback
+    */
+    this.nameUser = function(userId, targetUserId, requestBody, callback) {
+        if (!requestBody) {
+            callback(400, 'Invalid request body!');
+            return;
+        }
+        if (requestBody.name === undefined) {
+            callback(400, 'No name in request!');
+            return;
+        }
+        if (typeof requestBody.name !== 'string') {
+            callback(400, 'Invalid name!');
+            return;
+        }
+        var name = requestBody.name;
         logger.debug('name contact');
         var that = this;
         var currentUserLocShare = new LocMapSharingModel(userId);
         currentUserLocShare.getData(function (locShareResult) {
             if (typeof locShareResult !== 'number') {
-                currentUserLocShare.addContactsName(otherUserId,userName,callback);
-            }
-            else{
+                currentUserLocShare.addContactName(targetUserId, name, function (renameResult) {
+                    if (renameResult === 'OK') {
+                        callback(200, 'OK');
+                    } else {
+                        callback(renameResult, 'Error renaming contacts');
+                    }
+                });
+            } else {
                 logger.warn('Failed to rename contacts ' + userId);
                 callback(404, 'Failed to rename contacts.');
             }
 
-        }
+        });
 
     }
 
@@ -946,9 +970,32 @@ var LocMapRESTAPI = function() {
             });
         }
 
+        // Deletes the target user from the current user's name mapping
+        function checkAndDeleteTargetFromNameMapping(callback) {
+            logger.log('delete from name mapping')
+            // Reload locshare data to ensure that we don't restore anything removed by previous deletes
+            currentUserLocShare.getData(function (locShareResult) {
+                if (typeof locShareResult !== 'number') {
+                    var newMapping = JSON.parse(currentUserLocShare.data.nameMapping);
+                    if (newMapping.hasOwnProperty(targetUserId)) {
+                        delete(newMapping[targetUserId]);
+                        var newData = {};
+                        newData.nameMapping = JSON.stringify(newMapping);
+                        currentUserLocShare.setData(callback, newData);
+                    } else {
+                        callback('OK');
+                    }
+                } else {
+                    logger.error('Locshare suddenly disappeared while deleting');
+                    callback(locShareResult);
+                }
+            });
+
+        }
+
         currentUserLocShare.getData(function (locShareResult) {
             if (typeof locShareResult !== 'number') {
-                // Run the four helper functions above in order
+                // Run the five helper functions above in order
 
                 checkAndDeleteCanSeeMe(function (status1, result1) {
                     if (status1 !== 200) {
@@ -962,7 +1009,19 @@ var LocMapRESTAPI = function() {
                                     if (status3 !== 200) {
                                         callback(status3, result3);
                                     } else {
-                                        checkAndDeleteSelfFromIgnored(callback);
+                                        checkAndDeleteSelfFromIgnored(function (status4, result4) {
+                                            if (status3 !== 200) {
+                                                callback(status4, result4);
+                                            } else {
+                                                checkAndDeleteTargetFromNameMapping(function (deleteNameResult) {
+                                                    if (deleteNameResult !== 'OK') {
+                                                        callback(deleteNameResult, 'Failed to delete from namemapping');
+                                                    } else {
+                                                        callback(200, 'Deletion successful');
+                                                    }
+                                                });
+                                            }
+                                        });
                                     }
                                 });
                             }

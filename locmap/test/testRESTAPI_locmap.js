@@ -86,25 +86,6 @@ module.exports = {
             });
         });
     },
-    //User Renames contacts
-    userRenameContacts:function (test) {
-        test.expect(4);
-        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth, reply) {
-        auth.data = 'userName';
-
-             lmHelpers.api.post(test, '/v1/user/' + reply.id + '/rename/' + 'testUserId',
-                 auth, function () {
-                   lmHelpers.api.get(test, '/v1/user/' + reply.id + '/contacts', auth,
-                   function (res) {
-                       var expected = {canseeme: [], icansee: [], ignored: [], idmapping: []};
-                       expected.nameMapping= {'testUserId':'userName'};
-                       test.deepEqual(res.data, expected);
-                       test.done();
-                   });
-                 });
-             });
-        },
-
 
     // User dashboard requires authentication.
     userDashboardAuthentication: function (test) {
@@ -220,7 +201,7 @@ module.exports = {
                     // Verify that icansee list for user2 contains user1
                     lmHelpers.api.get(test, '/v1/user/' + reply2.id + '/contacts', auth2,
                         function (res) {
-                            var expected = {canseeme: [], icansee: [], ignored: [], idmapping: []};
+                            var expected = {canseeme: [], icansee: [], ignored: [], idmapping: [], nameMapping: {}};
                             expected.idmapping[reply1.id] = testUserEmail;
                             expected.icansee[reply1.id] = {location: {}, visibility: true, battery: ''}
                             test.deepEqual(res.data, expected);
@@ -228,7 +209,7 @@ module.exports = {
                             // Verify that canseeme list for user1 contains user2
                             lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/contacts', auth1,
                                 function (res2) {
-                                    var expected = {canseeme: [reply2.id], icansee: [], ignored: [], idmapping: []};
+                                    var expected = {canseeme: [reply2.id], icansee: [], ignored: [], idmapping: [], nameMapping: {}};
                                     expected.idmapping[reply2.id] = testUserEmail2;
                                     test.deepEqual(res2.data, expected);
                                     test.done();
@@ -508,7 +489,7 @@ module.exports = {
                 lmHelpers.api.post(test, '/v1/user/' + reply1.id + '/ignore', auth1, function () {
                     // Verify that the ignore list for user 1 contains user 2
                     lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/contacts', auth1, function (res) {
-                        var expected = {canseeme: [], icansee: [], ignored: [reply2.id], idmapping: []};
+                        var expected = {canseeme: [], icansee: [], ignored: [reply2.id], idmapping: [], nameMapping: {}};
                         test.deepEqual(res.data, expected);
                         test.done();
                     });
@@ -528,7 +509,7 @@ module.exports = {
                     lmHelpers.api.del(test, '/v1/user/' + reply1.id + '/ignore/' + reply2.id, auth1, function () {
                         // Verify that the ignore list for user 1 doesn't contain user 2
                         lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/contacts', auth1, function (res) {
-                            var expected = {canseeme: [], icansee: [], ignored: [], idmapping: []};
+                            var expected = {canseeme: [], icansee: [], ignored: [], idmapping: [], nameMapping: {}};
                             test.deepEqual(res.data, expected);
                             test.done();
                         });
@@ -549,7 +530,7 @@ module.exports = {
                         function () {
                             // Verify that ignore list for user1 contains user2 only once.
                             lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/contacts', auth1, function (res) {
-                                var expected = {canseeme: [], icansee: [], ignored: [reply2.id], idmapping: []};
+                                var expected = {canseeme: [], icansee: [], ignored: [reply2.id], idmapping: [], nameMapping: {}};
                                 test.deepEqual(res.data, expected);
                                 test.done();
                             });
@@ -578,7 +559,7 @@ module.exports = {
 
     // Contacts can be deleted.
     deleteContact: function (test) {
-        test.expect(14);
+        test.expect(15);
         lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
             lmHelpers.createLocMapUser(test, testUserEmail2, 'dev2', function (auth2, reply2) {
                 auth1.data = {emails: [testUserEmail2]};
@@ -589,28 +570,33 @@ module.exports = {
                         // Ignore user 2
                         auth1.data = {ids: [reply2.id]};
                         lmHelpers.api.post(test, '/v1/user/' + reply1.id + '/ignore', auth1, function () {
-                            // Verify that user1 can see and can be seen by user2 and that user 2 is on 1's ignore list
-                            lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/contacts', auth1,
-                                function (res) {
-                                    var expected = {canseeme: [reply2.id], icansee: [], ignored: [reply2.id], idmapping: []};
-                                    expected.idmapping[reply2.id] = testUserEmail2;
-                                    expected.icansee[reply2.id] = {location: {}, visibility: true, battery: ''}
-                                    test.deepEqual(res.data, expected);
-                                    // Delete user 2 from contacts
-                                    auth1.data = undefined;
-                                    lmHelpers.api.del(test, '/v1/user/' + reply1.id + '/contacts/' + reply2.id, auth1, function () {
-                                            // Verify that user 1's contact list is clear
-                                            lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/contacts', auth1, function (res2) {
-                                                var expected2 = {canseeme: [], icansee: [], ignored: [], idmapping: []};
-                                                test.deepEqual(res2.data, expected2);
-                                                // Verify that user 2's contact list is clear
-                                                lmHelpers.api.get(test, '/v1/user/' + reply2.id + '/contacts', auth2, function (res3) {
-                                                    test.deepEqual(res3.data, expected2);
-                                                    test.done();
+                            // Rename user 2
+                            auth1.data = {name: 'deletetest'};
+                            lmHelpers.api.post(test, '/v1/user/' + reply1.id + '/rename/' + reply2.id, auth1, function () {
+                                // Verify that user1 can see and can be seen by user2 and that user 2 is on 1's ignore list
+                                lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/contacts', auth1,
+                                    function (res) {
+                                        var expected = {canseeme: [reply2.id], icansee: [], ignored: [reply2.id], idmapping: [], nameMapping: {}};
+                                        expected.nameMapping[reply2.id] = 'deletetest';
+                                        expected.idmapping[reply2.id] = testUserEmail2;
+                                        expected.icansee[reply2.id] = {location: {}, visibility: true, battery: ''}
+                                        test.deepEqual(res.data, expected);
+                                        // Delete user 2 from contacts
+                                        auth1.data = undefined;
+                                        lmHelpers.api.del(test, '/v1/user/' + reply1.id + '/contacts/' + reply2.id, auth1, function () {
+                                                // Verify that user 1's contact list is clear
+                                                lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/contacts', auth1, function (res2) {
+                                                    var expected2 = {canseeme: [], icansee: [], ignored: [], idmapping: [], nameMapping: {}};
+                                                    test.deepEqual(res2.data, expected2);
+                                                    // Verify that user 2's contact list is clear
+                                                    lmHelpers.api.get(test, '/v1/user/' + reply2.id + '/contacts', auth2, function (res3) {
+                                                        test.deepEqual(res3.data, expected2);
+                                                        test.done();
+                                                    });
                                                 });
-                                            });
+                                        });
                                     });
-                                });
+                            });
                         });
                     });
                 });
@@ -627,7 +613,7 @@ module.exports = {
                 // Verify that user1 can see and can be seen by user2 and that user 2 is on 1's ignore list
                 lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/contacts', auth1,
                     function (res) {
-                        var expected = {canseeme: ['b4b265d4a1a7f40c631e4dd003510ebf43f32135'], icansee: [], ignored: [], idmapping: []};
+                        var expected = {canseeme: ['b4b265d4a1a7f40c631e4dd003510ebf43f32135'], icansee: [], ignored: [], idmapping: [], nameMapping: {}};
                         expected.idmapping['b4b265d4a1a7f40c631e4dd003510ebf43f32135'] = testStubUser;
                         test.deepEqual(res.data, expected);
                         // Delete user 2 from contacts
@@ -635,7 +621,7 @@ module.exports = {
                         lmHelpers.api.del(test, '/v1/user/' + reply1.id + '/contacts/' + 'b4b265d4a1a7f40c631e4dd003510ebf43f32135', auth1, function () {
                                 // Verify that user 1's contact list is clear
                                 lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/contacts', auth1, function (res2) {
-                                    var expected2 = {canseeme: [], icansee: [], ignored: [], idmapping: []};
+                                    var expected2 = {canseeme: [], icansee: [], ignored: [], idmapping: [], nameMapping: {}};
                                     test.deepEqual(res2.data, expected2);
                                     test.done();
                                 });
@@ -644,6 +630,26 @@ module.exports = {
             });
         });
     },
+
+    // User can rename contacts
+    userRenameContacts:function (test) {
+        test.expect(5);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth, reply) {
+        auth.data = {name: 'userName'};
+
+            lmHelpers.api.post(test, '/v1/user/' + reply.id + '/rename/' + 'testUserId',
+                auth, function () {
+                    console.log('got rename result')
+                    lmHelpers.api.get(test, '/v1/user/' + reply.id + '/contacts', auth,
+                    function (res) {
+                        var expected = {canseeme: [], icansee: [], ignored: [], idmapping: []};
+                        expected.nameMapping= {'testUserId':'userName'};
+                        test.deepEqual(res.data, expected);
+                        test.done();
+                    });
+                });
+            });
+        },
 
     // Stub users cannot be authorized.
     stubUserDashboardFails: function (test) {

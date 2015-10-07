@@ -114,10 +114,11 @@ module.exports = function (app) {
                 res.send(status, result);
             });
     });
-    //rename contacts
-    app.post('/api/locmap/v1/user/:userId/rename/:targetUserId',usesAuthentication ,function(req , res){
-        locMapRestApi.nameUser(userId, targetUserId , req.body,
-            function (status, result){
+
+    // Rename contacts
+    app['post']('/api/locmap/v1/user/:userId/rename/:targetUserId', usesAuthentication, function(req, res) {
+        locMapRestApi.nameUser(req.params.userId, req.params.targetUserId, req.body,
+            function (status, result) {
                 res.send(status, result);
         })
     })
