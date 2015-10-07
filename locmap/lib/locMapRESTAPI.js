@@ -812,7 +812,7 @@ var LocMapRESTAPI = function() {
             return;
         }
         var verifiedPlace = locMapCommon.verifyPlace(place);
-        if (verifiedPlace != null) {
+        if (verifiedPlace) {
             var user = cache.get('locmapuser', userId);
             if (Object.keys(user.data.places).length >= conf.get('locMapConfig').maxPlacesLimitNormalUser) {
                 callback(403, 'place_limit_reached');
@@ -829,7 +829,7 @@ var LocMapRESTAPI = function() {
                 return;
             }
         } else {
-            callback(400, "Couldn't verify place!");
+            callback(400, 'Couldn\'t verify place!');
         }
         return verifiedPlace;
     }
@@ -837,7 +837,7 @@ var LocMapRESTAPI = function() {
     // Add a new place to user.
     this.addUserPlace = function(userId, cache, placeObj, callback) {
         var verifiedPlace = this.getVerifiedPlace(userId, cache, placeObj, callback);
-        if (verifiedPlace == null) {
+        if (!verifiedPlace) {
             return;
         }
         var user = cache.get('locmapuser', userId);
@@ -981,7 +981,7 @@ var LocMapRESTAPI = function() {
     // Modify an existing place.
     this.modifyUserPlace = function(userId, cache, placeId, placeObj, callback) {
         var verifiedPlace = this.getVerifiedPlace(userId, cache, placeObj, callback);
-        if (verifiedPlace == null) {
+        if (!verifiedPlace) {
             return;
         }
         var user = cache.get('locmapuser', userId);
