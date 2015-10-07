@@ -796,44 +796,53 @@ var LocMapRESTAPI = function() {
         });
     };
 
-    // Add a new place to user.
-    this.addUserPlace = function(userId, cache, placeObj, callback) {
-        // Verify place data.
-        if (!placeObj) {
-            callback(400, 'Place object is wrong!');
-            return;
-        }
-        var place = placeObj;
-        if (!place || (typeof place !== 'object') || place.lat === undefined || place.lon === undefined || place.rad === undefined || place.name === undefined || place.img === undefined) {
-            callback(400, 'Place object is wrong!');
-            return;
-        }
-        var strippedPlace = locMapCommon.verifyPlace(place);
-        if (strippedPlace === null) {
-            callback(400, 'Place object is wrong!');
-            return;
-        }
-
-        var user = cache.get('locmapuser', userId);
-        if (Object.keys(user.data.places).length >= conf.get('locMapConfig').maxPlacesLimitNormalUser) {
-            callback(403, 'place_limit_reached');
-            return;
-        }
-
-        if (strippedPlace.name.length > conf.get('locMapConfig').maxPlaceNameLength) {
-            callback(403, 'place_name_too_long');
-            return;
-        }
-
+    this.placeNameAlreadyInUse = function(user, placeName) {
         for (var key in user.data.places) {
-            if (user.data.places[key].name === strippedPlace.name) {
+            if (user.data.places[key].name === placeName) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    this.getVerifiedPlace = function(userId, cache, place, callback) {
+        if (!place || (typeof place !== 'object') || place.lat === undefined || place.lon === undefined ||
+                place.rad === undefined || place.name === undefined || place.img === undefined) {
+            callback(400, 'Place object is wrong!');
+            return;
+        }
+        var verifiedPlace = locMapCommon.verifyPlace(place);
+        if (verifiedPlace) {
+            var user = cache.get('locmapuser', userId);
+            if (Object.keys(user.data.places).length >= conf.get('locMapConfig').maxPlacesLimitNormalUser) {
+                callback(403, 'place_limit_reached');
+                return;
+            }
+
+            if (verifiedPlace.name.length > conf.get('locMapConfig').maxPlaceNameLength) {
+                callback(403, 'place_name_too_long');
+                return;
+            }
+
+            if (this.placeNameAlreadyInUse(user, verifiedPlace.name)) {
                 callback(403, 'place_name_already_in_use');
                 return;
             }
+        } else {
+            callback(400, 'Couldn\'t verify place!');
         }
+        return verifiedPlace;
+    }
 
+    // Add a new place to user.
+    this.addUserPlace = function(userId, cache, placeObj, callback) {
+        var verifiedPlace = this.getVerifiedPlace(userId, cache, placeObj, callback);
+        if (!verifiedPlace) {
+            return;
+        }
+        var user = cache.get('locmapuser', userId);
         var placeId = uuid.v4();
-        user.data.places[placeId] = strippedPlace;
+        user.data.places[placeId] = verifiedPlace;
         user.setData(function(result) {
             if (typeof result !== 'number') {
                 callback(200, {'id': placeId});
@@ -1048,29 +1057,13 @@ var LocMapRESTAPI = function() {
 
     // Modify an existing place.
     this.modifyUserPlace = function(userId, cache, placeId, placeObj, callback) {
-        // Verify place data.
-        if (!placeObj) {
-            callback(400, 'Place object is wrong!');
+        var verifiedPlace = this.getVerifiedPlace(userId, cache, placeObj, callback);
+        if (!verifiedPlace) {
             return;
         }
-        var place = placeObj;
-        if (!place || (typeof place !== 'object') || place.lat === undefined || place.lon === undefined || place.rad === undefined || place.name === undefined || place.img === undefined) {
-            callback(400, 'Place object is wrong!');
-            return;
-        }
-        var strippedPlace = locMapCommon.verifyPlace(place);
-        if (strippedPlace === null) {
-            callback(400, 'Place object is wrong!');
-            return;
-        }
-        if (strippedPlace.name.length > conf.get('locMapConfig').maxPlaceNameLength) {
-            callback(403, 'place_name_too_long');
-            return;
-        }
-
         var user = cache.get('locmapuser', userId);
         if (user.data.places.hasOwnProperty(placeId)) {
-            user.data.places[placeId] = strippedPlace;
+            user.data.places[placeId] = verifiedPlace;
             user.setData(function(result) {
                 callback(locMapCommon.statusFromResult(result), result);
             });
