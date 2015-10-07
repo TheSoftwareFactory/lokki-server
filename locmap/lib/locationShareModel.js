@@ -22,6 +22,8 @@ var jsonFields = ['canSeeMe', 'ICanSee', 'ignored']; // List of model fields tha
 var LocMapSharingModel = function(userId) {
     this.data = {
         userId: userId,
+        // Store name mapping as stringified JSON for easy serialization
+        nameMapping:'{}',
         canSeeMe: [],
         ICanSee: [],
         ignored: []
@@ -142,6 +144,26 @@ var LocMapSharingModel = function(userId) {
         currentUser.data.ICanSee = locMapCommon.removeItemFromArray(currentUser.data.ICanSee, otherUserId);
         currentUser.setData(callback, null);
     };
+
+    /* Adds a custom name to a contact
+    param otherUserId   The ID of the contact to be renamed
+    param name          The custom name for the contact
+    callback callback   Callback function
+    param               'OK' if renaming successful, else error code
+    */
+    this.addContactName = function(otherUserId, name, callback) {
+        var currentUser = this;
+        if (!currentUser.exists) {
+            logger.trace('Setting userNames to uninitialized locationShare! Id: ' + currentUser.data.userId);
+            callback(400);
+            return;
+        }
+        var newMapping = JSON.parse(currentUser.data.nameMapping);
+        newMapping[otherUserId] = name;
+        currentUser.data.nameMapping = JSON.stringify(newMapping);
+        currentUser.setData(callback, null);
+    }
+
 
     /* Adds a user to logged in user's ignore list
     param otherUserId   Encrypted ID of the user to be blocked
