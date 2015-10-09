@@ -59,6 +59,7 @@ var LocMapCommon = function() {
         if (isNaN(newPlace.lat) || isNaN(newPlace.lon) || isNaN(newPlace.rad) || typeof newPlace.name !== 'string' || typeof newPlace.img !== 'string') {
             return null;
         } else {
+            newPlace.name = newPlace.name.trim();
             return newPlace;
         }
     };
