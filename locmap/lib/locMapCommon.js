@@ -60,6 +60,8 @@ var LocMapCommon = function() {
             return null;
         } else {
             newPlace.name = newPlace.name.trim();
+            var cleanName = newPlace.name.substr(1).toUpperCase() + newPlace.name.substr(1).toLowerCase();
+            newPlace.name = cleanName;
             return newPlace;
         }
     };
