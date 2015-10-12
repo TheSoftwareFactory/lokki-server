@@ -872,6 +872,10 @@ var LocMapRESTAPI = function() {
         var locShare = new LocMapSharingModel(userId);
         locShare.getData(function (locShareResult) {
             if (typeof locShareResult !== 'number') {
+                // Handle backwards compatibility with accounts created before name mapping was added
+                if (responseData.nameMapping == undefined) {
+                    responseData.nameMapping = '{}';
+                }
                 responseData.nameMapping = JSON.parse(locShare.data.nameMapping);// Set mapped names
                 responseData.canseeme = locShare.data.canSeeMe; // Set people who can see user
                 responseData.ignored = locShare.data.ignored; // Set people who the user doesn't want to see
