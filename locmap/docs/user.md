@@ -48,6 +48,32 @@ Stop another user from seeing the user's current position
 - Returns status and result of action
 
 
+##`POST` /user/:userid/ignore
+Add other user(s) to the user's ignore list
+
+###Parameters
+- **userId** _(required)_ - Id of current user
+- **request body** _(required)_ - Included in this body is:
+	- 'ids' - Object containing the ids of the users to be ignored
+		- Format - {integer: id}
+
+
+###Return
+- Returns status and result of action
+
+
+##`DELETE` /user/:userid/ignore/targetUserId
+Remove another user from the current user's ignore list
+
+###Parameters
+- **userId** _(required)_ - Id of current user
+- **targetUserId** _(required)_ - Id of user to remove from the ignore list
+
+
+###Return
+- Returns status and result of action
+
+
 ##`PUT` /user/:userid/visibility
 Toggle the user's global visibility
 
@@ -124,6 +150,48 @@ Get:
 
 ###Parameters
 - **userId** _(required)_ - Id of current user
+
+
+###Return
+- Returns status and result of action
+
+
+##`GET` /user/:userid/contacts
+Get:
+	- Locations of users that the current user can see
+	- List of users that can see the current user
+	- List of ignored users
+	- List of custom contact names
+
+###Parameters
+- **userId** _(required)_ - Id of current user
+
+
+###Return
+- Returns status and a JSON object containing user's contact data
+
+
+##`DELETE` /user/:userid/contacts/:targetUserId
+Removes a contact from user's can see and can be seen by lists, ignore list and custom name list
+
+###Parameters
+- **userId** _(required)_ - Id of current user
+- **targetUserId** _(required)_ - Id of contact to be deleted
+
+
+###Return
+- Returns status and result of action
+
+
+##`POST` /user/:userid/rename/:targetUserId
+Assigns a custom, user-specific nickname to target contact
+
+###Parameters
+- **userId** _(required)_ - Id of current user
+- **targetUserId** _(required)_ - Id of contact to be renamed
+- **request body** _(required)_ - Included in this body is:
+	- 'name' - Object containing the new contact name
+		- Format - {string: name}
 
 
 ###Return
