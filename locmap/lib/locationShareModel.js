@@ -158,6 +158,10 @@ var LocMapSharingModel = function(userId) {
             callback(400);
             return;
         }
+        // Handle backwards compatibility with accounts created before name mapping was added
+        if (currentUser.data.nameMapping == undefined) {
+            currentUser.data.nameMapping = '{}';
+        }
         var newMapping = JSON.parse(currentUser.data.nameMapping);
         newMapping[otherUserId] = name;
         currentUser.data.nameMapping = JSON.stringify(newMapping);
