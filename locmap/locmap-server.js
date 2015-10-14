@@ -236,6 +236,22 @@ module.exports = function (app) {
         });
     });
 
+    // New account verification using confirmation link.
+    app.get('/confirm/:userId/:confirmationId', function (req, res) {
+        locMapRestApi.confirmUserAccount(req.params.userId, req.params.confirmationId, function (status, result) {
+            // Remove forcing content to load as a file.
+            res.removeHeader('Content-Disposition');
+            // Make sure response is provided as html.
+            res.setHeader('Content-Type', 'text/html; charset=utf-8');
+            if (status === 200) {
+                res.send(200, result);
+            } else {
+                // TODO Should we return something else but 200
+                res.send(200, '<html>Could not verify confirmation link. If your account has already expired, sign up again to receive a new confirmation link.</html>');
+            }
+        });
+    });
+
     // Store a new place
     // POST data contents {name: 'aa', lat: 1, lon: 2, rad: 10, img: 'internalpic1.png'}
     // Returns 200, {id: 'placeid'}

@@ -26,13 +26,13 @@ module.exports = {
 
     testSignupEmailSend: function (test) {
         test.expect(3);
-        locMapEmail.sendSignupMail(targetUser, 'en-US', function (result) {
+        locMapEmail.sendSignupMail(targetUser, 'en-US', 'http://test.com', function (result) {
             test.ok(result);
             test.equal(locMapEmail.emails.length, 1);
             test.deepEqual(locMapEmail.emails[0], {to: targetUser, from: noReply,
                 subject: i18n.getLocalizedString('en-US', 'signup.userEmailSubject'),
                 text: i18n.getLocalizedString('en-US', 'signup.userEmailText',
-                    'targetUser', targetUser)});
+                    'targetUser', targetUser, 'confirmationCode', 'http://test.com')});
             test.done();
         });
     },

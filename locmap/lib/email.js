@@ -44,11 +44,11 @@ var LocMapEmail = function () {
         }
     };
 
-    this.sendSignupMail = function (targetEmail, langCode, callback) {
+    this.sendSignupMail = function (targetEmail, langCode, confirmationCode, callback) {
         var lang = locMapCommon.verifyLangCode(langCode),
             subject = i18n.getLocalizedString(lang, 'signup.userEmailSubject'),
             messageText = i18n.getLocalizedString(lang, 'signup.userEmailText',
-                'targetUser', targetEmail),
+                'targetUser', targetEmail, 'confirmationCode', confirmationCode),
             emailObj = {
                 to: targetEmail,
                 from: conf.get('senderEmail'),

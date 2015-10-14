@@ -11,6 +11,7 @@ See LICENSE for details
 
 var db = require('../../lib/db');
 var logger = require('../../lib/logger');
+var conf = require('../../lib/config');
 var AppleNotification = require('../../lib/appleNotificationService');
 var LocMapGoogleCloudMessagingService = require('./locMapGoogleCloudMessagingService');
 var MicrosoftPushNotificationService = require('../../lib/microsoftPushNotificationService');
@@ -128,6 +129,36 @@ var LocMapUserModel = function(userId) {
             logger.trace('No data given to setFields!');
             callback(400);
         }
+    };
+
+    /* Sets the user to be deleted after a timeout defined in config
+    callback callback   Callback function
+    */
+    this.setTimeout = function(callback) {
+        var currentUser = this;
+        db.expire(LocMapUserPrefix + currentUser.data.userId, conf.get('locMapConfig').confirmationCodeTimeout, function (error, result) {
+            if (error || result !== 1) {
+                logger.error('Error setting new account expire time: ' + error);
+                callback(result);
+            } else {
+                callback(200);
+            }
+        });
+    };
+
+    /* Removes an expiry date from this user account
+    callback callback   Callback function
+    */
+    this.removeTimeout = function(callback) {
+        var currentUser = this;
+        db.persist(LocMapUserPrefix + currentUser.data.userId, function (error, result) {
+            if (error || result !== 1) {
+                logger.error('Error removing new account expire time: ' + error);
+                callback(result);
+            } else {
+                callback(200);
+            }
+        });
     };
 
     // TODO test
