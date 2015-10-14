@@ -22,6 +22,8 @@ var LocMapEmail = require('./email');
 var locMapEmail = new LocMapEmail();
 var LocMapResetCode = require('./resetCode');
 var locMapResetCode = new LocMapResetCode();
+var LocMapConfirmationCode = require('./confirmationCode');
+var locMapConfirmationCode = new LocMapConfirmationCode();
 var I18N = require('../../lib/i18n');
 var i18n = new I18N();
 
@@ -133,19 +135,42 @@ var LocMapRESTAPI = function() {
         return null;
     }
 
-    this.signUpNonexistentUser = function(newUser, callback, userId) {
+    this.signUpNewUser = function(newUser, callback, userId) {
         newUser.data.activated = true;
         newUser.setData(function(result) {
             if (typeof result !== 'number') {
                 restApi._formatSignUpReplyData(userId, newUser.data.authorizationToken, function(replyResult) {
-                    locMapEmail.sendSignupMail(newUser.data.email, newUser.data.language, function(emailResult) {
-                        if (emailResult) {
-                            logger.trace('Signup email successfully sent to ' + newUser.data.email);
+                    // Generate account confirmation code
+                    locMapConfirmationCode.createConfirmationCode(newUser.data.userId, function (codeResult) {
+                        if (codeResult !== 400) {
+                            // Set account to expire in 24 hours if not verified
+                            newUser.setTimeout(function (timeoutResult) {
+                                if (timeoutResult !== 200) {
+                                    logger.warn('Could not set timeout for user ' + userId);
+                                }
+                                var confirmUrl = conf.get('locMapConfig').baseUrl + '/confirm/' + newUser.data.userId + '/' + codeResult;
+                                locMapEmail.sendSignupMail(newUser.data.email, newUser.data.language, confirmUrl, function(emailResult) {
+                                    if (emailResult) {
+                                        logger.trace('Signup email successfully sent to ' + newUser.data.email);
+                                    } else {
+                                        logger.warn('FAILED Signup email sending to ' + newUser.data.email);
+                                        if (timeoutResult === 200) {
+                                            // If we can't send the email, just make the account permanent
+                                            newUser.removeTimeout(function (removeTimeoutResult) {
+                                                if (removeTimeoutResult !== 200)    {
+                                                    logger.warn('Could neither send signup email not make account permanent!');
+                                                }
+                                            });
+                                        }
+
+                                    }
+                                });
+                                callback(locMapCommon.statusFromResult(replyResult), replyResult);
+                            });
                         } else {
-                            logger.warn('FAILED Signup email sending to ' + newUser.data.email);
+                            callback(400, 'Could not generate verification code');
                         }
                     });
-                    callback(locMapCommon.statusFromResult(replyResult), replyResult);
                 });
             } else {
                 callback(400, 'Signup error.');
@@ -193,26 +218,6 @@ var LocMapRESTAPI = function() {
         }
     }
 
-    this.signUpNonactivatedUser = function(newUser, userData, callback, userId) {
-        newUser.data.activated = true;
-        newUser.setData(function(result) {
-            if (typeof result !== 'number') {
-                restApi._formatSignUpReplyData(userId, newUser.data.authorizationToken, function(replyResult) {
-                    locMapEmail.sendSignupMail(newUser.data.email, newUser.data.language, function(emailResult) {
-                        if (emailResult) {
-                            logger.trace('Signup email successfully sent to ' + newUser.data.email);
-                        } else {
-                            logger.error('FAILED Signup email sending to ' + newUser.data.email);
-                        }
-                    });
-                    callback(locMapCommon.statusFromResult(replyResult), replyResult);
-                });
-            } else {
-                callback(result, 'Failed to save new user data.');
-            }
-        }, null);
-    }
-
     this.prepareSigningUp = function(userData, callback) {
         if (typeof userData !== 'object' || typeof userData.email !== 'string' || typeof userData.device_id !== 'string') {
             callback(400, 'Invalid data.');
@@ -245,12 +250,52 @@ var LocMapRESTAPI = function() {
             if (!newUser.exists) {
                 newUser.data.email = cleanEmail;
                 context.initializeUser(newUser, langCode, userData.device_id);
-                context.signUpNonexistentUser(newUser, callback, userId);
+                context.signUpNewUser(newUser, callback, userId);
             } else if (newUser.data.activated) {  // User has been activated already
                 context.signUpActivatedUser(newUser, userData, callback, langCode, userId);
             } else {  // User has not been activated ('stub' user) -> Normal signup without overwriting the email.
                 context.initializeUser(newUser, langCode, userData.device_id);
-                context.signUpNonactivatedUser(newUser, userData, callback, userId);
+                context.signUpNewUser(newUser, callback, userId);
+            }
+        });
+    };
+
+    /* Makes a new user account permanent
+    param userId            The account ID
+    param confirmationCode  The code used to verify the account
+    callback callback       Callback function
+    */
+    this.confirmUserAccount = function(userId, confirmationCode, callback) {
+        // Check that the confirmation code matches
+        locMapConfirmationCode.getConfirmationCodeData(userId, confirmationCode, function(confirmationData) {
+            if (typeof confirmationData !== 'number' && typeof confirmationData === 'object' && typeof confirmationData.userId === 'string' && confirmationData.userId.length > 0 &&
+                typeof confirmationData.confirmationCode === 'string' && confirmationData.confirmationCode.length > 0) {
+                locMapConfirmationCode.removeConfirmationCode(userId, function(removeResult) {
+                    if (removeResult !== 1) {
+                        logger.warn('Failed to delete confirmation code for user ' + confirmationData.userId + ' (code: ' + confirmationId + ')');
+                    }
+                    // Load account data
+                    var user = new LocMapUserModel(confirmationData.userId);
+                    user.getData(function() {
+                        if (user.exists) {
+                            // Persist the user account
+                            user.removeTimeout(function (persistResult) {
+                                if (persistResult !== 200) {
+                                    callback(result, 'Error persisting account');
+                                } else {
+                                    var lang = locMapCommon.verifyLangCode(user.data.language);
+                                    callback(200, i18n.getLocalizedString(lang, 'confirm.serverMessage'));
+                                }
+                            });
+                        } else {
+                            callback(404, 'User not found.');
+                        }
+                    });
+                });
+            } else if (confirmationData === 403) {
+                callback(403, 'Invalid confirmation code');
+            } else {
+                callback(404, 'Reset code not found.');
             }
         });
     };
