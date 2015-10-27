@@ -22,4 +22,5 @@ reporter.run(['locmap/test', 'test'], null, function(err) {
     if (err) {
         throw err;
     }
+    
 });
