@@ -2,7 +2,7 @@
 Copyright (c) 2014-2015 F-Secure
 See LICENSE for details
 */
-
+// dummy comment for test commit
 'use strict';
 
 // lokki-server main file
