@@ -16,6 +16,7 @@ var app = express();
 var NotificationWorker = require('./locmap/lib/notificationWorker');
 var notificationWorker = new NotificationWorker();
 
+// override the method of a request based on a header or custom query/post parameter
 var methodOverride = require('method-override');
 
 var bodyParser = require('body-parser');
