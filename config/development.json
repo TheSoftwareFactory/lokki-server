@@ -10,7 +10,7 @@
     "sendEmails": true,
     "locMapConfig": {
         "baseUrl": "https://lokki-dev.herokuapp.com",
-        "maxPlacesLimitNormalUser": 10
+        "maxPlacesLimitNormalUser": 100
     },
     "neverCrash": true,
     "pushNotifications": true
