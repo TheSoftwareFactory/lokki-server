@@ -4,7 +4,7 @@ before_install:
   - npm install -g complexity-report
 script:
   - eslint .
-  - cr . -x /node_modules
+  - cr .
   - node unittest-runner.js
 services:
   - redis-server
