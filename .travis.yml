@@ -1,20 +1,6 @@
 language: node_js
 before_install:
   - npm install -g eslint
-env:
-  global:
-   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
-   #   via the "travis encrypt" command using the project repo's public key
-   - secure: "Xzv+xZihgw4xw5ZOaazi1tPqsqM6mm2Xd7+ng0kCdvh53g10R75rGKXp/4W78uGCh07HOdfqJxqN4XDb9jHN/6r8WHeLbKTLoIGKrTJJcmcSP96WK5E4sGC86G4WHTsHce7mW4W7hoSCMCY6r/t/Yu5qL1xLYhbXt8WyDNIElsQ="
-addons:
-  coverity_scan:
-    project:
-      name: "TheSoftwareFactory/lokki-server"
-      description: "Build submitted via Travis CI"
-    notification_email: suleymanakbas91@gmail.com
-    build_command_prepend: ""
-    build_command:   ""
-    branch_pattern: master
 script:
   - eslint .
   - node unittest-runner.js
@@ -32,3 +18,17 @@ deploy:
     repo: TheSoftwareFactory/lokki-server
   api_key:
     secure: "g6gB8FPrEFIbzRKB16VwpuaObu4m53gnHLG+b5dUXBajVWC6qs2IhxUAH4Hkgo+HMEoWcEYlcbefZx6qNHX0yK6T4nqWoZ1K42BEWQWzQ6J7lk0DCJzOdHG8PM+sjByFphUtOJxasNsjJrfX1gQ9TxrCfSbdtDiP9JXukYGbA7s="
+env:
+  global:
+   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+   #   via the "travis encrypt" command using the project repo's public key
+   - secure: "Xzv+xZihgw4xw5ZOaazi1tPqsqM6mm2Xd7+ng0kCdvh53g10R75rGKXp/4W78uGCh07HOdfqJxqN4XDb9jHN/6r8WHeLbKTLoIGKrTJJcmcSP96WK5E4sGC86G4WHTsHce7mW4W7hoSCMCY6r/t/Yu5qL1xLYhbXt8WyDNIElsQ="
+addons:
+  coverity_scan:
+    project:
+      name: "TheSoftwareFactory/lokki-server"
+      description: "Build submitted via Travis CI"
+    notification_email: suleymanakbas91@gmail.com
+    build_command_prepend: ""
+    build_command:   "node unittest-runner.js"
+    branch_pattern: master
