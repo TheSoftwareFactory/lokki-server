@@ -1,8 +1,10 @@
 language: node_js
 before_install:
   - npm install -g eslint
+  - npm install -g complexity-report
 script:
   - eslint .
+  - cr . -x /node_modules
   - node unittest-runner.js
 services:
   - redis-server
@@ -17,4 +19,4 @@ deploy:
   on:
     repo: TheSoftwareFactory/lokki-server
   api_key:
-    secure: "g6gB8FPrEFIbzRKB16VwpuaObu4m53gnHLG+b5dUXBajVWC6qs2IhxUAH4Hkgo+HMEoWcEYlcbefZx6qNHX0yK6T4nqWoZ1K42BEWQWzQ6J7lk0DCJzOdHG8PM+sjByFphUtOJxasNsjJrfX1gQ9TxrCfSbdtDiP9JXukYGbA7s="
+    secure: "g6gB8FPrEFIbzRKB16VwpuaObu4m53gnHLG+b5dUXBajVWC6qs2IhxUAH4Hkgo+HMEoWcEYlcbefZx6qNHX0yK6T4nqWoZ1K42BEWQWzQ6J7lk0DCJzOdHG8PM+sjByFphUtOJxasNsjJrfX1gQ9TxrCfSbdtDiP9JXukYGbA7s=" 
