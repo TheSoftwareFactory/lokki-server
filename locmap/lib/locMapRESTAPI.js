@@ -86,10 +86,11 @@ var LocMapRESTAPI = function() {
         flood.reset(callback);
     };
 
-    this._formatSignUpReplyData = function(userId, authorizationToken, callback) {
+    this._formatSignUpReplyData = function(userId, authorizationToken, userType, callback) {
         var reply = {};
         reply.id = userId;
         reply.authorizationtoken = authorizationToken;
+        reply.userType = userType
         var locShare = new LocMapSharingModel(userId);
         locShare.getData(function(locShareResult) {
             reply.icansee = locShare.data.ICanSee;
@@ -139,7 +140,7 @@ var LocMapRESTAPI = function() {
         newUser.data.activated = true;
         newUser.setData(function(result) {
             if (typeof result !== 'number') {
-                restApi._formatSignUpReplyData(userId, newUser.data.authorizationToken, function(replyResult) {
+                restApi._formatSignUpReplyData(userId, newUser.data.authorizationToken,'newUser', function(replyResult) {
                     // Generate account confirmation code
                     locMapConfirmationCode.createConfirmationCode(newUser.data.userId, function (codeResult) {
                         if (codeResult !== 400) {
@@ -185,7 +186,7 @@ var LocMapRESTAPI = function() {
             this.initializeUser(newUser, langCode, userData.device_id);
             newUser.setData(function(result) {
                 if (typeof result !== 'number') {
-                    restApi._formatSignUpReplyData(userId, newUser.data.authorizationToken, function(replyResult) {
+                    restApi._formatSignUpReplyData(userId, newUser.data.authorizationToken,'activatedUser', function(replyResult) {
                         // TODO Send some email?
                         callback(locMapCommon.statusFromResult(replyResult), replyResult);
                     });
@@ -195,7 +196,7 @@ var LocMapRESTAPI = function() {
             });
         } else if (newUser.isMatchingDeviceId(userData.device_id)) { // Device id match, treat as password success and let user in.
             logger.trace('Device id match for user ' + newUser.data.userId);
-            restApi._formatSignUpReplyData(userId, newUser.data.authorizationToken, function(replyResult) {
+            restApi._formatSignUpReplyData(userId, newUser.data.authorizationToken,'activatedUser', function(replyResult) {
                 callback(locMapCommon.statusFromResult(replyResult), replyResult);
             });
         } else { // Device id mismatch, trigger recovery process for the account.
