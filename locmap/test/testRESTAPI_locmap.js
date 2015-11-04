@@ -695,7 +695,7 @@ module.exports = {
         test.expect(5);
         lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
             lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth2, reply2) {
-                reply1.userType = 'activatedUser' //status of user is new and server stores its status
+                reply1.userType = 'activatedUser' // status of user is new and server stores its status
                 test.deepEqual(reply1, reply2);   // as activated for 24 hours if same email is used
                 test.done();                      // for signup in 24 hrs its status will be returned as activated
             });
