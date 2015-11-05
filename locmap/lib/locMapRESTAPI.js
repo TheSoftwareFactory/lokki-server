@@ -927,14 +927,8 @@ var LocMapRESTAPI = function() {
                 // Get shared data for all users we can see (location, visibility, battery)
                 that._getUserShareData(locShare.data.ICanSee, function(ICanSeeData) {
                     responseData.icansee = ICanSeeData; // Set people the user can see
-                    // Map IDs to emails
-                    that._generateIdMapping(locShare.data.ICanSee, locShare.data.canSeeMe, function(idMappingData) {
-                        responseData.idmapping = idMappingData;
-
-                        // Send everything back
-                        callback(200, responseData);
-                    });
-
+					// Send everything back
+					callback(200, responseData);
                 });
             } else {
                 logger.warn('Failed to get contact for user ' + userId);

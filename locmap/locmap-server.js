@@ -306,7 +306,7 @@ module.exports = function (app) {
     });
 
     // Get all user's contacts.
-    // Returns contacts in the same format as Dashboard
+    // Returns contacts in the same format as Dashboard (without idMapping)
     app.get('/api/locmap/v1/user/:userId/contacts', usesAuthentication, function (req, res) {
 
         locMapRestApi.getUserContacts(req.params.userId, function (status, result) {
