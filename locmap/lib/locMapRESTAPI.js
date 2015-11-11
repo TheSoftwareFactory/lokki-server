@@ -374,7 +374,6 @@ var LocMapRESTAPI = function() {
         responseData.location = user.data.location;
         responseData.visibility = user.data.visibility;
         responseData.battery = user.data.battery;
-        responseData.serverMessage = user.data.serverMessage;
         var locShare = new LocMapSharingModel(userId);
         locShare.getData(function(locShareResult) {
             if (typeof locShareResult !== 'number') {
