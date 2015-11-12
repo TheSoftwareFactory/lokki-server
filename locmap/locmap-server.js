@@ -50,21 +50,17 @@ var usesAdminAuthentication = function (req, res, next) {
 //        });
 };
 
-
-
-
-
 module.exports = function (app) {
-	var GET = "get",
-		POST = "post",
-		PUT = "put",
-		DELETE = "delete";
+	var GET = 'get',
+		POST = 'post',
+		PUT = 'put',
+		DELETE = 'delete';
 
-	//Generates an express route.
-	// param type        Rest call type. I.e. "post", "get".
+	// Generates an express route.
+	// param type        Rest call type. I.e. 'post', 'get'.
 	// param uri         The uri
-	// param callback    The function that this route should call
-	// param callback2   The function that this route should call
+	// param callback(req, res, next)  A callback function. IF there is callback2, next() must be called.
+	// param callback2(req, res, next) Second callback function that is executed after first callback function.
 	function routeRootApi(type, uri, callback, callback2) {
 			(callback2 === undefined) ?
 				app[type](uri, callback) :
@@ -72,30 +68,27 @@ module.exports = function (app) {
 	}
 
 	// Generates an express route.
-	// param type        Rest call type. I.e. "post", "get".
-	// param uri         The uri suffix
-	// param versions    An array containing every version that uses. Single value is also ok. Examples: ["v1", "v2"], ["v1"], "v1"
-	// param callback    The function that this route should call
-	// param callback2   The function that this route should call
+	// param type                      Rest call type. I.e. 'post', 'get'.
+	// param uri                       The uri suffix
+	// param versions                  An array containing every version that uses. Single value is also ok. Examples: ['v1', 'v2'], ['v1'], 'v1'
+	// param callback(req, res, next)  A callback function. IF there is callback2, next() must be called.
+	// param callback2(req, res, next) Second callback function that is executed after first callback function.
 	function route(type, versions, uri, callback, callback2) {
 		if (!Array.isArray(versions)) versions = [versions];
-		var routes = versions.map(function(version) { return "/api/locmap/" + version  + "/" + uri; });
+		var routes = versions.map(function(version) { return '/api/locmap/' + version  + '/' + uri; });
 
 		routes.forEach(function(route) {
-			(callback2 === undefined) ?
-				routeRootApi(type, route, callback) :
-				routeRootApi(type, route, callback, callback2);
+			routeRootApi(type, route, callback, callback2);
 		});
 	}
 
 	function routeUser(type, versions, uri, callback) {
-		route(type, versions, "user/:userId/" + uri, usesAuthentication, callback);
+		route(type, versions, 'user/:userId/' + uri, usesAuthentication, callback);
 	}
 
 	function routeAdmin(type, versions, uri, callback) {
-		route(type, versions, "admin/:userId/" + uri, usesAdminAuthentication, callback);
+		route(type, versions, 'admin/:userId/' + uri, usesAdminAuthentication, callback);
 	}
-
 
     // Create new user to locmap
     // POST body: {email: 'user@example.com', device_id: 'permanentdeviceid', langCode: 'fi-FI'}
@@ -103,14 +96,14 @@ module.exports = function (app) {
     //      Format with two letters is also accepted: 'fi'
     // Reply: 200, {id: 'userId', authorizationtoken: 'mytoken',
     //      icansee: ['userId2', 'userId3'], canseeme: ['userId4']}
-	route(POST, ["v1", "v2"], "signup", function (req, res) {
+	route(POST, ['v1', 'v2'], 'signup', function (req, res) {
         locMapRestApi.signUpUser(req.body, function (status, result) {
 			res.send(status, result);
 		});
 	});
 
     // Update user location
-	routeUser(POST, ["v1", "v2"], "location", function (req, res) {
+	routeUser(POST, ['v1', 'v2'], 'location', function (req, res) {
 		var cache = new Cache();
 		cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
 
@@ -121,7 +114,7 @@ module.exports = function (app) {
 	});
 
     // Allow another to see current users position
-    routeUser(POST, ["v1", "v2"], "allow", function (req, res) {
+    routeUser(POST, ['v1', 'v2'], 'allow', function (req, res) {
         var cache = new Cache();
         cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
 
@@ -132,7 +125,7 @@ module.exports = function (app) {
     });
 
     // Stop another user from seeing current users position
-    routeUser(DELETE, ["v1", "v2"], "allow/:targetUserId",
+    routeUser(DELETE, ['v1', 'v2'], 'allow/:targetUserId',
         function (req, res) {
             var cache = new Cache();
             cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
@@ -144,7 +137,7 @@ module.exports = function (app) {
 	});
 
     // Prevent self from seeing another user's position
-    routeUser(POST, ["v1", "v2"], "ignore", function (req, res) {
+    routeUser(POST, ['v1', 'v2'], 'ignore', function (req, res) {
         locMapRestApi.ignoreUser(req.params.userId, req.body, function (status, result) {
                 res.send(status, result);
         });
@@ -152,7 +145,7 @@ module.exports = function (app) {
 
 
     // Allow self to see an ignored user's position
-    routeUser(DELETE, ["v1", "v2"], "ignore/:targetUserId", function (req, res) {
+    routeUser(DELETE, ['v1', 'v2'], 'ignore/:targetUserId', function (req, res) {
         locMapRestApi.unIgnoreUser(req.params.userId, req.params.targetUserId,
             function (status, result) {
                 res.send(status, result);
@@ -160,7 +153,7 @@ module.exports = function (app) {
     });
 
     // Rename contacts
-    routeUser(POST, ["v1", "v2"], "rename/:targetUserId", function(req, res) {
+    routeUser(POST, ['v1', 'v2'], 'rename/:targetUserId', function(req, res) {
         locMapRestApi.nameUser(req.params.userId, req.params.targetUserId, req.body,
             function (status, result) {
                 res.send(status, result);
@@ -168,7 +161,7 @@ module.exports = function (app) {
     });
 
     // Toggle user global visibility
-    routeUser(PUT, ["v1", "v2"], "visibility", function (req, res) {
+    routeUser(PUT, ['v1', 'v2'], 'visibility', function (req, res) {
         var cache = new Cache();
         cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
 
@@ -179,7 +172,7 @@ module.exports = function (app) {
     });
 
     // Set user language.
-    routeUser(PUT, ["v1", "v2"], "language", function (req, res) {
+    routeUser(PUT, ['v1', 'v2'], 'language', function (req, res) {
         var cache = new Cache();
         cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
 
@@ -191,7 +184,7 @@ module.exports = function (app) {
 
     // Set user's ios remote notification token.
     // apnToken must be in body.apnToken. if body.apnToken is undefined, stops sending notifications
-    routeUser(POST, ["v1", "v2"], "apnToken", function (req, res) {
+    routeUser(POST, ['v1', 'v2'], 'apnToken', function (req, res) {
         locMapRestApi.setUserApnToken(req.params.userId, req.body.apnToken,
             function (status, result) {
                 res.send(status, result);
@@ -200,7 +193,7 @@ module.exports = function (app) {
 
     // Set user's google android remote notification token.
     // gcmToken must be in body.gcmToken. if body.gcmToken is undefined, stops sending notifications
-    routeUser(POST, ["v1", "v2"], "gcmToken", function (req, res) {
+    routeUser(POST, ['v1', 'v2'], 'gcmToken', function (req, res) {
         locMapRestApi.setUserGcmToken(req.params.userId, req.body.gcmToken,
             function (status, result) {
                 res.send(status, result);
@@ -209,7 +202,7 @@ module.exports = function (app) {
 
     // Set user's wp8 remote notification token.
     // wp8Url must be in body.wp8. if body.wp8 is undefined - stops sending notifications to wp8
-	routeUser(POST, ["v1", "v2"], "wp8NotificationURL", function (req, res) {
+	routeUser(POST, ['v1', 'v2'], 'wp8NotificationURL', function (req, res) {
             locMapRestApi.setUserWP8Token(req.params.userId, req.body.wp8,
                 function (status, result) {
                     res.send(status, result);
@@ -218,7 +211,7 @@ module.exports = function (app) {
 
     // Receive user locations for the users current one can see,
     // list of users than can see current user and current global visibility status
-	routeUser(GET, ["v1", "v2"], "dashboard", function (req, res) {
+	routeUser(GET, ['v1', 'v2'], 'dashboard', function (req, res) {
         var cache = new Cache();
         cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
 
@@ -230,7 +223,7 @@ module.exports = function (app) {
     });
 
     // Send notification to update location to users that the current user can see.
-	routeUser(POST, ["v1", "v2"], "update/locations", function (req, res) {
+	routeUser(POST, ['v1', 'v2'], 'update/locations', function (req, res) {
             logger.trace('User ' + req.params.userId + ' requested location updates.');
             var cache = new Cache();
             cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
@@ -245,7 +238,7 @@ module.exports = function (app) {
     //      lokkiVersion: '1.2.3', reportTitle: 'Lokki crash NullpointerException',
     //      reportData: 'report data.'}
     // osType must be one of: android/ios/wp, other information is freeform.
-	route(POST, ["v1", "v2"], "crashReport/:userId", function (req, res) {
+	route(POST, ['v1', 'v2'], 'crashReport/:userId', function (req, res) {
         logger.trace('Crashreport storage called.');
         locMapRestApi.storeCrashReport(req.params.userId, req.body, function (status, result) {
             res.send(status, result);
@@ -262,7 +255,7 @@ module.exports = function (app) {
      */
 
     // Account recovery using reset link.
-	routeRootApi(GET, "/reset/:userId/:resetId", function (req, res) {
+	routeRootApi(GET, '/reset/:userId/:resetId', function (req, res) {
         locMapRestApi.resetUserAccountToRecoveryMode(req.params.userId, req.params.resetId, function (status, result) {
             // Remove forcing content to load as a file.
             res.removeHeader('Content-Disposition');
@@ -279,7 +272,7 @@ module.exports = function (app) {
     });
 
     // New account verification using confirmation link.
-	routeRootApi(GET, "/confirm/:userId/:confirmationId", function (req, res) {
+	routeRootApi(GET, '/confirm/:userId/:confirmationId', function (req, res) {
         locMapRestApi.confirmUserAccount(req.params.userId, req.params.confirmationId, function (status, result) {
             // Remove forcing content to load as a file.
             res.removeHeader('Content-Disposition');
@@ -299,7 +292,7 @@ module.exports = function (app) {
     // Returns 200, {id: 'placeid'}
     // If place data is invalid, returns 400
     // If place limit reached, returns 403
-	routeUser(POST, ["v1", "v2"], "place", function (req, res) {
+	routeUser(POST, ['v1', 'v2'], 'place', function (req, res) {
         var cache = new Cache();
         cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
 
@@ -312,7 +305,7 @@ module.exports = function (app) {
     // PUT data contents {name: 'aa', lat: 1, lon: 2, rad: 10, img: 'internalpic1.png'}
     // Returns 200
     // If place data is invalid, returns 400
-	routeUser(PUT, ["v1", "v2"], "place/:placeId", function (req, res) {
+	routeUser(PUT, ['v1', 'v2'], 'place/:placeId', function (req, res) {
         var cache = new Cache();
         cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
 
@@ -324,7 +317,7 @@ module.exports = function (app) {
 
     // Remove a place
     // Returns 200
-	routeUser(DELETE, ["v1", "v2"], "place/:placeId", function (req, res) {
+	routeUser(DELETE, ['v1', 'v2'], 'place/:placeId', function (req, res) {
             var cache = new Cache();
             cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
 
@@ -337,7 +330,7 @@ module.exports = function (app) {
     // Get all places of user.
     // Returns: 200, {placeId: {name: 'aa', lat: 1, lon: 2,
     //  rad: 20, img: 'internalpic1.png'}, placeId2: ... }
-	routeUser(GET, ["v1", "v2"], "places", function (req, res) {
+	routeUser(GET, ['v1', 'v2'], 'places', function (req, res) {
         var cache = new Cache();
         cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
 
@@ -348,14 +341,14 @@ module.exports = function (app) {
 
     // Get all user's contacts.
     // Returns contacts in the same format as Dashboard (without idMapping)
-	routeUser(GET, ["v1", "v2"], "contacts", function (req, res) {
+	routeUser(GET, ['v1', 'v2'], 'contacts', function (req, res) {
         locMapRestApi.getUserContacts(req.params.userId, function (status, result) {
             res.send(status, result);
         });
     });
 
     // Removes a contact, deleting the user and the contact from each other's location shares
-	routeUser(DELETE, ["v1", "v2"], "contacts/:targetUserId", function (req, res) {
+	routeUser(DELETE, ['v1', 'v2'], 'contacts/:targetUserId', function (req, res) {
         locMapRestApi.deleteContact(req.params.userId, req.params.targetUserId, function (status, result) {
             res.send(status, result);
         });
@@ -363,7 +356,7 @@ module.exports = function (app) {
 
     // // ADMIN calls
     // Get crash reports for chosen os and time period.
-	routeAdmin(GET, ["v1", "v2"], "crashReport/:osType/:year/:month", function (req, res) {
+	routeAdmin(GET, ['v1', 'v2'], 'crashReport/:osType/:year/:month', function (req, res) {
             locMapAdminApi.adminGetCrashReports(req.params.osType, req.params.year,
                 req.params.month,
                 function (status, result) {
@@ -375,14 +368,14 @@ module.exports = function (app) {
 
     // Put account into recovery mode. Limited to hardcoded set of development accounts.
     // POST contents: email string JSONized.
-	routeAdmin(POST, ["v1", "v2"], "accountRecovery", function (req, res) {
+	routeAdmin(POST, ['v1', 'v2'], 'accountRecovery', function (req, res) {
             locMapAdminApi.adminSetAccountToRecoveryMode(req.body, function (status, result) {
                 res.send(status, result);
             });
         });
 
     // Get current status of user info from the db
-	routeAdmin(GET, ["v1", "v2"], "userStats", function (req, res) {
+	routeAdmin(GET, ['v1', 'v2'], 'userStats', function (req, res) {
         locMapAdminApi.adminGetStats(function (status, result) {
             // Override the extra JSON security headers for easier browsing.
             res.removeHeader('Content-Disposition');
