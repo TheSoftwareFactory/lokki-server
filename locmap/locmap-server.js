@@ -75,7 +75,9 @@ module.exports = function (app) {
 	// param callback2(req, res, next) Second callback function that is executed after first callback function.
 	function route(type, versions, uri, callback, callback2) {
 		if (!Array.isArray(versions)) versions = [versions];
-		var routes = versions.map(function(version) { return '/api/locmap/' + version  + '/' + uri; });
+		var routes = versions.map(function(version) {
+			return '/api/locmap/' + version  + '/' + uri;
+		});
 
 		routes.forEach(function(route) {
 			routeRootApi(type, route, callback, callback2);
