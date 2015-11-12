@@ -222,7 +222,7 @@ module.exports = {
 
     // code to clean DB. calls callback when done
     cleanDB: function(callback) {
-        var dbSetup = require('../lib/dbSetup');
+        var dbSetup = require('../test_helpers/dbSetup');
         dbSetup(function() {
             callback();
         });
