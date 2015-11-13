@@ -13,6 +13,8 @@ var conf = require('../lib/config');
 var logger = require('../lib/logger');
 var LocMapRestApi = require('./lib/locMapRESTAPI');
 var locMapRestApi = new LocMapRestApi();
+var LocMapRestApi2 = require('./lib/locMapRESTAPI2');
+var locMapRestApi2 = new LocMapRestApi2();
 var LocMapAdminApi = require('./lib/locMapAdminApi');
 var locMapAdminApi = new LocMapAdminApi();
 var Cache = require('../lib/cache');
@@ -56,9 +58,9 @@ module.exports = function (app) {
 		PUT = 'put',
 		DELETE = 'delete';
 
-	// Generates an express route.
-	// param type        Rest call type. I.e. 'post', 'get'.
-	// param uri         The uri
+	// Generates an express route to the root path of REST API.
+	// param type                      Rest call type. I.e. 'post', 'get'.
+	// param uri                       The uri
 	// param callback(req, res, next)  A callback function. IF there is callback2, next() must be called.
 	// param callback2(req, res, next) Second callback function that is executed after first callback function.
 	function routeRootApi(type, uri, callback, callback2) {
@@ -67,29 +69,37 @@ module.exports = function (app) {
 				app[type](uri, callback, callback2);
 	}
 
-	// Generates an express route.
+	// Generates an express route to the REST API.
 	// param type                      Rest call type. I.e. 'post', 'get'.
-	// param uri                       The uri suffix
+	// param uri                       An array of uri suffices for route.Single value is also ok. Examples: ["place", "places"], ["places"], "place"
 	// param versions                  An array containing every version that uses. Single value is also ok. Examples: ['v1', 'v2'], ['v1'], 'v1'
 	// param callback(req, res, next)  A callback function. IF there is callback2, next() must be called.
 	// param callback2(req, res, next) Second callback function that is executed after first callback function.
-	function route(type, versions, uri, callback, callback2) {
+	function route(type, versions, uris, callback, callback2) {
 		if (!Array.isArray(versions)) versions = [versions];
-		var routes = versions.map(function(version) {
-			return '/api/locmap/' + version  + '/' + uri;
-		});
-
-		routes.forEach(function(route) {
-			routeRootApi(type, route, callback, callback2);
+		if (!Array.isArray(uris)) uris = [uris];
+		versions.forEach(function(version) {
+			uris.forEach(function(uri) {
+				var route  = '/api/locmap/' + version  + '/' + uri;
+				routeRootApi(type, route, callback, callback2);
+			});
 		});
 	}
 
-	function routeUser(type, versions, uri, callback) {
-		route(type, versions, 'user/:userId/' + uri, usesAuthentication, callback);
+	function routeUser(type, versions, uris, callback) {
+		if (!Array.isArray(uris)) uris = [uris];
+		uris.forEach(function(uri) {
+			var uriRoute  = 'user/:userId/' + uri;
+			route(type, versions, uriRoute, usesAuthentication, callback);
+		});
 	}
 
-	function routeAdmin(type, versions, uri, callback) {
-		route(type, versions, 'admin/:userId/' + uri, usesAdminAuthentication, callback);
+	function routeAdmin(type, versions, uris, callback) {
+		if (!Array.isArray(uris)) uris = [uris];
+		uris.forEach(function(uri) {
+			var uriRoute  = 'admin/:userId/' + uri;
+			route(type, versions, uriRoute, usesAdminAuthentication, callback);
+		});
 	}
 
     // Create new user to locmap
@@ -294,7 +304,7 @@ module.exports = function (app) {
     // Returns 200, {id: 'placeid'}
     // If place data is invalid, returns 400
     // If place limit reached, returns 403
-	routeUser(POST, ['v1', 'v2'], 'place', function (req, res) {
+	routeUser(POST, ['v1', 'v2'], ['place', 'places'], function (req, res) {
         var cache = new Cache();
         cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
 
@@ -307,7 +317,7 @@ module.exports = function (app) {
     // PUT data contents {name: 'aa', lat: 1, lon: 2, rad: 10, img: 'internalpic1.png'}
     // Returns 200
     // If place data is invalid, returns 400
-	routeUser(PUT, ['v1', 'v2'], 'place/:placeId', function (req, res) {
+	routeUser(PUT, ['v1', 'v2'], ['place/:placeId', 'places/:placeId'], function (req, res) {
         var cache = new Cache();
         cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
 
@@ -319,20 +329,20 @@ module.exports = function (app) {
 
     // Remove a place
     // Returns 200
-	routeUser(DELETE, ['v1', 'v2'], 'place/:placeId', function (req, res) {
-            var cache = new Cache();
-            cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
+	routeUser(DELETE, ['v1', 'v2'], ['place/:placeId', 'places/:placeId'], function (req, res) {
+		var cache = new Cache();
+		cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
 
-            locMapRestApi.removeUserPlace(req.params.userId, cache, req.params.placeId,
-                function (status, result) {
-                    res.send(status, result);
-                });
-        });
+		locMapRestApi.removeUserPlace(req.params.userId, cache, req.params.placeId,
+			function (status, result) {
+				res.send(status, result);
+			});
+	});
 
     // Get all places of user.
     // Returns: 200, {placeId: {name: 'aa', lat: 1, lon: 2,
     //  rad: 20, img: 'internalpic1.png'}, placeId2: ... }
-	routeUser(GET, ['v1', 'v2'], 'places', function (req, res) {
+	routeUser(GET, 'v1', 'places', function (req, res) {
         var cache = new Cache();
         cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
 
@@ -340,6 +350,18 @@ module.exports = function (app) {
             res.send(status, result);
         });
     });
+
+	// Get all places of user.
+	// Returns: 200, [{id: placeId, name: 'aa', lat: 1, lon: 2,
+	//  rad: 20, img: 'internalpic1.png'}, ... ]
+	routeUser(GET, 'v2', 'places', function (req, res) {
+		var cache = new Cache();
+		cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
+
+		locMapRestApi2.getUserPlaces(req.params.userId, cache, function (status, result) {
+			res.send(status, result);
+		});
+	});
 
     // Get all user's contacts.
     // Returns contacts in the same format as Dashboard (without idMapping)
