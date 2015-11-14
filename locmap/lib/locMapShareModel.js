@@ -19,7 +19,7 @@ var sharePrefix = conf.get('db').sharePrefix;
 
 var jsonFields = ['canSeeMe', 'ICanSee', 'ignored']; // List of model fields that are JSON encoded.
 
-var LocMapSharingModel = function(userId) {
+var LocMapShareModel = function(userId) {
     this.data = {
         userId: userId,
         // Store name mapping as stringified JSON for easy serialization
@@ -200,4 +200,4 @@ var LocMapSharingModel = function(userId) {
     }
 };
 
-module.exports = LocMapSharingModel;
+module.exports = LocMapShareModel;

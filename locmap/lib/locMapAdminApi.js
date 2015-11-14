@@ -8,7 +8,7 @@ See LICENSE for details
 var conf = require('../../lib/config');
 var logger = require('../../lib/logger');
 var LocMapUserModel = require('./locMapUserModel');
-var LocMapSharingModel = require('./locationShareModel');
+var LocMapShareModel = require('./locMapShareModel');
 var LocMapCrashReports = require('./crashReports');
 var locMapCrashReports = new LocMapCrashReports();
 var LocMapCommon = require('./locMapCommon');
@@ -158,7 +158,7 @@ var LocMapAdminApi = function() {
         for (var u in users) {
             var userId = users[u];
             userId = userId.replace(userPrefix, '');
-            addUserShareStats(new LocMapSharingModel(userId));
+            addUserShareStats(new LocMapShareModel(userId));
         }
     };
 
