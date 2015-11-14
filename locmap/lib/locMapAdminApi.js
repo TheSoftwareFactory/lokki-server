@@ -17,6 +17,8 @@ var db = require('../../lib/db');
 
 var check = require('validator').check;
 
+var userPrefix = conf.get('db').userPrefix;
+
 var LocMapAdminApi = function() {
     var locMapAdminApi = this;
 
@@ -155,7 +157,7 @@ var LocMapAdminApi = function() {
 
         for (var u in users) {
             var userId = users[u];
-            userId = userId.replace('locmapusers:', '');
+            userId = userId.replace(userPrefix, '');
             addUserShareStats(new LocMapSharingModel(userId));
         }
     };
@@ -181,7 +183,7 @@ var LocMapAdminApi = function() {
 
         for (var u in users) {
             var userId = users[u];
-            userId = userId.replace('locmapusers:', '');
+            userId = userId.replace(userPrefix, '');
 
             // put user into closure
             addUserStats(new LocMapUserModel(userId));
@@ -190,7 +192,7 @@ var LocMapAdminApi = function() {
 
     this.adminGetStats = function(callback) {
         var statsStruct = locMapCommon.getDefaultStatsDict();
-        db.keys('locmapusers:*', function(err, users) {
+        db.keys(userPrefix + '*', function(err, users) {
             if (err) {
                 logger.warn('Failed to get locmap users from db.');
                 callback(500, statsStruct);
