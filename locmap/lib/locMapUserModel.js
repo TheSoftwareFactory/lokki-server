@@ -23,7 +23,7 @@ var I18N = require('../../lib/i18n');
 var i18n = new I18N();
 
 
-var LocMapUserPrefix = 'locmapusers:';
+var userPrefix = conf.get('db').userPrefix;
 var jsonFields = ['visibility', 'location', 'activated', 'accountRecoveryMode', 'places', 'lastVisibleNotification', 'lastInvisibleNotification', 'lastDashboardAccess']; // List of model fields that are JSON encoded.
 
 var LocMapUserModel = function(userId) {
@@ -66,7 +66,7 @@ var LocMapUserModel = function(userId) {
 
     this.getData = function(callback) {
         var currentUser = this;
-        db.hgetall(LocMapUserPrefix + this.data.userId, function(error, result) {
+        db.hgetall(userPrefix + this.data.userId, function(error, result) {
             if (result) { // Convert Data to JSON object. result = this._deserializeData(result);
                 var key;
                 for (key in result) {
@@ -103,7 +103,7 @@ var LocMapUserModel = function(userId) {
         }
 
         var serializedData = currentUser._serializeData(currentUser.data);
-        db.hmset(LocMapUserPrefix + currentUser.data.userId, serializedData, function(error, result) {
+        db.hmset(userPrefix + currentUser.data.userId, serializedData, function(error, result) {
             if (error) {
                 result = 400;
                 logger.error('Error setting user data: ' + error);
@@ -118,7 +118,7 @@ var LocMapUserModel = function(userId) {
         var currentUser = this;
         if (data !== null) {
             var serializedData = currentUser._serializeData(data);
-            db.hmset(LocMapUserPrefix + currentUser.data.userId, serializedData, function(error, result) {
+            db.hmset(userPrefix + currentUser.data.userId, serializedData, function(error, result) {
                 if (error) {
                     result = 400;
                     logger.error('Error setting user data fields: ' + error);
@@ -136,7 +136,7 @@ var LocMapUserModel = function(userId) {
     */
     this.setTimeout = function(callback) {
         var currentUser = this;
-        db.expire(LocMapUserPrefix + currentUser.data.userId, conf.get('locMapConfig').confirmationCodeTimeout, function (error, result) {
+        db.expire(userPrefix + currentUser.data.userId, conf.get('locMapConfig').confirmationCodeTimeout, function (error, result) {
             if (error || result !== 1) {
                 logger.error('Error setting new account expire time: ' + error);
                 callback(result);
@@ -151,7 +151,7 @@ var LocMapUserModel = function(userId) {
     */
     this.removeTimeout = function(callback) {
         var currentUser = this;
-        db.persist(LocMapUserPrefix + currentUser.data.userId, function (error, result) {
+        db.persist(userPrefix + currentUser.data.userId, function (error, result) {
             if (error || result !== 1) {
                 logger.error('Error removing new account expire time: ' + error);
                 callback(result);
