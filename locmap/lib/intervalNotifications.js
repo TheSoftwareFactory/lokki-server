@@ -13,6 +13,7 @@ var LocMapCommon = require('./locMapCommon');
 var locMapCommon = new LocMapCommon();
 
 var lockDBKey = 'intervalNotificationsLock';
+var userPrefix = conf.get('db').userPrefix;
 
 var IntervalNotifications = function () {
     var intervalNotifications = this;
@@ -82,7 +83,7 @@ var IntervalNotifications = function () {
         }
 
         for (u = 0; u < users.length; u += 1) {
-            processUser(new LocMapUserModel(users[u].replace('locmapusers:', '')));
+            processUser(new LocMapUserModel(users[u].replace(userPrefix, '')));
         }
     };
 
@@ -102,7 +103,7 @@ var IntervalNotifications = function () {
                 if (result === 'OK') {
                     logger.trace('INTERVALNOTIF: Acquired lock.');
                     var userCount = 0;
-                    db.keys('locmapusers:*', function (err, users) {
+                    db.keys(userPrefix + '*', function (err, users) {
                         if (err) {
                             logger.error('Failed to get locmap users from db.');
                             callback(-1);

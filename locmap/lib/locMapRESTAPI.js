@@ -13,7 +13,7 @@ var conf = require('../../lib/config');
 var logger = require('../../lib/logger');
 var LocMapUserModel = require('./locMapUserModel');
 var FloodModel = require('../../lib/floodModel');
-var LocMapSharingModel = require('./locationShareModel');
+var LocMapShareModel = require('./locMapShareModel');
 var LocMapCommon = require('./locMapCommon');
 var locMapCommon = new LocMapCommon();
 var LocMapCrashReports = require('./crashReports');
@@ -90,7 +90,7 @@ var LocMapRESTAPI = function() {
         var reply = {};
         reply.id = userId;
         reply.authorizationtoken = authorizationToken;
-        var locShare = new LocMapSharingModel(userId);
+        var locShare = new LocMapShareModel(userId);
         locShare.getData(function(locShareResult) {
             reply.icansee = locShare.data.ICanSee;
             reply.canseeme = locShare.data.canSeeMe;
@@ -374,7 +374,7 @@ var LocMapRESTAPI = function() {
         responseData.location = user.data.location;
         responseData.visibility = user.data.visibility;
         responseData.battery = user.data.battery;
-        var locShare = new LocMapSharingModel(userId);
+        var locShare = new LocMapShareModel(userId);
         locShare.getData(function(locShareResult) {
             if (typeof locShareResult !== 'number') {
                 responseData.canseeme = locShare.data.canSeeMe;
@@ -461,7 +461,7 @@ var LocMapRESTAPI = function() {
             return;
         }
 
-        var otherLocShare = new LocMapSharingModel(otherUserId);
+        var otherLocShare = new LocMapShareModel(otherUserId);
         otherLocShare.getData(function(otherLocShareResult) {
             // Non-existing user, create a stub for it with the email.
             if (otherLocShareResult === 404) {
@@ -507,7 +507,7 @@ var LocMapRESTAPI = function() {
         }
         var cacheUser = cache.get('locmapuser', userId);
         var currentUserEmail = cacheUser.data.email;
-        var currentUserLocShare = new LocMapSharingModel(userId);
+        var currentUserLocShare = new LocMapShareModel(userId);
 
         function handleAllowResult(allowResult) {
             if (allowResult !== 200) {
@@ -536,10 +536,10 @@ var LocMapRESTAPI = function() {
     };
 
     this.denyToSeeUserLocation = function(userId, cache, targetUserId, callback) {
-        var myLocShare = new LocMapSharingModel(userId);
+        var myLocShare = new LocMapShareModel(userId);
         myLocShare.getData(function() {
             if (myLocShare.exists) {
-                var otherLocShare = new LocMapSharingModel(targetUserId);
+                var otherLocShare = new LocMapShareModel(targetUserId);
                 otherLocShare.getData(function(otherLocShareResult) {
                     if (typeof otherLocShareResult !== 'number') {
                         myLocShare.denyOtherUser(targetUserId, function(mResult) {
@@ -562,7 +562,7 @@ var LocMapRESTAPI = function() {
     };
 
     /* Helper function for ignoring users
-    param currentUserLocShare   The locationShareModel for the currently logged in user
+    param currentUserLocShare   The locMapShareModel for the currently logged in user
     param targetUserId          The encrypted user ID of the user to be ignored
     callback callback           The function which is called when this function finishes
     param                       "OK" if ignoring successful, else error code
@@ -607,7 +607,7 @@ var LocMapRESTAPI = function() {
         }
 
         // Get currently logged in user's locShare
-        var currentUserLocShare = new LocMapSharingModel(userId);
+        var currentUserLocShare = new LocMapShareModel(userId);
 
         // Helper function for email loop below
         function handleIgnoreResult(ignoreResult) {
@@ -646,7 +646,7 @@ var LocMapRESTAPI = function() {
     */
     this.unIgnoreUser = function(userId, targetUserId, callback) {
         // Load user sharing data
-        var myLocShare = new LocMapSharingModel(userId);
+        var myLocShare = new LocMapShareModel(userId);
         myLocShare.getData(function() {
             if (myLocShare.exists) {
                 // unignore target user
@@ -727,7 +727,7 @@ var LocMapRESTAPI = function() {
 
     this.requestUserLocationUpdates = function(userId, callback) {
         var that = this;
-        var locShare = new LocMapSharingModel(userId);
+        var locShare = new LocMapShareModel(userId);
         locShare.getData(function() {
             if (locShare.exists) {
                 logger.trace('User ' + userId + ' requesting user location updates.');
@@ -914,7 +914,7 @@ var LocMapRESTAPI = function() {
         var that = this;
         var responseData = {};
         // Load contact data from server
-        var locShare = new LocMapSharingModel(userId);
+        var locShare = new LocMapShareModel(userId);
         locShare.getData(function (locShareResult) {
             if (typeof locShareResult !== 'number') {
                 // Handle backwards compatibility with accounts created before name mapping was added
@@ -965,7 +965,7 @@ var LocMapRESTAPI = function() {
         var name = requestBody.name;
         logger.debug('name contact');
         var that = this;
-        var currentUserLocShare = new LocMapSharingModel(userId);
+        var currentUserLocShare = new LocMapShareModel(userId);
         currentUserLocShare.getData(function (locShareResult) {
             if (typeof locShareResult !== 'number') {
                 currentUserLocShare.addContactName(targetUserId, name, function (renameResult) {
@@ -993,7 +993,7 @@ var LocMapRESTAPI = function() {
     this.deleteContact = function(userId, targetUserId, callback) {
         logger.debug('delete contact');
         var that = this;
-        var currentUserLocShare = new LocMapSharingModel(userId);
+        var currentUserLocShare = new LocMapShareModel(userId);
 
         // Deletes the target user from the current user's locShare's canSeeMe list
         function checkAndDeleteCanSeeMe(callback) {
@@ -1024,7 +1024,7 @@ var LocMapRESTAPI = function() {
 
         // Deletes the current user from the target user's locShare's ignore list
         function checkAndDeleteSelfFromIgnored(callback) {
-            var targetUserLocShare = new LocMapSharingModel(userId);
+            var targetUserLocShare = new LocMapShareModel(userId);
             targetUserLocShare.getData(function (locShareResult) {
 
                 if (typeof locShareResult !== 'number') {
