@@ -18,7 +18,7 @@ module.exports = {
         this.currentYear = this.currentDate.getFullYear();
         this.currentMonth = this.currentDate.getMonth() + 1;
 
-        var dbSetup = require('../../lib/dbSetup');
+        var dbSetup = require('../../test_helpers/dbSetup');
         dbSetup(function () {
             callback();
         });
