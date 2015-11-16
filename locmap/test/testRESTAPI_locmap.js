@@ -20,6 +20,11 @@ var userDashboard2 = {};
 function placeInV2Format(place, id) {
 	var clonePlace = JSON.parse(JSON.stringify(place));
 	clonePlace.id = id;
+	clonePlace.location = {};
+	['lat', 'lon', 'rad'].forEach(function(field) {
+		clonePlace.location[field] = clonePlace[field];
+		delete clonePlace[field];
+	});
 	return clonePlace;
 }
 

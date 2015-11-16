@@ -43,6 +43,11 @@ var LocMapRESTAPI2 = function() {
 		Object.keys(cachedPlaces).forEach(function(id) {
 			var place = cachedPlaces[id];
 			place.id = id;
+			place.location = {};
+			['lat', 'lon', 'rad'].forEach(function(field) {
+				place.location[field] = place[field];
+				delete place[field];
+			});
 			places.push(place);
 		});
 
