@@ -896,20 +896,7 @@ tests.both.modifyNonExistingPlace = function(version) {
 };
 
 
-// Remove non-existing place gives 404.
-tests.both.removeNonExistingPlace = function (version) {
-    return function (test) {
-        test.expect(3);
-        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
-            lmHelpers.api.del(test, '/' + version + '/user/' + reply1.id + '/place/wrongPlaceId', auth1,
-                {status: 404}, function () {
-                    test.done();
-                });
-        });
-    }
-};
-
-tests.v1 = {};
+tests.v1 = {}, tests.v2 = {};
 
 // User without places gives an empty object back.
 tests.v1.getPlacesFromUserWithoutPlaces = function(version) {
@@ -922,6 +909,18 @@ tests.v1.getPlacesFromUserWithoutPlaces = function(version) {
             });
         });
     }
+};
+
+tests.v2.getPlacesFromUserWithoutPlaces = function(version) {
+	return function (test) {
+		test.expect(4);
+		lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+			lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places', auth1, function (result) {
+				test.deepEqual(result.data, {});
+				test.done();
+			});
+		});
+	}
 };
 
 // Create a new place
@@ -948,6 +947,29 @@ tests.v1.createAndGetUserPlace = function(version) {
     }
 };
 
+tests.v2.createAndGetUserPlace = function(version) {
+	return function (test) {
+		test.expect(8);
+		lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+			var authWithPlace = JSON.parse(JSON.stringify(auth1));
+			authWithPlace.data = lmHelpers.locMapPlace1;
+			lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places', authWithPlace,
+				function (result) {
+					// Verify that placeid is a uuid string.
+					var placeId = result.data.id;
+					test.equal(typeof placeId, 'string');
+					test.equal(placeId.length, 36);
+					lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places', auth1,
+						function (result2) {
+							test.equal(Object.keys(result2.data).length, 1);
+							test.deepEqual(result2.data[0], placeInV2Format(lmHelpers.locMapPlace1, placeId));
+							test.done();
+						});
+				});
+		});
+	}
+};
+
 // Create invalid place gives 400
 tests.v1.createInvalidPlace = function(version) {
     return function (test) {
@@ -961,6 +983,20 @@ tests.v1.createInvalidPlace = function(version) {
                 });
         });
     }
+};
+
+tests.v2.createInvalidPlace = function(version) {
+	return function (test) {
+		test.expect(3);
+		lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+			var authWithPlace = JSON.parse(JSON.stringify(auth1));
+			authWithPlace.data = {lat: 1.2, lon: 2.3};
+			lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places', authWithPlace,
+				{status: 400}, function () {
+					test.done();
+				});
+		});
+	}
 };
 
 // Create multiple places
@@ -998,6 +1034,40 @@ tests.v1.createMultiplePlaces = function(version) {
     }
 };
 
+tests.v2.createMultiplePlaces = function(version) {
+	return function (test) {
+		test.expect(12);
+		lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+			var authWithPlace = JSON.parse(JSON.stringify(auth1));
+			authWithPlace.data = lmHelpers.locMapPlace1;
+			lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places', authWithPlace,
+				function (p1Result) {
+					// Verify that placeid is a uuid string.
+					var placeId1 = p1Result.data.id;
+					test.equal(typeof placeId1, 'string');
+					test.equal(placeId1.length, 36);
+
+					authWithPlace.data = lmHelpers.locMapPlace2;
+					lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places', authWithPlace,
+						function (p2Result) {
+							// Verify that placeid is a uuid string.
+							var placeId2 = p2Result.data.id;
+							test.equal(typeof placeId2, 'string');
+							test.equal(placeId2.length, 36);
+
+							lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places', auth1,
+								function (result) {
+									test.equal(Object.keys(result.data).length, 2);
+									test.deepEqual(result.data[0], placeInV2Format(lmHelpers.locMapPlace1, placeId1));
+									test.deepEqual(result.data[1], placeInV2Format(lmHelpers.locMapPlace2, placeId2));
+									test.done();
+								});
+						});
+				});
+		});
+	}
+};
+
 // Place creation has a limit.
 tests.v1.createPlacesLimit = function(version) {
     return function (test) {
@@ -1030,6 +1100,39 @@ tests.v1.createPlacesLimit = function(version) {
                 });
         });
     }
+};
+
+tests.v2.createPlacesLimit = function(version) {
+	return function (test) {
+		test.expect(9);
+		lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+			var authWithPlace = JSON.parse(JSON.stringify(auth1));
+			authWithPlace.data = lmHelpers.locMapPlace1;
+			lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places', authWithPlace,
+				function (p1Result) {
+					authWithPlace.data = lmHelpers.locMapPlace2;
+					lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places', authWithPlace,
+						function (p2Result) {
+							authWithPlace.data = lmHelpers.locMapPlace3;
+							// Request over the limit should return status 403.
+							lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places',
+								authWithPlace, {status: 403}, function () {
+									// Verify that only the places added before hitting limit
+									// exist on user places.
+									lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places',
+										auth1, function (result) {
+											test.equal(Object.keys(result.data).length, 2);
+											test.deepEqual(result.data[0],
+												placeInV2Format(lmHelpers.locMapPlace1, p1Result.data.id));
+											test.deepEqual(result.data[1],
+												placeInV2Format(lmHelpers.locMapPlace2, p2Result.data.id));
+											test.done();
+										});
+								});
+						});
+				});
+		});
+	}
 };
 
 // Modify an existing place.
@@ -1065,6 +1168,38 @@ tests.v1.modifyPlace = function(version) {
     }
 };
 
+tests.v2.modifyPlace = function(version) {
+	return function (test) {
+		test.expect(9);
+		lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+			var authWithPlace = JSON.parse(JSON.stringify(auth1));
+			authWithPlace.data = lmHelpers.locMapPlace1;
+			lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places', authWithPlace,
+				function (result1) {
+					var placeId1 = result1.data.id;
+					// Verify that first place is in.
+					lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places', auth1,
+						function (placesResult1) {
+							test.deepEqual(placesResult1.data[0], placeInV2Format(lmHelpers.locMapPlace1, placeId1));
+							authWithPlace.data = lmHelpers.locMapPlace2;
+							lmHelpers.api.put(test, '/' + version + '/user/' + reply1.id + '/places/' + placeId1,
+								authWithPlace, function () {
+									lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places',
+										auth1, function (placesResult2) {
+											// Verify that number of places is still one,
+											// and that the place is the latest.
+											test.equal(Object.keys(placesResult2.data).length, 1);
+											test.deepEqual(placesResult2.data[0],
+												placeInV2Format(lmHelpers.locMapPlace2, placeId1));
+											test.done();
+										});
+								});
+						});
+				});
+		});
+	}
+};
+
 // Modify existing place with invalid gives 400.
 tests.v1.modifyPlaceWithInvalid = function(version) {
     return function (test) {
@@ -1089,6 +1224,31 @@ tests.v1.modifyPlaceWithInvalid = function(version) {
                 });
         });
     }
+};
+
+tests.v2.modifyPlaceWithInvalid = function(version) {
+	return function (test) {
+		test.expect(6);
+		lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+			var authWithPlace = JSON.parse(JSON.stringify(auth1));
+			authWithPlace.data = lmHelpers.locMapPlace1;
+			lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/place', authWithPlace,
+				function (result1) {
+					var placeId1 = result1.data.id;
+					authWithPlace.data = {lat: 1.2, lon: 3.5, rad: 'plop'};
+					lmHelpers.api.put(test, '/' + version + '/user/' + reply1.id + '/place/' + placeId1,
+						authWithPlace, {status: 400}, function () {
+							// Verify that place is still the original.
+							lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places', auth1,
+								function (placesResult1) {
+									test.deepEqual(placesResult1.data[0],
+										placeInV2Format(lmHelpers.locMapPlace1, placeId1));
+									test.done();
+								});
+						});
+				});
+		});
+	}
 };
 
 // Remove an existing place.
@@ -1119,246 +1279,77 @@ tests.v1.removePlace = function(version) {
     }
 };
 
-tests.v2 = {};
-
-// User without places gives an empty object back.
-tests.v2.getPlacesFromUserWithoutPlaces = function(version) {
-    return function (test) {
-        test.expect(4);
-        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
-            lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places', auth1, function (result) {
-                test.deepEqual(result.data, {});
-                test.done();
-            });
-        });
-    }
-};
-
-// Create a new place
-tests.v2.createAndGetUserPlace = function(version) {
-    return function (test) {
-        test.expect(8);
-        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
-            var authWithPlace = JSON.parse(JSON.stringify(auth1));
-            authWithPlace.data = lmHelpers.locMapPlace1;
-            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places', authWithPlace,
-                function (result) {
-                    // Verify that placeid is a uuid string.
-                    var placeId = result.data.id;
-                    test.equal(typeof placeId, 'string');
-                    test.equal(placeId.length, 36);
-                    lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places', auth1,
-                        function (result2) {
-                            test.equal(Object.keys(result2.data).length, 1);
-                            test.deepEqual(result2.data[0], placeInV2Format(lmHelpers.locMapPlace1, placeId));
-                            test.done();
-                        });
-                });
-        });
-    }
-};
-
-// Create invalid place gives 400
-tests.v2.createInvalidPlace = function(version) {
-    return function (test) {
-        test.expect(3);
-        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
-            var authWithPlace = JSON.parse(JSON.stringify(auth1));
-            authWithPlace.data = {lat: 1.2, lon: 2.3};
-            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places', authWithPlace,
-                {status: 400}, function () {
-                    test.done();
-                });
-        });
-    }
-};
-
-// Create multiple places
-tests.v2.createMultiplePlaces = function(version) {
-    return function (test) {
-        test.expect(12);
-        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
-            var authWithPlace = JSON.parse(JSON.stringify(auth1));
-            authWithPlace.data = lmHelpers.locMapPlace1;
-            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places', authWithPlace,
-                function (p1Result) {
-                    // Verify that placeid is a uuid string.
-                    var placeId1 = p1Result.data.id;
-                    test.equal(typeof placeId1, 'string');
-                    test.equal(placeId1.length, 36);
-
-                    authWithPlace.data = lmHelpers.locMapPlace2;
-                    lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places', authWithPlace,
-                        function (p2Result) {
-                            // Verify that placeid is a uuid string.
-                            var placeId2 = p2Result.data.id;
-                            test.equal(typeof placeId2, 'string');
-                            test.equal(placeId2.length, 36);
-
-                            lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places', auth1,
-                                function (result) {
-                                    test.equal(Object.keys(result.data).length, 2);
-                                    test.deepEqual(result.data[0], placeInV2Format(lmHelpers.locMapPlace1, placeId1));
-                                    test.deepEqual(result.data[1], placeInV2Format(lmHelpers.locMapPlace2, placeId2));
-                                    test.done();
-                                });
-                        });
-                });
-        });
-    }
-};
-
-// Place creation has a limit.
-tests.v2.createPlacesLimit = function(version) {
-    return function (test) {
-        test.expect(9);
-        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
-            var authWithPlace = JSON.parse(JSON.stringify(auth1));
-            authWithPlace.data = lmHelpers.locMapPlace1;
-            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places', authWithPlace,
-                function (p1Result) {
-                    authWithPlace.data = lmHelpers.locMapPlace2;
-                    lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places', authWithPlace,
-                        function (p2Result) {
-                            authWithPlace.data = lmHelpers.locMapPlace3;
-                            // Request over the limit should return status 403.
-                            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places',
-                                authWithPlace, {status: 403}, function () {
-                                    // Verify that only the places added before hitting limit
-                                    // exist on user places.
-                                    lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places',
-                                        auth1, function (result) {
-                                            test.equal(Object.keys(result.data).length, 2);
-                                            test.deepEqual(result.data[0],
-                                                placeInV2Format(lmHelpers.locMapPlace1, p1Result.data.id));
-                                            test.deepEqual(result.data[1],
-                                                placeInV2Format(lmHelpers.locMapPlace2, p2Result.data.id));
-                                            test.done();
-                                        });
-                                });
-                        });
-                });
-        });
-    }
-};
-
-// Modify an existing place.
-tests.v2.modifyPlace = function(version) {
-    return function (test) {
-        test.expect(9);
-        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
-            var authWithPlace = JSON.parse(JSON.stringify(auth1));
-            authWithPlace.data = lmHelpers.locMapPlace1;
-            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places', authWithPlace,
-                function (result1) {
-                    var placeId1 = result1.data.id;
-                    // Verify that first place is in.
-                    lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places', auth1,
-                        function (placesResult1) {
-                            test.deepEqual(placesResult1.data[0], placeInV2Format(lmHelpers.locMapPlace1, placeId1));
-                            authWithPlace.data = lmHelpers.locMapPlace2;
-                            lmHelpers.api.put(test, '/' + version + '/user/' + reply1.id + '/places/' + placeId1,
-                                authWithPlace, function () {
-                                    lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places',
-                                        auth1, function (placesResult2) {
-                                            // Verify that number of places is still one,
-                                            // and that the place is the latest.
-                                            test.equal(Object.keys(placesResult2.data).length, 1);
-                                            test.deepEqual(placesResult2.data[0],
-                                                placeInV2Format(lmHelpers.locMapPlace2, placeId1));
-                                            test.done();
-                                        });
-                                });
-                        });
-                });
-        });
-    }
-};
-
-// Modify existing place with invalid gives 400.
-tests.v2.modifyPlaceWithInvalid = function(version) {
-    return function (test) {
-        test.expect(6);
-        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
-            var authWithPlace = JSON.parse(JSON.stringify(auth1));
-            authWithPlace.data = lmHelpers.locMapPlace1;
-            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/place', authWithPlace,
-                function (result1) {
-                    var placeId1 = result1.data.id;
-                    authWithPlace.data = {lat: 1.2, lon: 3.5, rad: 'plop'};
-                    lmHelpers.api.put(test, '/' + version + '/user/' + reply1.id + '/place/' + placeId1,
-                        authWithPlace, {status: 400}, function () {
-                            // Verify that place is still the original.
-                            lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places', auth1,
-                                function (placesResult1) {
-                                    test.deepEqual(placesResult1.data[0],
-                                        placeInV2Format(lmHelpers.locMapPlace1, placeId1));
-                                    test.done();
-                                });
-                        });
-                });
-        });
-    }
-};
-// Remove an existing place.
 tests.v2.removePlace = function(version) {
-    return function (test) {
-        test.expect(8);
-        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
-            var authWithPlace = JSON.parse(JSON.stringify(auth1));
-            authWithPlace.data = lmHelpers.locMapPlace1;
-            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places', authWithPlace,
-                function (result1) {
-                    var placeId1 = result1.data.id;
-                    // Verify that first place is in.
-                    lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places', auth1,
-                        function (placesResult1) {
-                            test.equal(Object.keys(placesResult1.data).length, 1);
-                            lmHelpers.api.del(test, '/' + version + '/user/' + reply1.id + '/places/' + placeId1,
-                                auth1, function () {
-                                    lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places',
-                                        auth1, function (placesResult2) {
-                                            test.deepEqual(placesResult2.data, {});
-                                            test.done();
-                                        });
-                                });
-                        });
-                });
-        });
-    }
+	return function (test) {
+		test.expect(8);
+		lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+			var authWithPlace = JSON.parse(JSON.stringify(auth1));
+			authWithPlace.data = lmHelpers.locMapPlace1;
+			lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places', authWithPlace,
+				function (result1) {
+					var placeId1 = result1.data.id;
+					// Verify that first place is in.
+					lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places', auth1,
+						function (placesResult1) {
+							test.equal(Object.keys(placesResult1.data).length, 1);
+							lmHelpers.api.del(test, '/' + version + '/user/' + reply1.id + '/places/' + placeId1,
+								auth1, function () {
+									lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places',
+										auth1, function (placesResult2) {
+											test.deepEqual(placesResult2.data, {});
+											test.done();
+										});
+								});
+						});
+				});
+		});
+	}
 };
+
 
 // Remove non-existing place gives 404.
+tests.v1.removeNonExistingPlace = function (version) {
+	return function (test) {
+		test.expect(3);
+		lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+			lmHelpers.api.del(test, '/' + version + '/user/' + reply1.id + '/place/wrongPlaceId', auth1,
+				{status: 404}, function () {
+					test.done();
+				});
+		});
+	}
+};
+
 tests.v2.removeNonExistingPlace = function(version) {
-    return function (test) {
-        test.expect(3);
-        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
-            lmHelpers.api.del(test, '/' + version + '/user/' + reply1.id + '/places/wrongPlaceId', auth1,
-                {status: 404}, function () {
-                    test.done();
-                });
-        });
-    }
+	return function (test) {
+		test.expect(3);
+		lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+			lmHelpers.api.del(test, '/' + version + '/user/' + reply1.id + '/places/wrongPlaceId', auth1,
+				{status: 404}, function () {
+					test.done();
+				});
+		});
+	}
 };
 
 var v1 = 'v1', v2 = 'v2';
 var versions = [v1, v2];
 
-function addTest(name, version, testContainer) {
+function addTest(name, version, scope) {
 	function prettifyVersion(version) {
 		return ' [' + version + ']';
 	}
-	module.exports[name + prettifyVersion(version)] = testContainer[name](version);
+	module.exports[name + prettifyVersion(version)] = tests[scope][name](version);
 }
 
 Object.keys(tests.both).forEach(function (testName) {
     versions.forEach(function (version) {
-		addTest(testName, version, tests.both);
+		addTest(testName, version, 'both');
     });
 });
 versions.forEach(function(version) {
     Object.keys(tests[version]).forEach(function (testName) {
-		addTest(testName, version, tests[version]);
+		addTest(testName, version, version);
     });
 });
 
