@@ -1344,20 +1344,23 @@ tests.v2.removeNonExistingPlace = function(version) {
 var v1 = 'v1', v2 = 'v2';
 var versions = [v1, v2];
 
-function capitalizeVersion(version) {
-    return version.toUpperCase();
+function addTest(name, version, testContainer) {
+	function prettifyVersion(version) {
+		return ' [' + version + ']';
+	}
+	module.exports[name + prettifyVersion(version)] = testContainer[name](version);
 }
 
 Object.keys(tests.both).forEach(function (testName) {
     versions.forEach(function (version) {
-        module.exports[testName + capitalizeVersion(version)] = tests.both[testName](version);
+		addTest(testName, version, tests.both);
     });
 });
 versions.forEach(function(version) {
     Object.keys(tests[version]).forEach(function (testName) {
-        module.exports[testName + capitalizeVersion(version)] = tests[version][testName](version);
+		addTest(testName, version, tests[version]);
     });
-})
+});
 
 module.exports.tearDown = function (callback) {
     callback();
