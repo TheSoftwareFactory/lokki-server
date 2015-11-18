@@ -71,13 +71,13 @@ var LocMapRESTAPI2 = function() {
 				//nameMapping: userId -> name
 				var nameMapping = JSON.parse(locShare.data.nameMapping);
 
-				// array of userIds who can see me. We create a dictionary for better performance.
+				// Array of userIds who can see me. We create a dictionary for better performance.
 				var canSeeMe = {};
 				locShare.data.canSeeMe.forEach(function(userId) {
 					canSeeMe[userId] = true;
 				});
 
-				// array of userIds who I have ignored (= I can't see on the map). We create a dictionary for better performance.
+				// Array of userIds who I have ignored (= I can't see on the map). We create a dictionary for better performance.
 				var ignored = {};
 				locShare.data.ignored.forEach(function(userId) {
 					ignored[userId] = true;
@@ -95,13 +95,7 @@ var LocMapRESTAPI2 = function() {
 							var contact = {userId: contactUserId, email: email};
 							contact.name = (nameMapping[contactUserId]) ? nameMapping[contactUserId] : null;
 							contact.isIgnored = !!ignored[contactUserId];
-                            if (ICanSee[contactUserId]) {
-                                contact.location =  ICanSee[contactUserId].location;
-                                contact.location.rad = contact.location.acc;
-                                delete contact.location.acc;
-                            } else {
-                                contact.location = null;
-                            }
+                            contact.location = (ICanSee[contactUserId]) ? ICanSee[contactUserId].location : null;
 							contact.canSeeMe = !!canSeeMe[contactUserId];
 
 							contacts.push(contact);

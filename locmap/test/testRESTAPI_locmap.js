@@ -1509,39 +1509,6 @@ tests.v2.userRenameContacts = function(version) {
     }
 };
 
-tests.v2.contactLocationUsesRadInsteafOfAcc = function(version) {
-    return function(test) {
-        test.expect(9);
-
-        var location = {lat: 1, lon: 2, acc: 100};
-
-        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth, reply1) {
-            lmHelpers.createLocMapUser(test, testUserEmail2, 'dev2', function (auth2, reply2) {
-                auth.data = {emails: [testUserEmail2]};
-                lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/allow', auth, function () {
-                    auth2.data = {emails: [testUserEmail]};
-                    lmHelpers.api.post(test, '/' + version + '/user/' + reply2.id + '/allow', auth2, function () {
-                        auth2.data = {location: location};
-                        lmHelpers.api.post(test, '/' + version + '/user/' + reply2.id + '/location', auth2, function () {
-                            lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/contacts', auth, function(res) {
-                                var expectedLocation = location;
-                                expectedLocation.rad = location.acc;
-                                delete expectedLocation.acc;
-                                var expected = [{userId: reply2.id, email: testUserEmail2, name: null, location: expectedLocation, isIgnored: false, canSeeMe: true}];
-                                expected[0].location.time = res.data[0].location.time; //don't really care about this one
-                                test.deepEqual(res.data, expected);
-                                test.done();
-                            });
-                        });
-                    });
-                });
-            });
-        });
-
-    }
-}
-
-
 var v1 = 'v1', v2 = 'v2';
 var versions = [v1, v2];
 
