@@ -9,12 +9,14 @@ See LICENSE for details
  Test file: User API methods
  */
 
+var conf = require('../../lib/config');
+
 var LocMapEmail = require('../lib/email');
 var locMapEmail;
 var I18N = require('../../lib/i18n');
 var i18n = new I18N();
 
-var noReply = 'no-reply@example.com';
+var sender = conf.get('senderEmail');
 var targetUser = 'targetuser@example.com';
 var senderUser = 'senderuser@example.com';
 
@@ -29,7 +31,7 @@ module.exports = {
         locMapEmail.sendSignupMail(targetUser, 'en-US', 'http://test.com', function (result) {
             test.ok(result);
             test.equal(locMapEmail.emails.length, 1);
-            test.deepEqual(locMapEmail.emails[0], {to: targetUser, from: noReply,
+            test.deepEqual(locMapEmail.emails[0], {to: targetUser, from: sender,
                 subject: i18n.getLocalizedString('en-US', 'signup.userEmailSubject'),
                 text: i18n.getLocalizedString('en-US', 'signup.userEmailText',
                     'targetUser', targetUser, 'confirmationCode', 'http://test.com')});
@@ -42,7 +44,7 @@ module.exports = {
         locMapEmail.sendInviteEmail(targetUser, senderUser, 'en-US', function (result) {
             test.ok(result);
             test.equal(locMapEmail.emails.length, 1);
-            test.deepEqual(locMapEmail.emails[0], {to: targetUser, from: noReply,
+            test.deepEqual(locMapEmail.emails[0], {to: targetUser, from: sender,
                 subject: i18n.getLocalizedString('en-US', 'invite.userInvitedToLokkiEmailSubject'),
                 text: i18n.getLocalizedString('en-US', 'invite.userInvitedToLokkiEmailText',
                     'targetUser', targetUser, 'senderUser', senderUser)});
@@ -56,7 +58,7 @@ module.exports = {
         locMapEmail.sendResetEmail(targetUser, resetLink, 'en-US', function (result) {
             test.ok(result);
             test.equal(locMapEmail.emails.length, 1);
-            test.deepEqual(locMapEmail.emails[0], {to: targetUser, from: noReply,
+            test.deepEqual(locMapEmail.emails[0], {to: targetUser, from: sender,
                 subject: i18n.getLocalizedString('en-US', 'reset.emailSubject'),
                 text: i18n.getLocalizedString('en-US', 'reset.emailText', 'resetLink', resetLink)});
             test.done();
