@@ -1118,7 +1118,7 @@ tests.v2.allowAnotherUserContacts = function(version) {
         lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
             lmHelpers.createLocMapUser(test, testUserEmail2, 'dev2', function (auth2, reply2) {
                 auth1.data = {emails: [testUserEmail2]};
-                lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/allow', auth1, function () {
+                lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/contacts/allow', auth1, function () {
 
                     // Verify that icansee list for user2 contains user1
                     lmHelpers.api.get(test, '/' + version + '/user/' + reply2.id + '/contacts', auth2,
@@ -1174,9 +1174,9 @@ tests.v2.ignoreAnotherUser = function(version) {
         lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
             lmHelpers.createLocMapUser(test, testUserEmail2, 'dev2', function (auth2, reply2) {
                 auth1.data = {emails: [testUserEmail2]};
-                lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/allow', auth1, function () {
+                lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/contacts/allow', auth1, function () {
                     auth1.data = {ids: [reply2.id]};
-                    lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/ignore', auth1, function () {
+                    lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/contacts/ignore', auth1, function () {
                         // Verify that the ignore list for user 1 contains user 2
                         lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/contacts', auth1, function (res) {
                             var expected = [{userId: reply2.id, email: testUserEmail2, name: null, isIgnored: true, location: null, canSeeMe: true}];
@@ -1220,10 +1220,10 @@ tests.v2.unignoreAnotherUser = function(version) {
         lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
             lmHelpers.createLocMapUser(test, testUserEmail2, 'dev2', function (auth2, reply2) {
                 auth1.data = {emails: [testUserEmail2]};
-                lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/allow', auth1, function () {
+                lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/contacts/allow', auth1, function () {
                     auth1.data = {ids: [reply2.id]};
-                    lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/ignore', auth1, function () {
-                        lmHelpers.api.del(test, '/' + version + '/user/' + reply1.id + '/ignore/' + reply2.id, auth1, function () {
+                    lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/contacts/ignore', auth1, function () {
+                        lmHelpers.api.del(test, '/' + version + '/user/' + reply1.id + '/contacts/ignore/' + reply2.id, auth1, function () {
                             // Verify that the ignore list for user 1 doesn't contain user 2
                             lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/contacts', auth1, function (res) {
                                 var expected = [{userId: reply2.id, email: testUserEmail2, name: null, isIgnored: false, location: null, canSeeMe: true}];
@@ -1355,14 +1355,14 @@ tests.v2.deleteContact = function(version) {
                 auth1.data = {emails: [testUserEmail2]};
                 auth2.data = {emails: [testUserEmail]};
                 // Allow both users to see each other
-                lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/allow', auth1, function () {
-                    lmHelpers.api.post(test, '/' + version + '/user/' + reply2.id + '/allow', auth2, function () {
+                lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/contacts/allow', auth1, function () {
+                    lmHelpers.api.post(test, '/' + version + '/user/' + reply2.id + '/contacts/allow', auth2, function () {
                         // Ignore user 2
                         auth1.data = {ids: [reply2.id]};
-                        lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/ignore', auth1, function () {
+                        lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/contacts/ignore', auth1, function () {
                             // Rename user 2
                             auth1.data = {name: 'deletetest'};
-                            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/rename/' + reply2.id, auth1, function () {
+                            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/contacts/rename/' + reply2.id, auth1, function () {
                                 // Verify that user1 can see and can be seen by user2 and that user 2 is on 1's ignore list
                                 lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/contacts', auth1,
                                     function (res) {
@@ -1438,7 +1438,7 @@ tests.v2.deleteStubContact = function(version) {
         test.expect(8);
         lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
             auth1.data = {emails: [testStubUser]};
-            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/allow', auth1, function () {
+            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/contacts/allow', auth1, function () {
                 // Verify that user1 can see and can be seen by user2 and that user 2 is on 1's ignore list
                 lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/contacts', auth1,
                     function (res) {
@@ -1491,10 +1491,10 @@ tests.v2.userRenameContacts = function(version) {
         lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth, reply1) {
             lmHelpers.createLocMapUser(test, testUserEmail2, 'dev2', function (auth2, reply2) {
                 auth.data = {emails: [testUserEmail2]};
-                lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/allow', auth, function () {
+                lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/contacts/allow', auth, function () {
 
                     auth.data = {name: newName};
-                    lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/rename/' + reply2.id,
+                    lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/contacts/rename/' + reply2.id,
                         auth, function () {
                             lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/contacts', auth,
                                 function (res) {

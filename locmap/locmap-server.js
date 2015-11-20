@@ -126,7 +126,7 @@ module.exports = function (app) {
 	});
 
     // Allow another to see current users position
-    routeUser(POST, ['v1', 'v2'], 'allow', function (req, res) {
+    routeUser(POST, ['v1', 'v2'], ['allow', 'contacts/allow'], function (req, res) {
         var cache = new Cache();
         cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
 
@@ -137,7 +137,7 @@ module.exports = function (app) {
     });
 
     // Stop another user from seeing current users position
-    routeUser(DELETE, ['v1', 'v2'], 'allow/:targetUserId',
+    routeUser(DELETE, ['v1', 'v2'], ['allow/:targetUserId', 'contacts/allow/:targetUserId'],
         function (req, res) {
             var cache = new Cache();
             cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
@@ -149,7 +149,7 @@ module.exports = function (app) {
 	});
 
     // Prevent self from seeing another user's position
-    routeUser(POST, ['v1', 'v2'], 'ignore', function (req, res) {
+    routeUser(POST, ['v1', 'v2'], ['ignore', 'contacts/ignore'], function (req, res) {
         locMapRestApi.ignoreUser(req.params.userId, req.body, function (status, result) {
                 res.send(status, result);
         });
@@ -157,7 +157,7 @@ module.exports = function (app) {
 
 
     // Allow self to see an ignored user's position
-    routeUser(DELETE, ['v1', 'v2'], 'ignore/:targetUserId', function (req, res) {
+    routeUser(DELETE, ['v1', 'v2'], ['ignore/:targetUserId', 'contacts/ignore/:targetUserId'], function (req, res) {
         locMapRestApi.unIgnoreUser(req.params.userId, req.params.targetUserId,
             function (status, result) {
                 res.send(status, result);
@@ -165,7 +165,7 @@ module.exports = function (app) {
     });
 
     // Rename contacts
-    routeUser(POST, ['v1', 'v2'], 'rename/:targetUserId', function(req, res) {
+    routeUser(POST, ['v1', 'v2'], ['rename/:targetUserId', 'contacts/rename/:targetUserId'], function(req, res) {
         locMapRestApi.nameUser(req.params.userId, req.params.targetUserId, req.body,
             function (status, result) {
                 res.send(status, result);
