@@ -33,26 +33,26 @@ var uuid = require('node-uuid');
 // Rest API version 2
 var LocMapRESTAPI2 = function() {
 
-	// Get user places.
-	this.getUserPlaces = function(userId, cache, callback) {
-		var user = cache.get('locmapuser', userId);
+    // Get user places.
+    this.getUserPlaces = function(userId, cache, callback) {
+        var user = cache.get('locmapuser', userId);
 
-		var cachedPlaces = user.data.places;
-		var places = [];
+        var cachedPlaces = user.data.places;
+        var places = [];
 
-		Object.keys(cachedPlaces).forEach(function(id) {
-			var place = cachedPlaces[id];
-			place.id = id;
-			place.location = {};
-			['lat', 'lon', 'rad'].forEach(function(field) {
-				place.location[field] = place[field];
-				delete place[field];
-			});
-			places.push(place);
-		});
+        Object.keys(cachedPlaces).forEach(function(id) {
+            var place = cachedPlaces[id];
+            place.id = id;
+            place.location = {};
+            ['lat', 'lon', 'rad'].forEach(function(field) {
+                place.location[field] = place[field];
+                delete place[field];
+            });
+            places.push(place);
+        });
 
-		callback(200, places);
-	};
+        callback(200, places);
+    };
 
 };
 
