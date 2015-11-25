@@ -7,6 +7,7 @@ See LICENSE for details
 
 var helpers = require('../../test_helpers/test_helpers');
 var lmHelpers = require('../test_helpers/locMapHelpers');
+var Constants = require('../lib/constants.js');
 
 var testUserEmail = 'user1@example.com.invalid';
 var testUserEmail2 = 'user2@example.com.invalid';
@@ -166,7 +167,7 @@ module.exports = {
                 auth1.data = {emails: [testUserEmail2]};
                 lmHelpers.api.post(test, '/v1/user/' + reply1.id + '/allow', auth1, function () {
                     // Verify that icansee list for user2 contains user1
-                    lmHelpers.api.get(test, '/v1/user/' + reply2.id + '/dashboard', auth2,
+                    lmHelpers.api.get(test, '/v1/user/' + reply2.id + '/version/' + Constants.LatestAcceptedVersionCode + '/dashboard', auth2,
                         function (res) {
                             var ICanSeeData = {},
                                 idMapping = {};
@@ -177,7 +178,7 @@ module.exports = {
                             userDashboard.idmapping = idMapping;
                             test.deepEqual(res.data, userDashboard);
                             // Verify that canseeme list for user1 contains user2
-                            lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/dashboard', auth1,
+                            lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/version/' + Constants.LatestAcceptedVersionCode + '/dashboard', auth1,
                                 function (res2) {
                                     userDashboard2.canseeme = [reply2.id];
                                     userDashboard2.idmapping = idMapping;
@@ -230,7 +231,7 @@ module.exports = {
                     lmHelpers.api.post(test, '/v1/user/' + reply1.id + '/allow', auth1,
                         function () {
                             // Verify that icansee list for user2 contains user1 only once.
-                            lmHelpers.api.get(test, '/v1/user/' + reply2.id + '/dashboard', auth2,
+                            lmHelpers.api.get(test, '/v1/user/' + reply2.id + '/version/' + Constants.LatestAcceptedVersionCode + '/dashboard', auth2,
                                 function (res) {
                                     var ICanSeeData = {},
                                         idMapping = {};
@@ -242,7 +243,7 @@ module.exports = {
                                     userDashboard.idmapping = idMapping;
                                     test.deepEqual(res.data, userDashboard);
                                     // Verify that canseeme list for user1 contains user2 only once.
-                                    lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/dashboard',
+                                    lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/version/' + Constants.LatestAcceptedVersionCode + '/dashboard',
                                         auth1, function (res2) {
                                             userDashboard2.canseeme = [reply2.id];
                                             userDashboard2.idmapping = idMapping;
@@ -268,14 +269,14 @@ module.exports = {
                         lmHelpers.api.del(test, '/v1/user/' + reply1.id + '/allow/' + reply2.id,
                             auth1, function () {
                                 // Verify that icansee list is empty for the other user.
-                                lmHelpers.api.get(test, '/v1/user/' + reply2.id + '/dashboard',
+                                lmHelpers.api.get(test, '/v1/user/' + reply2.id + '/version/' + Constants.LatestAcceptedVersionCode + '/dashboard',
                                     auth2, function (res) {
                                         var idMapping = {};
                                         idMapping[reply2.id] = testUserEmail2;
                                         test.deepEqual(res.data.idmapping, idMapping);
                                         test.deepEqual(res.data.icansee, []);
                                         // Verify that canseeme list is empty for the denying user.
-                                        lmHelpers.api.get(test, '/v1/user/' + reply1.id +
+                                        lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/version/' + Constants.LatestAcceptedVersionCode +
                                             '/dashboard', auth1, function (res2) {
                                                 var idMapping2 = {};
                                                 idMapping2[reply1.id] = testUserEmail;
@@ -290,6 +291,18 @@ module.exports = {
         });
     },
 
+    // Version is out of date message is displayed.
+    userDashboardOldVersionMessage: function (test) {
+        test.expect(4);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+            lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/version/410/dashboard', auth1,
+                function (dash) {
+                    test.equal(dash.data.serverMessage, Constants.ServerMessage);
+                    test.done();
+                });
+        });
+    },
+
     // Cannot allow own user.
     cannotAllowSelf: function (test) {
         test.expect(5);
@@ -298,7 +311,7 @@ module.exports = {
             authWithEmail.data = {emails: [testUserEmail]};
             lmHelpers.api.post(test, '/v1/user/' + reply1.id + '/allow', authWithEmail,
                 {status: 400}, function () {
-                    lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/dashboard', auth1,
+                    lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/version/' + Constants.LatestAcceptedVersionCode + '/dashboard', auth1,
                         function (dash) {
                             test.deepEqual(dash.data.canseeme, []);
                             test.done();
@@ -315,7 +328,7 @@ module.exports = {
             authWithEmail.data = {emails: ['thisisnotanemail@']};
             lmHelpers.api.post(test, '/v1/user/' + reply1.id + '/allow', authWithEmail,
                 {status: 400}, function () {
-                    lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/dashboard', auth1,
+                    lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/version/' + Constants.LatestAcceptedVersionCode + '/dashboard', auth1,
                         function (dash) {
                             test.deepEqual(dash.data.canseeme, []);
                             test.done();
@@ -334,7 +347,7 @@ module.exports = {
                     authWithEmail.data = {emails: ['TeStUsEr2@Example.COM']};
                     lmHelpers.api.post(test, '/v1/user/' + reply1.id + '/allow', authWithEmail,
                         function () {
-                            lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/dashboard', auth1,
+                            lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/version/' + Constants.LatestAcceptedVersionCode + '/dashboard', auth1,
                                 function (dash) {
                                     test.deepEqual(dash.data.canseeme, [reply2.id]);
                                     test.done();
@@ -354,7 +367,7 @@ module.exports = {
                     auth1.data = {emails: [testUserEmail2]};
                     lmHelpers.api.post(test, '/v1/user/' + reply1.id + '/allow', auth1,
                         function () {
-                            lmHelpers.api.get(test, '/v1/user/' + reply2.id + '/dashboard', auth2,
+                            lmHelpers.api.get(test, '/v1/user/' + reply2.id + '/version/' + Constants.LatestAcceptedVersionCode + '/dashboard', auth2,
                                 function (dash) {
                                     test.equal(dash.data.visibility, true,
                                         'User visibility should be true.');
@@ -382,7 +395,7 @@ module.exports = {
                     auth1.data = {emails: [testUserEmail2]};
                     lmHelpers.api.post(test, '/v1/user/' + reply1.id + '/allow', auth1,
                         function () {
-                            lmHelpers.api.get(test, '/v1/user/' + reply2.id + '/dashboard', auth2,
+                            lmHelpers.api.get(test, '/v1/user/' + reply2.id + '/version/' + Constants.LatestAcceptedVersionCode + '/dashboard', auth2,
                                 function (dash) {
                                     test.equal(dash.data.icansee[reply1.id].battery, 99);
                                     test.done();
@@ -399,7 +412,7 @@ module.exports = {
         lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
             auth1.data = {emails: [testUserEmail2]};
             lmHelpers.api.post(test, '/v1/user/' + reply1.id + '/allow', auth1, function () {
-                lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/dashboard', auth1,
+                lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/version/' + Constants.LatestAcceptedVersionCode + '/dashboard', auth1,
                     function (dash) {
                         test.equal(dash.data.canseeme.length, 1);
                         // Canseeme id (user2) must be in idmapping, value must be "user2"
@@ -425,7 +438,7 @@ module.exports = {
                             auth3.data = {emails: [testUserEmail]};
                             lmHelpers.api.post(test, '/v1/user/' + reply3.id + '/allow', auth3,
                                 function () {
-                                    lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/dashboard',
+                                    lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/version/' + Constants.LatestAcceptedVersionCode + '/dashboard',
                                         auth1, function (dash) {
                                             var ICanSeeData = {},
                                                 idMapping = {};
@@ -659,7 +672,7 @@ module.exports = {
             lmHelpers.api.post(test, '/v1/user/' + reply1.id + '/allow', auth1, function () {
                 // Hash for stub user email, depends on the hashing function.
                 lmHelpers.api.get(test,
-                    '/v1/user/b4b265d4a1a7f40c631e4dd003510ebf43f32135/dashboard',
+                    '/v1/user/b4b265d4a1a7f40c631e4dd003510ebf43f32135/version/' + Constants.LatestAcceptedVersionCode + '/dashboard',
                     {'headers': {'authorizationtoken': ''}}, lmHelpers.wrongAuthTokenResult,
                     function () {
                         test.done();
@@ -720,13 +733,13 @@ module.exports = {
             authWithVisibility.data = {visibility: false};
             lmHelpers.api.put(test, '/v1/user/' + reply1.id + '/visibility', authWithVisibility,
                 function () {
-                    lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/dashboard', auth1,
+                    lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/version/' + Constants.LatestAcceptedVersionCode + '/dashboard', auth1,
                         function (dash) {
                             test.equal(dash.data.visibility, false);
                             authWithVisibility.data = {visibility: true};
                             lmHelpers.api.put(test, '/v1/user/' + reply1.id + '/visibility',
                                 authWithVisibility, function () {
-                                    lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/dashboard',
+                                    lmHelpers.api.get(test, '/v1/user/' + reply1.id + '/version/' + Constants.LatestAcceptedVersionCode + '/dashboard',
                                         auth1, function (dash2) {
                                             test.equal(dash2.data.visibility, true);
                                             test.done();
