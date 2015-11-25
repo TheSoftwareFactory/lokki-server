@@ -16,7 +16,6 @@ var locMapRestApi = new LocMapRestApi();
 var LocMapAdminApi = require('./lib/locMapAdminApi');
 var locMapAdminApi = new LocMapAdminApi();
 var Cache = require('../lib/cache');
-var Constants = require('./lib/constants');
 
 // use it as first callback for calls which use authentication.
 var usesAuthentication = function (req, res, next) {
@@ -185,28 +184,6 @@ module.exports = function (app) {
                 ' contents: ' + JSON.stringify(result));
             res.send(status, result);
         });
-    });
-
-    // Check for version, if it is out of date, then return a server message.
-    // Otherwise, return the user dashboard information.
-    app.get('/api/locmap/v1/user/:userId/version/:versionCode/dashboard', usesAuthentication, function (req, res) {
-        var cache = new Cache();
-        cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
-
-        if (req.params.versionCode < Constants.LatestAcceptedVersionCode)
-        {
-            var responseData = {};
-            responseData.serverMessage = Constants.ServerMessage;
-            res.send(200, responseData);
-        }
-        else
-        {
-            locMapRestApi.getUserDashboard(req.params.userId, cache, function (status, result) {
-                logger.trace('Dashboard reply status: ' + status +
-                    ' contents: ' + JSON.stringify(result));
-                res.send(status, result);
-            });
-        }
     });
 
     // Send notification to update location to users that the current user can see.
