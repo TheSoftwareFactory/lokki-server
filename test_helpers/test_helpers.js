@@ -188,7 +188,7 @@ module.exports = {
         testServerProcess.stdout.on('data', function(data) {
             var str = data.toString();
             var lines = str.split(/(\r?\n)/g);
-            logger.trace('Server log: %s', lines.join('').trim());
+            logger.debug('Server log: %s', lines.join('').trim());
         });
 
         // Poll server until able to connect

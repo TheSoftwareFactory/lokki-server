@@ -749,7 +749,6 @@ tests.both.userRenameContacts = function(version) {
 
             lmHelpers.api.post(test, '/' + version + '/user/' + reply.id + '/rename/' + 'testUserId',
                 auth, function () {
-                    console.log('got rename result');
                     lmHelpers.api.get(test, '/' + version + '/user/' + reply.id + '/contacts', auth,
                         function (res) {
                             var expected = {canseeme: [], icansee: [], ignored: [], idmapping: []};
