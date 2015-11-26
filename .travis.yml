@@ -8,7 +8,8 @@ env:
   es6: true
 script:
   - eslint .
-  - cr . -x /node_modules
+    # complexity-report can't deal with ES6, so ignore parse errors
+  - cr --ignoreerrors . -x /node_modules  
   - node unittest-runner.js
 services:
   - redis-server
