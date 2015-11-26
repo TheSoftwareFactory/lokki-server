@@ -19,6 +19,9 @@ var LocMapAdminApi = require('./lib/locMapAdminApi');
 var locMapAdminApi = new LocMapAdminApi();
 var Cache = require('../lib/cache');
 
+var suspend = require('suspend');
+var assert = require('assert');
+
 // use it as first callback for calls which use authentication.
 var usesAuthentication = function (req, res, next) {
     locMapRestApi.authorizeUser(req.params.userId, req.headers,
@@ -109,6 +112,7 @@ module.exports = function (app) {
     // Reply: 200, {id: 'userId', authorizationtoken: 'mytoken',
     //      icansee: ['userId2', 'userId3'], canseeme: ['userId4']}
     route(POST, ['v1', 'v2'], 'signup', function (req, res) {
+
         locMapRestApi.signUpUser(req.body, function (status, result) {
             res.send(status, result);
         });
@@ -285,6 +289,7 @@ module.exports = function (app) {
 
     // New account verification using confirmation link.
     routeRootApi(GET, '/confirm/:userId/:confirmationId', function (req, res) {
+
         locMapRestApi.confirmUserAccount(req.params.userId, req.params.confirmationId, function (status, result) {
             // Remove forcing content to load as a file.
             res.removeHeader('Content-Disposition');
@@ -377,6 +382,51 @@ module.exports = function (app) {
             res.send(status, result);
         });
     });
+
+    app.get('/request-delete/:emailAddr', suspend(function* (req, res) {
+        res.removeHeader('Content-Disposition');
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+
+        var result = yield locMapRestApi.requestDelete(req.params.emailAddr,
+                suspend.resumeRaw());
+        var status = result[0];
+        var result = result[1];
+
+        if (status === 200) {
+            res.send(200, result);
+        }
+        assert.ok(status === 200);
+    }));
+
+    app.get('/confirm-delete/:userId/:deleteCode', suspend(function* (req, res) {
+        res.removeHeader('Content-Disposition');
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+
+        var result = yield locMapRestApi.confirmDelete(req.params.userId, 
+                req.params.deleteCode, suspend.resumeRaw());
+        var status = result[0];
+        var result = result[1];
+
+        if (status === 200) {
+            res.send(200, result);
+        }
+        assert.ok(status === 200);
+    }));
+
+    app.get('/do-delete/:userId/:deleteCode', suspend(function* (req, res) {
+        res.removeHeader('Content-Disposition');
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+
+        var result = yield locMapRestApi.doDelete(req.params.userId,
+                req.params.deleteCode, suspend.resumeRaw());
+        var status = result[0];
+        var result = result[1];
+
+        if (status === 200) {
+            res.send(200, result);
+        }
+        assert.ok(status === 200);
+    }));
 
     // // ADMIN calls
     // Get crash reports for chosen os and time period.

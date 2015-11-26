@@ -26,9 +26,12 @@ var LocMapConfirmationCode = require('./confirmationCode');
 var locMapConfirmationCode = new LocMapConfirmationCode();
 var I18N = require('../../lib/i18n');
 var i18n = new I18N();
+var deletion = require('./deletion');
 
 var check = require('validator').check;
 var uuid = require('node-uuid');
+var assert = require('assert');
+var suspend = require('suspend');
 
 var LocMapRESTAPI = function() {
     var restApi = this;
@@ -267,6 +270,7 @@ var LocMapRESTAPI = function() {
     callback callback       Callback function
     */
     this.confirmUserAccount = function(userId, confirmationCode, callback) {
+
         // Check that the confirmation code matches
         locMapConfirmationCode.getConfirmationCodeData(userId, confirmationCode, function(confirmationData) {
             if (typeof confirmationData !== 'number' && typeof confirmationData === 'object' && typeof confirmationData.userId === 'string' && confirmationData.userId.length > 0 &&
@@ -1124,6 +1128,7 @@ var LocMapRESTAPI = function() {
 
     // Remove an existing place.
     this.removeUserPlace = function(userId, cache, placeId, callback) {
+
         var user = cache.get('locmapuser', userId);
         if (user.data.places.hasOwnProperty(placeId)) {
             delete user.data.places[placeId];
@@ -1135,6 +1140,80 @@ var LocMapRESTAPI = function() {
         }
     };
 
+    this.confirmDelete = suspend(function* (userId, deleteCode, callback) {
+        var yesLink = conf.get('locMapConfig').baseUrl
+            + '/do-delete/' + userId + '/' + deleteCode;
+
+        var user = new LocMapUserModel(userId);
+        var data = (yield user.getData(suspend.resumeRaw()))[0];
+        var lang = data.language;
+        assert.ok(!!lang);
+
+        var responseHtml = i18n.getLocalizedString(lang, 'delete.confirm',
+                'yesLink', yesLink);
+        return callback(200, responseHtml);
+    });
+
+    this.doDelete = suspend(function* (userId, deleteCode, callback) {
+
+        var user = new LocMapUserModel(userId);
+        var data = (yield user.getData(suspend.resumeRaw()))[0];
+        var lang = data.language;
+        assert.ok(!!lang);
+
+        var result = yield deletion.tryDeleteUser(userId, deleteCode, suspend.resume());
+
+        if (result === 'OK') {
+            logger.info('Deleted user '+userId);
+            return callback(200, i18n.getLocalizedString(lang, 'delete.done'));
+        } else {
+            logger.info('Failed to delete user '+userId);
+            return callback(200, i18n.getLocalizedString(lang, 'delete.failed'));
+        }
+    });
+
+    this.requestDelete = suspend(function* (email, callback) {
+
+        assert.ok(typeof email === 'string');
+        assert.ok(typeof callback === 'function');
+
+        var LocMapEmail = require('./email');
+        var locMapEmail = new LocMapEmail();
+
+        var userId = yield locMapCommon.getUserByEmail(email, suspend.resume());
+        
+        if (userId === null) {
+            logger.info('Requested to delete nonexistent user with email '
+                    + email);
+            return callback(200, i18n.getLocalizedString(i18n.getDefaultLanguage(), 
+                    'delete.request.badaddress'));
+        };
+
+        assert.ok(typeof userId === 'string' && userId.length === 40);
+        var user = new LocMapUserModel(userId);
+        var data = (yield user.getData(suspend.resumeRaw()))[0];
+        var lang = data.language;
+        assert.ok(!!lang);
+
+        var code = yield deletion.makeDeleteCode(userId, suspend.resume());
+        assert.ok(typeof code === 'string' && code.length > 10);
+
+        var deleteLink = conf.get('locMapConfig').baseUrl
+            + '/confirm-delete/' + userId + '/' + code;
+        var sent = (yield locMapEmail.sendDeleteEmail(email, deleteLink,
+                    user.language, suspend.resumeRaw()))[0];
+
+        assert.ok(typeof sent === 'boolean');
+
+        if (!sent) {
+            logger.info('Failed to send deletion email to '+email);
+            callback(200, i18n.getLocalizedString(lang,
+                    'delete.request.sendfail', 'email', email));
+        } else {
+            callback(200, i18n.getLocalizedString(lang,
+                    'delete.request.sent', 'email', email));
+        }
+    });
 };
 
 module.exports = LocMapRESTAPI;
