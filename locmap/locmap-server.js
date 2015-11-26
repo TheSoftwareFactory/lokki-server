@@ -245,14 +245,11 @@ module.exports = function (app) {
         var cache = new Cache();
         cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
 
-        if (req.params.versionCode < Constants.LatestAcceptedVersionCode)
-        {
+        if (req.params.versionCode < Constants.LatestAcceptedVersionCode) {
             var responseData = {};
             responseData.serverMessage = Constants.ServerMessage;
             res.send(200, responseData);
-        }
-        else
-        {
+        } else {
             locMapRestApi.getUserDashboard(req.params.userId, cache, function (status, result) {
                 logger.trace('Dashboard reply status: ' + status +
                     ' contents: ' + JSON.stringify(result));

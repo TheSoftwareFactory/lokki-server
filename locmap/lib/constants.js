@@ -8,8 +8,8 @@
  */
 
 var Constants = {
-    "LatestAcceptedVersionCode":"413",
-    "ServerMessage":"Your application is out of date. Please download the new version from Google Play Store."
+    'LatestAcceptedVersionCode':'420',
+    'ServerMessage':'Your application is out of date. Please download the new version from Google Play Store.'
 };
 
 module.exports = Constants;
