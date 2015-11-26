@@ -1140,7 +1140,7 @@ var LocMapRESTAPI = function() {
         }
     };
 
-    this.confirmDelete = suspend(function* (userId, deleteCode, callback){
+    this.confirmDelete = suspend(function* (userId, deleteCode, callback) {
         var yesLink = conf.get('locMapConfig').baseUrl
             + '/do-delete/' + userId + '/' + deleteCode;
 

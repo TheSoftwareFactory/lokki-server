@@ -27,5 +27,10 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/TheSoftwareFactory/lokki-server.git"
+  },
+  "eslintConfig": {
+    "env": {
+      "es6": true
+    }
   }
 }

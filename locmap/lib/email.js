@@ -31,7 +31,7 @@ var LocMapEmail = function () {
             logger.trace('Using sendgrid to send email.');
             var sendgrid = require('sendgrid')(
                     conf.get('sendGrid').username,
-                    conf.get('sendGrid').password );
+                    conf.get('sendGrid').password);
             var email = new sendgrid.Email(emailObj);
             var sendRes = yield sendgrid.send(email, suspend.resumeRaw());
             var err = sendRes[0];

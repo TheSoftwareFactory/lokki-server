@@ -201,15 +201,13 @@ var LocMapCommon = function() {
                 var data = (yield user.getData(suspend.resumeRaw()))[0];
                 if (!data.email) {
                     logger.error('Could not get email of user '+users[i]);
-                }
-                else if (data.email === email) {
+                } else if (data.email === email) {
                     return callback(null, userId);
                 }
             }
             // user not in database
             return callback(null, null);
-        }
-        catch (err) {
+        } catch (err) {
             return callback(err);
         }
     });
