@@ -8,6 +8,7 @@ See LICENSE for details
 
 var conf = require('../lib/config');
 var logger = require('../lib/logger');
+var db = require('../lib/db');
 
 var testServerProcess = {};
 
@@ -342,6 +343,14 @@ module.exports = {
             var testUser = testUsers[i];
             removeAvatar(testUser);
         }
+    },
+
+    keyExists: function (key, callback) {
+        db.keys(key, function (err, res) {
+            if (err) callback(err);
+            if (res instanceof Array && res.length === 1) callback(null, true);
+            else callback(null, false);
+        });
     }
 
 };

@@ -27,5 +27,13 @@
     "reset.emailSubject": "Vahvista Lokki -rekisteröityminen",
     "reset.emailText": "Sinun on vahvistettava Lokki-tilisi. Voit tehdä sen napsauttamalla seuraavaa linkkiä: %resetLink%. Tämä linkki on toiminnassa 24 tunnin ajan. Ota huomioon, että sinun on kirjauduttava Lokkiin kahden tunnin kuluessa siitä, kun olet vahvistanut tilisi. Tämä ei vaikuta Lokissa jo oleviin yhteystietoihisi ja asetuksiisi.\n\nMuista, että et voi käyttää samaa sähköpostiosoitetta kuin yhdessä Lokki-tilissä tai laitteessa.",
     "reset.serverMessage": "<html><body>Hyvä Lokin käyttäjä<br/><br/>Voit nyt kirjautua Lokkiin. Tämä valtuutus on voimassa kahden tunnin ajan. Yhteystietosi ja asetuksesi eivät muutu, kun kirjaudut Lokkiin.<br/><br/>Muista, että et voi käyttää samaa sähköpostiosoitetta kuin yhdessä Lokki-tilissä tai laitteessa.</body></html>",
-    "notify.friendLocationRequestLokkiStart": "Lokki-ystäväsi pyytävät sijaintiasi. Käynnistä Lokki, jotta sijaintiraportointi otetaan käyttöön."
+    "notify.friendLocationRequestLokkiStart": "Lokki-ystäväsi pyytävät sijaintiasi. Käynnistä Lokki, jotta sijaintiraportointi otetaan käyttöön.",
+    "delete.request.badaddress": "<html><body>Ei ole käyttäjää tuolla osoitteella.</html></body>",
+    "delete.request.sent": "<html><body>Osoitteeseen %email% on lähetetty viesti.<br/><br/> Ole hyvä ja seuraa tuossa viestissä olevia ohjeita</html></body>",
+    "delete.request.sendfail": "<html><body>Emme onnistuneet lähettämään viestiä osoitteeseen %email%<br/><br/>Yritä uudestaan tai ota yhteyttä Lokki-sovelluksen ylläpitäjiin</html></body>",
+    "delete.emailSubject": "Vahvista Lokki-tietojen poistaminen",
+    "delete.emailText": "Joku on pyytänyt Lokki-tilisi ja kaikkien sen tietojen poistamista. Jos se et ollut sinä, jätä tämä viesti huomiotta. Muuten, klikkaa tätä linkkiä: %deleteLink%",
+    "delete.confirm": "<html><body> <a href=%yesLink&>Klikkaa tätä</a> poistaaksesi kaikki Lokki-tietosi. <br/><br/> Tätä ei voi perua! <br/><br/> Jos et halua poistaa tietojasi, sulje tämä sivu. </html></body>",
+    "delete.done": "<html><body>Tietosi on nyt poistettu.</body></html>",
+    "delete.failed": "<html><body>Emme onnistuneet poistamaan tietojasi! <br/><br/> Yritä uudestaan tai ota yhteyttä Lokki-sovelluksen ylläpitäjiin."
 }
