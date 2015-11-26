@@ -15,11 +15,11 @@ var db = require('../../lib/db');
 var LocMapCommon = require('./locMapCommon');
 var locMapCommon = new LocMapCommon();
 
-var LocMapUserPrefix = 'locmapsharemodel:';
+var sharePrefix = conf.get('db').sharePrefix;
 
 var jsonFields = ['canSeeMe', 'ICanSee', 'ignored']; // List of model fields that are JSON encoded.
 
-var LocMapSharingModel = function(userId) {
+var LocMapShareModel = function(userId) {
     this.data = {
         userId: userId,
         // Store name mapping as stringified JSON for easy serialization
@@ -48,7 +48,7 @@ var LocMapSharingModel = function(userId) {
 
     this.getData = function(callback) {
         var currentUser = this;
-        db.hgetall(LocMapUserPrefix + this.data.userId, function(error, result) {
+        db.hgetall(sharePrefix + this.data.userId, function(error, result) {
             if (result) { // Convert Data to JSON object. result = this._deserializeData(result);
                 for (var key in result) {
                     try {
@@ -86,7 +86,7 @@ var LocMapSharingModel = function(userId) {
         }
 
         var serializedData = currentUser._serializeData(currentUser.data);
-        db.hmset(LocMapUserPrefix + currentUser.data.userId, serializedData, function(error, result) {
+        db.hmset(sharePrefix + currentUser.data.userId, serializedData, function(error, result) {
 
             if (error) {
                 result = 400;
@@ -200,4 +200,4 @@ var LocMapSharingModel = function(userId) {
     }
 };
 
-module.exports = LocMapSharingModel;
+module.exports = LocMapShareModel;

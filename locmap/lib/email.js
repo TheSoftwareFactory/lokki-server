@@ -17,34 +17,48 @@ var locMapCommon = new LocMapCommon();
 var I18N = require('../../lib/i18n');
 var i18n = new I18N();
 
+var util = require('util');
+
+var assert = require('assert');
+var suspend = require('suspend');
+var db = require('../../lib/db');
+
 var LocMapEmail = function () {
     this.emails = [];
 
-    this._sendEmail = function (emailObj, callback) {
+    this._sendEmail = suspend(function* (emailObj, callback) {
         if (conf.get('sendEmails')) {
             logger.trace('Using sendgrid to send email.');
             var sendgrid = require('sendgrid')(
                     conf.get('sendGrid').username,
-                    conf.get('sendGrid').password
-                ),
-                email = new sendgrid.Email(emailObj);
-            sendgrid.send(email, function (err) {
-                if (err) {
-                    logger.error('Error sending signup email to ' + emailObj.to + ' : ' + err);
-                    logger.error(err);
-                    callback(false);
-                } else {
-                    callback(true);
-                }
-            });
+                    conf.get('sendGrid').password);
+            var email = new sendgrid.Email(emailObj);
+            var sendRes = yield sendgrid.send(email, suspend.resumeRaw());
+            var err = sendRes[0];
+            if (err) {
+                logger.error('Error sending signup email to '
+                        + emailObj.to + ' : ' + err);
+                logger.error(err);
+                return callback(false);
+            } else {
+                return callback(true);
+            }
         } else {
             logger.trace('Saving email locally.');
             this.emails.push(emailObj);
-            callback(true);
+
+            try {
+                yield db.rpush('sentmail', JSON.stringify(emailObj),
+                        suspend.resume());
+            } catch (err) {
+                return callback(false);
+            }
+            return callback(true);
         }
-    };
+    });
 
     this.sendSignupMail = function (targetEmail, langCode, confirmationCode, callback) {
+
         var lang = locMapCommon.verifyLangCode(langCode),
             subject = i18n.getLocalizedString(lang, 'signup.userEmailSubject'),
             messageText = i18n.getLocalizedString(lang, 'signup.userEmailText',
@@ -92,6 +106,24 @@ var LocMapEmail = function () {
             subject = i18n.getLocalizedString(lang, 'reset.emailSubject'),
             messageText = i18n.getLocalizedString(lang, 'reset.emailText', 'resetLink', resetLink),
             emailObj = {
+                to: targetEmail,
+                from: conf.get('senderEmail'),
+                subject: subject,
+                text: messageText
+            };
+        this._sendEmail(emailObj, callback);
+    };
+
+    this.sendDeleteEmail = function (targetEmail, deleteLink, langCode, callback) {
+
+        var lang = locMapCommon.verifyLangCode(langCode);
+        var subject = i18n.getLocalizedString(lang, 'delete.emailSubject');
+
+        var  messageText = i18n.getLocalizedString(lang, 'delete.emailText',
+                'deleteLink', deleteLink);
+        assert(!!messageText && typeof messageText === 'string');
+
+        var emailObj = {
                 to: targetEmail,
                 from: conf.get('senderEmail'),
                 subject: subject,

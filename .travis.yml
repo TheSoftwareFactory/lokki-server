@@ -1,10 +1,15 @@
 language: node_js
+node_js:
+  - "4.2.2"
 before_install:
   - npm install -g eslint
   - npm install -g complexity-report
+env:
+  es6: true
 script:
   - eslint .
-  - cr . -x /node_modules
+    # complexity-report can't deal with ES6, so ignore parse errors
+  - cr --ignoreerrors . -x /node_modules  
   - node unittest-runner.js
 services:
   - redis-server

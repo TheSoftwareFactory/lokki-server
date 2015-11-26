@@ -9,10 +9,11 @@
 
 # backups
 *~
-*.swp
+*.sw*
 
 node_modules/
 newrelic_agent.log
 
 # Redis database dumps
 dump.rdb
+

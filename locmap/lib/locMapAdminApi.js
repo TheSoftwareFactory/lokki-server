@@ -8,7 +8,7 @@ See LICENSE for details
 var conf = require('../../lib/config');
 var logger = require('../../lib/logger');
 var LocMapUserModel = require('./locMapUserModel');
-var LocMapSharingModel = require('./locationShareModel');
+var LocMapShareModel = require('./locMapShareModel');
 var LocMapCrashReports = require('./crashReports');
 var locMapCrashReports = new LocMapCrashReports();
 var LocMapCommon = require('./locMapCommon');
@@ -16,6 +16,8 @@ var locMapCommon = new LocMapCommon();
 var db = require('../../lib/db');
 
 var check = require('validator').check;
+
+var userPrefix = conf.get('db').userPrefix;
 
 var LocMapAdminApi = function() {
     var locMapAdminApi = this;
@@ -155,8 +157,8 @@ var LocMapAdminApi = function() {
 
         for (var u in users) {
             var userId = users[u];
-            userId = userId.replace('locmapusers:', '');
-            addUserShareStats(new LocMapSharingModel(userId));
+            userId = userId.replace(userPrefix, '');
+            addUserShareStats(new LocMapShareModel(userId));
         }
     };
 
@@ -181,7 +183,7 @@ var LocMapAdminApi = function() {
 
         for (var u in users) {
             var userId = users[u];
-            userId = userId.replace('locmapusers:', '');
+            userId = userId.replace(userPrefix, '');
 
             // put user into closure
             addUserStats(new LocMapUserModel(userId));
@@ -190,7 +192,7 @@ var LocMapAdminApi = function() {
 
     this.adminGetStats = function(callback) {
         var statsStruct = locMapCommon.getDefaultStatsDict();
-        db.keys('locmapusers:*', function(err, users) {
+        db.keys(userPrefix + '*', function(err, users) {
             if (err) {
                 logger.warn('Failed to get locmap users from db.');
                 callback(500, statsStruct);
