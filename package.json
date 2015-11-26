@@ -13,18 +13,24 @@
     "tracer": "^0.7.3",
     "validator": "2.0.x",
     "method-override": "2.3.5",
-    "body-parser": "~1.13.3"
+    "body-parser": "~1.13.3",
+    "suspend": "^0.7.0"
   },
   "devDependencies": {
     "nodeunit": "0.9.x",
     "nodeunit-httpclient": "0.2.x"
   },
   "engines": {
-    "node": "0.10.x",
+    "node": "4.2.2",
     "npm": "1.2.x"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/TheSoftwareFactory/lokki-server.git"
+  },
+  "eslintConfig": {
+    "env": {
+      "es6": true
+    }
   }
 }

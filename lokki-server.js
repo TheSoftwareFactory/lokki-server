@@ -56,6 +56,26 @@ app.use('/api', function (req, res, next) {
     return next();
 });
 
+
+// see more information when route code throws an error
+app.use(function (req, res, next) {
+    // create per request domain instance
+    var domain = require('domain');
+    var d = domain.create();
+
+    d.on('error', function (err) {
+        logger.error(err);
+        logger.error(err.stack);
+        throw err;
+    });
+
+    d.run(function() {
+        process.domain.add(req);
+        process.domain.add(res);
+        next();
+    });
+});
+
 if (conf.get('neverCrash')) {
     // do not allow production server to crash
     process.on('uncaughtException', function (err) {

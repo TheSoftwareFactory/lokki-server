@@ -13,7 +13,7 @@ var conf = require('../../lib/config');
 var logger = require('../../lib/logger');
 var LocMapUserModel = require('./locMapUserModel');
 var FloodModel = require('../../lib/floodModel');
-var LocMapSharingModel = require('./locationShareModel');
+var LocMapShareModel = require('./locMapShareModel');
 var LocMapCommon = require('./locMapCommon');
 var locMapCommon = new LocMapCommon();
 var LocMapCrashReports = require('./crashReports');
@@ -26,9 +26,12 @@ var LocMapConfirmationCode = require('./confirmationCode');
 var locMapConfirmationCode = new LocMapConfirmationCode();
 var I18N = require('../../lib/i18n');
 var i18n = new I18N();
+var deletion = require('./deletion');
 
 var check = require('validator').check;
 var uuid = require('node-uuid');
+var assert = require('assert');
+var suspend = require('suspend');
 
 var LocMapRESTAPI = function() {
     var restApi = this;
@@ -90,8 +93,8 @@ var LocMapRESTAPI = function() {
         var reply = {};
         reply.id = userId;
         reply.authorizationtoken = authorizationToken;
+        var locShare = new LocMapShareModel(userId);
         reply.userType = userType
-        var locShare = new LocMapSharingModel(userId);
         locShare.getData(function(locShareResult) {
             reply.icansee = locShare.data.ICanSee;
             reply.canseeme = locShare.data.canSeeMe;
@@ -267,6 +270,7 @@ var LocMapRESTAPI = function() {
     callback callback       Callback function
     */
     this.confirmUserAccount = function(userId, confirmationCode, callback) {
+
         // Check that the confirmation code matches
         locMapConfirmationCode.getConfirmationCodeData(userId, confirmationCode, function(confirmationData) {
             if (typeof confirmationData !== 'number' && typeof confirmationData === 'object' && typeof confirmationData.userId === 'string' && confirmationData.userId.length > 0 &&
@@ -375,7 +379,7 @@ var LocMapRESTAPI = function() {
         responseData.location = user.data.location;
         responseData.visibility = user.data.visibility;
         responseData.battery = user.data.battery;
-        var locShare = new LocMapSharingModel(userId);
+        var locShare = new LocMapShareModel(userId);
         locShare.getData(function(locShareResult) {
             if (typeof locShareResult !== 'number') {
                 responseData.canseeme = locShare.data.canSeeMe;
@@ -462,7 +466,7 @@ var LocMapRESTAPI = function() {
             return;
         }
 
-        var otherLocShare = new LocMapSharingModel(otherUserId);
+        var otherLocShare = new LocMapShareModel(otherUserId);
         otherLocShare.getData(function(otherLocShareResult) {
             // Non-existing user, create a stub for it with the email.
             if (otherLocShareResult === 404) {
@@ -508,7 +512,7 @@ var LocMapRESTAPI = function() {
         }
         var cacheUser = cache.get('locmapuser', userId);
         var currentUserEmail = cacheUser.data.email;
-        var currentUserLocShare = new LocMapSharingModel(userId);
+        var currentUserLocShare = new LocMapShareModel(userId);
 
         function handleAllowResult(allowResult) {
             if (allowResult !== 200) {
@@ -537,10 +541,10 @@ var LocMapRESTAPI = function() {
     };
 
     this.denyToSeeUserLocation = function(userId, cache, targetUserId, callback) {
-        var myLocShare = new LocMapSharingModel(userId);
+        var myLocShare = new LocMapShareModel(userId);
         myLocShare.getData(function() {
             if (myLocShare.exists) {
-                var otherLocShare = new LocMapSharingModel(targetUserId);
+                var otherLocShare = new LocMapShareModel(targetUserId);
                 otherLocShare.getData(function(otherLocShareResult) {
                     if (typeof otherLocShareResult !== 'number') {
                         myLocShare.denyOtherUser(targetUserId, function(mResult) {
@@ -563,7 +567,7 @@ var LocMapRESTAPI = function() {
     };
 
     /* Helper function for ignoring users
-    param currentUserLocShare   The locationShareModel for the currently logged in user
+    param currentUserLocShare   The locMapShareModel for the currently logged in user
     param targetUserId          The encrypted user ID of the user to be ignored
     callback callback           The function which is called when this function finishes
     param                       "OK" if ignoring successful, else error code
@@ -608,7 +612,7 @@ var LocMapRESTAPI = function() {
         }
 
         // Get currently logged in user's locShare
-        var currentUserLocShare = new LocMapSharingModel(userId);
+        var currentUserLocShare = new LocMapShareModel(userId);
 
         // Helper function for email loop below
         function handleIgnoreResult(ignoreResult) {
@@ -647,7 +651,7 @@ var LocMapRESTAPI = function() {
     */
     this.unIgnoreUser = function(userId, targetUserId, callback) {
         // Load user sharing data
-        var myLocShare = new LocMapSharingModel(userId);
+        var myLocShare = new LocMapShareModel(userId);
         myLocShare.getData(function() {
             if (myLocShare.exists) {
                 // unignore target user
@@ -728,7 +732,7 @@ var LocMapRESTAPI = function() {
 
     this.requestUserLocationUpdates = function(userId, callback) {
         var that = this;
-        var locShare = new LocMapSharingModel(userId);
+        var locShare = new LocMapShareModel(userId);
         locShare.getData(function() {
             if (locShare.exists) {
                 logger.trace('User ' + userId + ' requesting user location updates.');
@@ -915,7 +919,7 @@ var LocMapRESTAPI = function() {
         var that = this;
         var responseData = {};
         // Load contact data from server
-        var locShare = new LocMapSharingModel(userId);
+        var locShare = new LocMapShareModel(userId);
         locShare.getData(function (locShareResult) {
             if (typeof locShareResult !== 'number') {
                 // Handle backwards compatibility with accounts created before name mapping was added
@@ -966,7 +970,7 @@ var LocMapRESTAPI = function() {
         var name = requestBody.name;
         logger.debug('name contact');
         var that = this;
-        var currentUserLocShare = new LocMapSharingModel(userId);
+        var currentUserLocShare = new LocMapShareModel(userId);
         currentUserLocShare.getData(function (locShareResult) {
             if (typeof locShareResult !== 'number') {
                 currentUserLocShare.addContactName(targetUserId, name, function (renameResult) {
@@ -994,7 +998,7 @@ var LocMapRESTAPI = function() {
     this.deleteContact = function(userId, targetUserId, callback) {
         logger.debug('delete contact');
         var that = this;
-        var currentUserLocShare = new LocMapSharingModel(userId);
+        var currentUserLocShare = new LocMapShareModel(userId);
 
         // Deletes the target user from the current user's locShare's canSeeMe list
         function checkAndDeleteCanSeeMe(callback) {
@@ -1025,7 +1029,7 @@ var LocMapRESTAPI = function() {
 
         // Deletes the current user from the target user's locShare's ignore list
         function checkAndDeleteSelfFromIgnored(callback) {
-            var targetUserLocShare = new LocMapSharingModel(userId);
+            var targetUserLocShare = new LocMapShareModel(userId);
             targetUserLocShare.getData(function (locShareResult) {
 
                 if (typeof locShareResult !== 'number') {
@@ -1124,6 +1128,7 @@ var LocMapRESTAPI = function() {
 
     // Remove an existing place.
     this.removeUserPlace = function(userId, cache, placeId, callback) {
+
         var user = cache.get('locmapuser', userId);
         if (user.data.places.hasOwnProperty(placeId)) {
             delete user.data.places[placeId];
@@ -1135,6 +1140,80 @@ var LocMapRESTAPI = function() {
         }
     };
 
+    this.confirmDelete = suspend(function* (userId, deleteCode, callback) {
+        var yesLink = conf.get('locMapConfig').baseUrl
+            + '/do-delete/' + userId + '/' + deleteCode;
+
+        var user = new LocMapUserModel(userId);
+        var data = (yield user.getData(suspend.resumeRaw()))[0];
+        var lang = data.language;
+        assert.ok(!!lang);
+
+        var responseHtml = i18n.getLocalizedString(lang, 'delete.confirm',
+                'yesLink', yesLink);
+        return callback(200, responseHtml);
+    });
+
+    this.doDelete = suspend(function* (userId, deleteCode, callback) {
+
+        var user = new LocMapUserModel(userId);
+        var data = (yield user.getData(suspend.resumeRaw()))[0];
+        var lang = data.language;
+        assert.ok(!!lang);
+
+        var result = yield deletion.tryDeleteUser(userId, deleteCode, suspend.resume());
+
+        if (result === 'OK') {
+            logger.info('Deleted user '+userId);
+            return callback(200, i18n.getLocalizedString(lang, 'delete.done'));
+        } else {
+            logger.info('Failed to delete user '+userId);
+            return callback(200, i18n.getLocalizedString(lang, 'delete.failed'));
+        }
+    });
+
+    this.requestDelete = suspend(function* (email, callback) {
+
+        assert.ok(typeof email === 'string');
+        assert.ok(typeof callback === 'function');
+
+        var LocMapEmail = require('./email');
+        var locMapEmail = new LocMapEmail();
+
+        var userId = yield locMapCommon.getUserByEmail(email, suspend.resume());
+        
+        if (userId === null) {
+            logger.info('Requested to delete nonexistent user with email '
+                    + email);
+            return callback(200, i18n.getLocalizedString(i18n.getDefaultLanguage(), 
+                    'delete.request.badaddress'));
+        };
+
+        assert.ok(typeof userId === 'string' && userId.length === 40);
+        var user = new LocMapUserModel(userId);
+        var data = (yield user.getData(suspend.resumeRaw()))[0];
+        var lang = data.language;
+        assert.ok(!!lang);
+
+        var code = yield deletion.makeDeleteCode(userId, suspend.resume());
+        assert.ok(typeof code === 'string' && code.length > 10);
+
+        var deleteLink = conf.get('locMapConfig').baseUrl
+            + '/confirm-delete/' + userId + '/' + code;
+        var sent = (yield locMapEmail.sendDeleteEmail(email, deleteLink,
+                    user.language, suspend.resumeRaw()))[0];
+
+        assert.ok(typeof sent === 'boolean');
+
+        if (!sent) {
+            logger.info('Failed to send deletion email to '+email);
+            callback(200, i18n.getLocalizedString(lang,
+                    'delete.request.sendfail', 'email', email));
+        } else {
+            callback(200, i18n.getLocalizedString(lang,
+                    'delete.request.sent', 'email', email));
+        }
+    });
 };
 
 module.exports = LocMapRESTAPI;

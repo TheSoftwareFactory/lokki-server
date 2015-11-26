@@ -49,7 +49,7 @@ function compareTokens(a, b) {
 module.exports = {
     setUp: function (callback) {
         pushedNotifications = [];
-        var dbSetup = require('../../lib/dbSetup');
+        var dbSetup = require('../../test_helpers/dbSetup');
         dbSetup(function () {
             callback();
         });

@@ -10,6 +10,14 @@ See LICENSE for details
  */
 var crypto = require('crypto');
 
+var suspend = require('suspend');
+var assert = require('assert');
+var conf = require('../../lib/config');
+var db = require('../../lib/db');
+var logger = require('../../lib/logger');
+
+var userPrefix = conf.get('db').userPrefix;
+
 var LocMapCommon = function() {
 
     // converts password from clear text to salted hashed password to store
@@ -175,6 +183,34 @@ var LocMapCommon = function() {
         }
     };
 
+    // Slow - works by going through all user entries in database.
+    // Do not use when performance is required!
+    this.getUserByEmail = suspend(function* (email, callback) {
+        assert.ok(typeof email === 'string');
+
+        // local import to avoid error with cyclical require
+        var LocMapUserModel = require('./locMapUserModel');
+
+        try {
+            var users = yield db.keys(userPrefix+'*', suspend.resume());
+            if (users === null) users = [];
+            assert.ok(users instanceof Array);
+            for (var i = 0; i < users.length; ++i) {
+                var userId = users[i].split(':')[1];
+                var user = new LocMapUserModel(userId);
+                var data = (yield user.getData(suspend.resumeRaw()))[0];
+                if (!data.email) {
+                    logger.error('Could not get email of user '+users[i]);
+                } else if (data.email === email) {
+                    return callback(null, userId);
+                }
+            }
+            // user not in database
+            return callback(null, null);
+        } catch (err) {
+            return callback(err);
+        }
+    });
 };
 
 module.exports = LocMapCommon;

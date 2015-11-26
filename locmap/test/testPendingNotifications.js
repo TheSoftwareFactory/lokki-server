@@ -14,7 +14,7 @@ var pendingNotifications = new PendingNotifications();
 
 module.exports = {
     setUp: function (callback) {
-        var dbSetup = require('../../lib/dbSetup');
+        var dbSetup = require('../../test_helpers/dbSetup');
         dbSetup(function () {
             callback();
         });
