@@ -8,7 +8,7 @@
  */
 
 var Constants = {
-    'LatestAcceptedVersionCode':'420',
+    'LatestAcceptedVersionCode':'413',
     'ServerMessage':'Your application is out of date. Please download the new version from Google Play Store.'
 };
 
