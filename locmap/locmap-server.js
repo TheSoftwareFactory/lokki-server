@@ -370,19 +370,19 @@ module.exports = function (app) {
 
     // Get all user's contacts.
     // Returns contacts in the same format as Dashboard (without idMapping)
-	routeUser(GET, 'v1', 'contacts', function (req, res) {
+    routeUser(GET, 'v1', 'contacts', function (req, res) {
         locMapRestApi.getUserContacts(req.params.userId, function (status, result) {
             res.send(status, result);
         });
     });
 
-	// Get all user's contacts.
+    // Get all user's contacts.
     // Returns contacts as a list, where contact contains fields userId, email, name, location, isIgnored, canSeeMe}.
-	routeUser(GET, 'v2', 'contacts', function (req, res) {
-		locMapRestApi2.getUserContacts(req.params.userId, function (status, result) {
-			res.send(status, result);
-		});
-	});
+    routeUser(GET, 'v2', 'contacts', function (req, res) {
+        locMapRestApi2.getUserContacts(req.params.userId, function (status, result) {
+            res.send(status, result);
+        });
+    });
 
     // Removes a contact, deleting the user and the contact from each other's location shares
     routeUser(DELETE, ['v1', 'v2'], 'contacts/:targetUserId', function (req, res) {
