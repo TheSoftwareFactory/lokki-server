@@ -223,38 +223,6 @@ tests.both.allowAnotherUser = function(version) {
     }
 };
 
-// Allowing another user adds them to icansee and idmapping in contacts.
-tests.both.allowAnotherUserContacts = function(version) {
-    return function (test) {
-        test.expect(9);
-        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
-            lmHelpers.createLocMapUser(test, testUserEmail2, 'dev2', function (auth2, reply2) {
-                auth1.data = {emails: [testUserEmail2]};
-                lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/allow', auth1, function () {
-
-                    // Verify that icansee list for user2 contains user1
-                    lmHelpers.api.get(test, '/' + version + '/user/' + reply2.id + '/contacts', auth2,
-                        function (res) {
-                            var expected = {canseeme: [], icansee: [], ignored: [], idmapping: [], nameMapping: {}};
-                            expected.idmapping[reply1.id] = testUserEmail;
-                            expected.icansee[reply1.id] = {location: {}, visibility: true, battery: ''};
-                            test.deepEqual(res.data, expected);
-
-                            // Verify that canseeme list for user1 contains user2
-                            lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/contacts', auth1,
-                                function (res2) {
-                                    var expected = {canseeme: [reply2.id], icansee: [], ignored: [], idmapping: [], nameMapping: {}};
-                                    expected.idmapping[reply2.id] = testUserEmail2;
-                                    test.deepEqual(res2.data, expected);
-                                    test.done();
-                                });
-                        });
-                });
-            });
-        });
-    }
-};
-
 // Multiple allow users do not create duplicate entries.
 tests.both.allowAnotherUserMultiple = function(version) {
     return function (test) {
@@ -540,227 +508,6 @@ tests.both.allowedUsersUpperLimit = function(version) {
     }
 };
 
-// Ignoring another user adds them to ignore list in contacts
-tests.both.ignoreAnotherUser = function(version) {
-    return function (test) {
-        test.expect(7);
-        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
-            lmHelpers.createLocMapUser(test, testUserEmail2, 'dev2', function (auth2, reply2) {
-                auth1.data = {ids: [reply2.id]};
-
-                lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/ignore', auth1, function () {
-                    // Verify that the ignore list for user 1 contains user 2
-                    lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/contacts', auth1, function (res) {
-                        var expected = {
-                            canseeme: [],
-                            icansee: [],
-                            ignored: [reply2.id],
-                            idmapping: [],
-                            nameMapping: {}
-                        };
-                        test.deepEqual(res.data, expected);
-                        test.done();
-                    });
-                });
-            });
-        });
-    }
-};
-
-// Unignoring another user removes them from ignore list in contacts
-tests.both.unignoreAnotherUser = function(version) {
-    return function (test) {
-        test.expect(8);
-        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
-            lmHelpers.createLocMapUser(test, testUserEmail2, 'dev2', function (auth2, reply2) {
-                auth1.data = {ids: [reply2.id]};
-
-                lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/ignore', auth1, function () {
-                    lmHelpers.api.del(test, '/' + version + '/user/' + reply1.id + '/ignore/' + reply2.id, auth1, function () {
-                        // Verify that the ignore list for user 1 doesn't contain user 2
-                        lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/contacts', auth1, function (res) {
-                            var expected = {canseeme: [], icansee: [], ignored: [], idmapping: [], nameMapping: {}};
-                            test.deepEqual(res.data, expected);
-                            test.done();
-                        });
-                    });
-                });
-            });
-        });
-    }
-};
-
-// Multiple ignore users do not create duplicate entries.
-tests.both.ignoreAnotherUserMultiple = function(version) {
-    return function (test) {
-        test.expect(8);
-        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
-            lmHelpers.createLocMapUser(test, testUserEmail2, 'dev2', function (auth2, reply2) {
-                auth1.data = {ids: [reply2.id]};
-                lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/ignore', auth1, function () {
-                    lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/ignore', auth1,
-                        function () {
-                            // Verify that ignore list for user1 contains user2 only once.
-                            lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/contacts', auth1, function (res) {
-                                var expected = {
-                                    canseeme: [],
-                                    icansee: [],
-                                    ignored: [reply2.id],
-                                    idmapping: [],
-                                    nameMapping: {}
-                                };
-                                test.deepEqual(res.data, expected);
-                                test.done();
-                            });
-                        });
-                });
-            });
-        });
-    }
-};
-
-// Cannot ignore own user.
-tests.both.cannotIgnoreSelf = function(version) {
-    return function (test) {
-        test.expect(5);
-        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
-            var authWithEmail = JSON.parse(JSON.stringify(auth1));
-            authWithEmail.data = {ids: [reply1.id]};
-            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/ignore', authWithEmail,
-                {status: 400}, function () {
-                    lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/contacts', auth1,
-                        function (res) {
-                            test.deepEqual(res.data.ignored, []);
-                            test.done();
-                        });
-                });
-        });
-    }
-};
-
-// Contacts can be deleted.
-tests.both.deleteContact = function(version) {
-    return function (test) {
-        test.expect(15);
-        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
-            lmHelpers.createLocMapUser(test, testUserEmail2, 'dev2', function (auth2, reply2) {
-                auth1.data = {emails: [testUserEmail2]};
-                auth2.data = {emails: [testUserEmail]};
-                // Allow both users to see each other
-                lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/allow', auth1, function () {
-                    lmHelpers.api.post(test, '/' + version + '/user/' + reply2.id + '/allow', auth2, function () {
-                        // Ignore user 2
-                        auth1.data = {ids: [reply2.id]};
-                        lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/ignore', auth1, function () {
-                            // Rename user 2
-                            auth1.data = {name: 'deletetest'};
-                            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/rename/' + reply2.id, auth1, function () {
-                                // Verify that user1 can see and can be seen by user2 and that user 2 is on 1's ignore list
-                                lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/contacts', auth1,
-                                    function (res) {
-                                        var expected = {
-                                            canseeme: [reply2.id],
-                                            icansee: [],
-                                            ignored: [reply2.id],
-                                            idmapping: [],
-                                            nameMapping: {}
-                                        };
-                                        expected.nameMapping[reply2.id] = 'deletetest';
-                                        expected.idmapping[reply2.id] = testUserEmail2;
-                                        expected.icansee[reply2.id] = {location: {}, visibility: true, battery: ''};
-                                        test.deepEqual(res.data, expected);
-                                        // Delete user 2 from contacts
-                                        auth1.data = undefined;
-                                        lmHelpers.api.del(test, '/' + version + '/user/' + reply1.id + '/contacts/' + reply2.id, auth1, function () {
-                                            // Verify that user 1's contact list is clear
-                                            lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/contacts', auth1, function (res2) {
-                                                var expected2 = {
-                                                    canseeme: [],
-                                                    icansee: [],
-                                                    ignored: [],
-                                                    idmapping: [],
-                                                    nameMapping: {}
-                                                };
-                                                test.deepEqual(res2.data, expected2);
-                                                // Verify that user 2's contact list is clear
-                                                lmHelpers.api.get(test, '/' + version + '/user/' + reply2.id + '/contacts', auth2, function (res3) {
-                                                    test.deepEqual(res3.data, expected2);
-                                                    test.done();
-                                                });
-                                            });
-                                        });
-                                    });
-                            });
-                        });
-                    });
-                });
-            });
-        });
-    }
-};
-
-// User can delete a stub contact
-tests.both.deleteStubContact = function(version) {
-    return function (test) {
-        test.expect(8);
-        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
-            auth1.data = {emails: [testStubUser]};
-            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/allow', auth1, function () {
-                // Verify that user1 can see and can be seen by user2 and that user 2 is on 1's ignore list
-                lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/contacts', auth1,
-                    function (res) {
-                        var expected = {
-                            canseeme: ['b4b265d4a1a7f40c631e4dd003510ebf43f32135'],
-                            icansee: [],
-                            ignored: [],
-                            idmapping: [],
-                            nameMapping: {}
-                        };
-                        expected.idmapping['b4b265d4a1a7f40c631e4dd003510ebf43f32135'] = testStubUser;
-                        test.deepEqual(res.data, expected);
-                        // Delete user 2 from contacts
-                        auth1.data = undefined;
-                        lmHelpers.api.del(test, '/' + version + '/user/' + reply1.id + '/contacts/' + 'b4b265d4a1a7f40c631e4dd003510ebf43f32135', auth1, function () {
-                            // Verify that user 1's contact list is clear
-                            lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/contacts', auth1, function (res2) {
-                                var expected2 = {
-                                    canseeme: [],
-                                    icansee: [],
-                                    ignored: [],
-                                    idmapping: [],
-                                    nameMapping: {}
-                                };
-                                test.deepEqual(res2.data, expected2);
-                                test.done();
-                            });
-                        });
-                    });
-            });
-        });
-    }
-};
-
-// User can rename contacts
-tests.both.userRenameContacts = function(version) {
-    return function (test) {
-        test.expect(5);
-        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth, reply) {
-            auth.data = {name: 'userName'};
-
-            lmHelpers.api.post(test, '/' + version + '/user/' + reply.id + '/rename/' + 'testUserId',
-                auth, function () {
-                    lmHelpers.api.get(test, '/' + version + '/user/' + reply.id + '/contacts', auth,
-                        function (res) {
-                            var expected = {canseeme: [], icansee: [], ignored: [], idmapping: []};
-                            expected.nameMapping = {'testUserId': 'userName'};
-                            test.deepEqual(res.data, expected);
-                            test.done();
-                        });
-                });
-        });
-    }
-};
-
 // Stub users cannot be authorized.
 tests.both.stubUserDashboardFails = function(version) {
     return function (test) {
@@ -895,23 +642,22 @@ tests.both.modifyNonExistingPlace = function(version) {
 };
 
 
-// Remove non-existing place gives 404.
-tests.both.removeNonExistingPlace = function (version) {
+tests.v1 = {}, tests.v2 = {};
+
+// User without places gives an empty object back.
+tests.v1.getPlacesFromUserWithoutPlaces = function(version) {
     return function (test) {
-        test.expect(3);
+        test.expect(4);
         lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
-            lmHelpers.api.del(test, '/' + version + '/user/' + reply1.id + '/place/wrongPlaceId', auth1,
-                {status: 404}, function () {
-                    test.done();
-                });
+            lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places', auth1, function (result) {
+                test.deepEqual(result.data, {});
+                test.done();
+            });
         });
     }
 };
 
-tests.v1 = {};
-
-// User without places gives an empty object back.
-tests.v1.getPlacesFromUserWithoutPlaces = function(version) {
+tests.v2.getPlacesFromUserWithoutPlaces = function(version) {
     return function (test) {
         test.expect(4);
         lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
@@ -947,6 +693,29 @@ tests.v1.createAndGetUserPlace = function(version) {
     }
 };
 
+tests.v2.createAndGetUserPlace = function(version) {
+    return function (test) {
+        test.expect(8);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+            var authWithPlace = JSON.parse(JSON.stringify(auth1));
+            authWithPlace.data = lmHelpers.locMapPlace1;
+            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places', authWithPlace,
+                function (result) {
+                    // Verify that placeid is a uuid string.
+                    var placeId = result.data.id;
+                    test.equal(typeof placeId, 'string');
+                    test.equal(placeId.length, 36);
+                    lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places', auth1,
+                        function (result2) {
+                            test.equal(Object.keys(result2.data).length, 1);
+                            test.deepEqual(result2.data[0], placeInV2Format(lmHelpers.locMapPlace1, placeId));
+                            test.done();
+                        });
+                });
+        });
+    }
+};
+
 // Create invalid place gives 400
 tests.v1.createInvalidPlace = function(version) {
     return function (test) {
@@ -955,6 +724,20 @@ tests.v1.createInvalidPlace = function(version) {
             var authWithPlace = JSON.parse(JSON.stringify(auth1));
             authWithPlace.data = {lat: 1.2, lon: 2.3};
             lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/place', authWithPlace,
+                {status: 400}, function () {
+                    test.done();
+                });
+        });
+    }
+};
+
+tests.v2.createInvalidPlace = function(version) {
+    return function (test) {
+        test.expect(3);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+            var authWithPlace = JSON.parse(JSON.stringify(auth1));
+            authWithPlace.data = {lat: 1.2, lon: 2.3};
+            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places', authWithPlace,
                 {status: 400}, function () {
                     test.done();
                 });
@@ -997,6 +780,40 @@ tests.v1.createMultiplePlaces = function(version) {
     }
 };
 
+tests.v2.createMultiplePlaces = function(version) {
+    return function (test) {
+        test.expect(12);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+            var authWithPlace = JSON.parse(JSON.stringify(auth1));
+            authWithPlace.data = lmHelpers.locMapPlace1;
+            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places', authWithPlace,
+                function (p1Result) {
+                    // Verify that placeid is a uuid string.
+                    var placeId1 = p1Result.data.id;
+                    test.equal(typeof placeId1, 'string');
+                    test.equal(placeId1.length, 36);
+
+                    authWithPlace.data = lmHelpers.locMapPlace2;
+                    lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places', authWithPlace,
+                        function (p2Result) {
+                            // Verify that placeid is a uuid string.
+                            var placeId2 = p2Result.data.id;
+                            test.equal(typeof placeId2, 'string');
+                            test.equal(placeId2.length, 36);
+
+                            lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places', auth1,
+                                function (result) {
+                                    test.equal(Object.keys(result.data).length, 2);
+                                    test.deepEqual(result.data[0], placeInV2Format(lmHelpers.locMapPlace1, placeId1));
+                                    test.deepEqual(result.data[1], placeInV2Format(lmHelpers.locMapPlace2, placeId2));
+                                    test.done();
+                                });
+                        });
+                });
+        });
+    }
+};
+
 // Place creation has a limit.
 tests.v1.createPlacesLimit = function(version) {
     return function (test) {
@@ -1022,6 +839,39 @@ tests.v1.createPlacesLimit = function(version) {
                                                 lmHelpers.locMapPlace1);
                                             test.deepEqual(result.data[p2Result.data.id],
                                                 lmHelpers.locMapPlace2);
+                                            test.done();
+                                        });
+                                });
+                        });
+                });
+        });
+    }
+};
+
+tests.v2.createPlacesLimit = function(version) {
+    return function (test) {
+        test.expect(9);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+            var authWithPlace = JSON.parse(JSON.stringify(auth1));
+            authWithPlace.data = lmHelpers.locMapPlace1;
+            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places', authWithPlace,
+                function (p1Result) {
+                    authWithPlace.data = lmHelpers.locMapPlace2;
+                    lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places', authWithPlace,
+                        function (p2Result) {
+                            authWithPlace.data = lmHelpers.locMapPlace3;
+                            // Request over the limit should return status 403.
+                            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places',
+                                authWithPlace, {status: 403}, function () {
+                                    // Verify that only the places added before hitting limit
+                                    // exist on user places.
+                                    lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places',
+                                        auth1, function (result) {
+                                            test.equal(Object.keys(result.data).length, 2);
+                                            test.deepEqual(result.data[0],
+                                                placeInV2Format(lmHelpers.locMapPlace1, p1Result.data.id));
+                                            test.deepEqual(result.data[1],
+                                                placeInV2Format(lmHelpers.locMapPlace2, p2Result.data.id));
                                             test.done();
                                         });
                                 });
@@ -1064,6 +914,38 @@ tests.v1.modifyPlace = function(version) {
     }
 };
 
+tests.v2.modifyPlace = function(version) {
+    return function (test) {
+        test.expect(9);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+            var authWithPlace = JSON.parse(JSON.stringify(auth1));
+            authWithPlace.data = lmHelpers.locMapPlace1;
+            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places', authWithPlace,
+                function (result1) {
+                    var placeId1 = result1.data.id;
+                    // Verify that first place is in.
+                    lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places', auth1,
+                        function (placesResult1) {
+                            test.deepEqual(placesResult1.data[0], placeInV2Format(lmHelpers.locMapPlace1, placeId1));
+                            authWithPlace.data = lmHelpers.locMapPlace2;
+                            lmHelpers.api.put(test, '/' + version + '/user/' + reply1.id + '/places/' + placeId1,
+                                authWithPlace, function () {
+                                    lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places',
+                                        auth1, function (placesResult2) {
+                                            // Verify that number of places is still one,
+                                            // and that the place is the latest.
+                                            test.equal(Object.keys(placesResult2.data).length, 1);
+                                            test.deepEqual(placesResult2.data[0],
+                                                placeInV2Format(lmHelpers.locMapPlace2, placeId1));
+                                            test.done();
+                                        });
+                                });
+                        });
+                });
+        });
+    }
+};
+
 // Modify existing place with invalid gives 400.
 tests.v1.modifyPlaceWithInvalid = function(version) {
     return function (test) {
@@ -1082,6 +964,31 @@ tests.v1.modifyPlaceWithInvalid = function(version) {
                                 function (placesResult1) {
                                     test.deepEqual(placesResult1.data[placeId1],
                                         lmHelpers.locMapPlace1);
+                                    test.done();
+                                });
+                        });
+                });
+        });
+    }
+};
+
+tests.v2.modifyPlaceWithInvalid = function(version) {
+    return function (test) {
+        test.expect(6);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+            var authWithPlace = JSON.parse(JSON.stringify(auth1));
+            authWithPlace.data = lmHelpers.locMapPlace1;
+            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/place', authWithPlace,
+                function (result1) {
+                    var placeId1 = result1.data.id;
+                    authWithPlace.data = {lat: 1.2, lon: 3.5, rad: 'plop'};
+                    lmHelpers.api.put(test, '/' + version + '/user/' + reply1.id + '/place/' + placeId1,
+                        authWithPlace, {status: 400}, function () {
+                            // Verify that place is still the original.
+                            lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places', auth1,
+                                function (placesResult1) {
+                                    test.deepEqual(placesResult1.data[0],
+                                        placeInV2Format(lmHelpers.locMapPlace1, placeId1));
                                     test.done();
                                 });
                         });
@@ -1118,188 +1025,6 @@ tests.v1.removePlace = function(version) {
     }
 };
 
-tests.v2 = {};
-
-// User without places gives an empty object back.
-tests.v2.getPlacesFromUserWithoutPlaces = function(version) {
-    return function (test) {
-        test.expect(4);
-        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
-            lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places', auth1, function (result) {
-                test.deepEqual(result.data, {});
-                test.done();
-            });
-        });
-    }
-};
-
-// Create a new place
-tests.v2.createAndGetUserPlace = function(version) {
-    return function (test) {
-        test.expect(8);
-        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
-            var authWithPlace = JSON.parse(JSON.stringify(auth1));
-            authWithPlace.data = lmHelpers.locMapPlace1;
-            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places', authWithPlace,
-                function (result) {
-                    // Verify that placeid is a uuid string.
-                    var placeId = result.data.id;
-                    test.equal(typeof placeId, 'string');
-                    test.equal(placeId.length, 36);
-                    lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places', auth1,
-                        function (result2) {
-                            test.equal(Object.keys(result2.data).length, 1);
-                            test.deepEqual(result2.data[0], placeInV2Format(lmHelpers.locMapPlace1, placeId));
-                            test.done();
-                        });
-                });
-        });
-    }
-};
-
-// Create invalid place gives 400
-tests.v2.createInvalidPlace = function(version) {
-    return function (test) {
-        test.expect(3);
-        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
-            var authWithPlace = JSON.parse(JSON.stringify(auth1));
-            authWithPlace.data = {lat: 1.2, lon: 2.3};
-            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places', authWithPlace,
-                {status: 400}, function () {
-                    test.done();
-                });
-        });
-    }
-};
-
-// Create multiple places
-tests.v2.createMultiplePlaces = function(version) {
-    return function (test) {
-        test.expect(12);
-        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
-            var authWithPlace = JSON.parse(JSON.stringify(auth1));
-            authWithPlace.data = lmHelpers.locMapPlace1;
-            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places', authWithPlace,
-                function (p1Result) {
-                    // Verify that placeid is a uuid string.
-                    var placeId1 = p1Result.data.id;
-                    test.equal(typeof placeId1, 'string');
-                    test.equal(placeId1.length, 36);
-
-                    authWithPlace.data = lmHelpers.locMapPlace2;
-                    lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places', authWithPlace,
-                        function (p2Result) {
-                            // Verify that placeid is a uuid string.
-                            var placeId2 = p2Result.data.id;
-                            test.equal(typeof placeId2, 'string');
-                            test.equal(placeId2.length, 36);
-
-                            lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places', auth1,
-                                function (result) {
-                                    test.equal(Object.keys(result.data).length, 2);
-                                    test.deepEqual(result.data[0], placeInV2Format(lmHelpers.locMapPlace1, placeId1));
-                                    test.deepEqual(result.data[1], placeInV2Format(lmHelpers.locMapPlace2, placeId2));
-                                    test.done();
-                                });
-                        });
-                });
-        });
-    }
-};
-
-// Place creation has a limit.
-tests.v2.createPlacesLimit = function(version) {
-    return function (test) {
-        test.expect(9);
-        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
-            var authWithPlace = JSON.parse(JSON.stringify(auth1));
-            authWithPlace.data = lmHelpers.locMapPlace1;
-            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places', authWithPlace,
-                function (p1Result) {
-                    authWithPlace.data = lmHelpers.locMapPlace2;
-                    lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places', authWithPlace,
-                        function (p2Result) {
-                            authWithPlace.data = lmHelpers.locMapPlace3;
-                            // Request over the limit should return status 403.
-                            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places',
-                                authWithPlace, {status: 403}, function () {
-                                    // Verify that only the places added before hitting limit
-                                    // exist on user places.
-                                    lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places',
-                                        auth1, function (result) {
-                                            test.equal(Object.keys(result.data).length, 2);
-                                            test.deepEqual(result.data[0],
-                                                placeInV2Format(lmHelpers.locMapPlace1, p1Result.data.id));
-                                            test.deepEqual(result.data[1],
-                                                placeInV2Format(lmHelpers.locMapPlace2, p2Result.data.id));
-                                            test.done();
-                                        });
-                                });
-                        });
-                });
-        });
-    }
-};
-
-// Modify an existing place.
-tests.v2.modifyPlace = function(version) {
-    return function (test) {
-        test.expect(9);
-        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
-            var authWithPlace = JSON.parse(JSON.stringify(auth1));
-            authWithPlace.data = lmHelpers.locMapPlace1;
-            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places', authWithPlace,
-                function (result1) {
-                    var placeId1 = result1.data.id;
-                    // Verify that first place is in.
-                    lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places', auth1,
-                        function (placesResult1) {
-                            test.deepEqual(placesResult1.data[0], placeInV2Format(lmHelpers.locMapPlace1, placeId1));
-                            authWithPlace.data = lmHelpers.locMapPlace2;
-                            lmHelpers.api.put(test, '/' + version + '/user/' + reply1.id + '/places/' + placeId1,
-                                authWithPlace, function () {
-                                    lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places',
-                                        auth1, function (placesResult2) {
-                                            // Verify that number of places is still one,
-                                            // and that the place is the latest.
-                                            test.equal(Object.keys(placesResult2.data).length, 1);
-                                            test.deepEqual(placesResult2.data[0],
-                                                placeInV2Format(lmHelpers.locMapPlace2, placeId1));
-                                            test.done();
-                                        });
-                                });
-                        });
-                });
-        });
-    }
-};
-
-// Modify existing place with invalid gives 400.
-tests.v2.modifyPlaceWithInvalid = function(version) {
-    return function (test) {
-        test.expect(6);
-        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
-            var authWithPlace = JSON.parse(JSON.stringify(auth1));
-            authWithPlace.data = lmHelpers.locMapPlace1;
-            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/place', authWithPlace,
-                function (result1) {
-                    var placeId1 = result1.data.id;
-                    authWithPlace.data = {lat: 1.2, lon: 3.5, rad: 'plop'};
-                    lmHelpers.api.put(test, '/' + version + '/user/' + reply1.id + '/place/' + placeId1,
-                        authWithPlace, {status: 400}, function () {
-                            // Verify that place is still the original.
-                            lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places', auth1,
-                                function (placesResult1) {
-                                    test.deepEqual(placesResult1.data[0],
-                                        placeInV2Format(lmHelpers.locMapPlace1, placeId1));
-                                    test.done();
-                                });
-                        });
-                });
-        });
-    }
-};
-// Remove an existing place.
 tests.v2.removePlace = function(version) {
     return function (test) {
         test.expect(8);
@@ -1327,7 +1052,20 @@ tests.v2.removePlace = function(version) {
     }
 };
 
+
 // Remove non-existing place gives 404.
+tests.v1.removeNonExistingPlace = function (version) {
+    return function (test) {
+        test.expect(3);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+            lmHelpers.api.del(test, '/' + version + '/user/' + reply1.id + '/place/wrongPlaceId', auth1,
+                {status: 404}, function () {
+                    test.done();
+                });
+        });
+    }
+};
+
 tests.v2.removeNonExistingPlace = function(version) {
     return function (test) {
         test.expect(3);
@@ -1340,23 +1078,455 @@ tests.v2.removeNonExistingPlace = function(version) {
     }
 };
 
+// Allowing another user adds them to icansee and idmapping in contacts.
+tests.v1.allowAnotherUserContacts = function(version) {
+    return function (test) {
+        test.expect(9);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+            lmHelpers.createLocMapUser(test, testUserEmail2, 'dev2', function (auth2, reply2) {
+                auth1.data = {emails: [testUserEmail2]};
+                lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/allow', auth1, function () {
+
+                    // Verify that icansee list for user2 contains user1
+                    lmHelpers.api.get(test, '/' + version + '/user/' + reply2.id + '/contacts', auth2,
+                        function (res) {
+                            var expected = {canseeme: [], icansee: [], ignored: [], idmapping: [], nameMapping: {}};
+                            expected.idmapping[reply1.id] = testUserEmail;
+                            expected.icansee[reply1.id] = {location: {}, visibility: true, battery: ''};
+                            test.deepEqual(res.data, expected);
+
+                            // Verify that canseeme list for user1 contains user2
+                            lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/contacts', auth1,
+                                function (res2) {
+                                    var expected = {canseeme: [reply2.id], icansee: [], ignored: [], idmapping: [], nameMapping: {}};
+                                    expected.idmapping[reply2.id] = testUserEmail2;
+                                    test.deepEqual(res2.data, expected);
+                                    test.done();
+                                });
+                        });
+                });
+            });
+        });
+    }
+};
+
+tests.v2.allowAnotherUserContacts = function(version) {
+    return function (test) {
+        test.expect(9);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+            lmHelpers.createLocMapUser(test, testUserEmail2, 'dev2', function (auth2, reply2) {
+                auth1.data = {emails: [testUserEmail2]};
+                lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/contacts/allow', auth1, function () {
+
+                    // Verify that icansee list for user2 contains user1
+                    lmHelpers.api.get(test, '/' + version + '/user/' + reply2.id + '/contacts', auth2,
+                        function (res) {
+                            var expected = [{userId: reply1.id, email: testUserEmail, name: null, isIgnored: false, location: {}, canSeeMe: false}];
+                            test.deepEqual(res.data, expected);
+
+                            // Verify that canseeme list for user1 contains user2
+                            lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/contacts', auth1,
+                                function (res2) {
+                                    var expected = [{userId: reply2.id, email: testUserEmail2, name: null, isIgnored: false, location: null, canSeeMe: true}];
+                                    test.deepEqual(res2.data, expected);
+                                    test.done();
+                                });
+                        });
+                });
+            });
+        });
+    }
+};
+
+// Ignoring another user adds them to ignore list in contacts
+tests.v1.ignoreAnotherUser = function(version) {
+    return function (test) {
+        test.expect(7);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+            lmHelpers.createLocMapUser(test, testUserEmail2, 'dev2', function (auth2, reply2) {
+                auth1.data = {ids: [reply2.id]};
+
+                lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/ignore', auth1, function () {
+                    // Verify that the ignore list for user 1 contains user 2
+                    lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/contacts', auth1, function (res) {
+                        var expected = {
+                            canseeme: [],
+                            icansee: [],
+                            ignored: [reply2.id],
+                            idmapping: [],
+                            nameMapping: {}
+                        };
+                        test.deepEqual(res.data, expected);
+                        test.done();
+                    });
+                });
+            });
+        });
+    }
+};
+
+// Unignored user is returned with field isIgnored: true
+tests.v2.ignoreAnotherUser = function(version) {
+    return function (test) {
+        test.expect(8);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+            lmHelpers.createLocMapUser(test, testUserEmail2, 'dev2', function (auth2, reply2) {
+                auth1.data = {emails: [testUserEmail2]};
+                lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/contacts/allow', auth1, function () {
+                    auth1.data = {ids: [reply2.id]};
+                    lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/contacts/ignore', auth1, function () {
+                        // Verify that the ignore list for user 1 contains user 2
+                        lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/contacts', auth1, function (res) {
+                            var expected = [{userId: reply2.id, email: testUserEmail2, name: null, isIgnored: true, location: null, canSeeMe: true}];
+                            test.deepEqual(res.data, expected);
+                            test.done();
+                        });
+                    });
+                });
+            });
+        });
+    }
+};
+
+// Unignoring another user removes them from ignore list in contacts
+tests.v1.unignoreAnotherUser = function(version) {
+    return function (test) {
+        test.expect(8);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+            lmHelpers.createLocMapUser(test, testUserEmail2, 'dev2', function (auth2, reply2) {
+                auth1.data = {ids: [reply2.id]};
+
+                lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/ignore', auth1, function () {
+                    lmHelpers.api.del(test, '/' + version + '/user/' + reply1.id + '/ignore/' + reply2.id, auth1, function () {
+                        // Verify that the ignore list for user 1 doesn't contain user 2
+                        lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/contacts', auth1, function (res) {
+                            var expected = {canseeme: [], icansee: [], ignored: [], idmapping: [], nameMapping: {}};
+                            test.deepEqual(res.data, expected);
+                            test.done();
+                        });
+                    });
+                });
+            });
+        });
+    }
+};
+
+// Unignored user is returned with field isIgnored: true
+tests.v2.unignoreAnotherUser = function(version) {
+    return function (test) {
+        test.expect(9);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+            lmHelpers.createLocMapUser(test, testUserEmail2, 'dev2', function (auth2, reply2) {
+                auth1.data = {emails: [testUserEmail2]};
+                lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/contacts/allow', auth1, function () {
+                    auth1.data = {ids: [reply2.id]};
+                    lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/contacts/ignore', auth1, function () {
+                        lmHelpers.api.del(test, '/' + version + '/user/' + reply1.id + '/contacts/ignore/' + reply2.id, auth1, function () {
+                            // Verify that the ignore list for user 1 doesn't contain user 2
+                            lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/contacts', auth1, function (res) {
+                                var expected = [{userId: reply2.id, email: testUserEmail2, name: null, isIgnored: false, location: null, canSeeMe: true}];
+                                test.deepEqual(res.data, expected);
+                                test.done();
+                            });
+                        });
+                    });
+                });
+            });
+        });
+    }
+};
+
+// Multiple ignore users do not create duplicate entries.
+tests.v1.ignoreAnotherUserMultiple = function(version) {
+    return function (test) {
+        test.expect(8);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+            lmHelpers.createLocMapUser(test, testUserEmail2, 'dev2', function (auth2, reply2) {
+                auth1.data = {ids: [reply2.id]};
+                lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/ignore', auth1, function () {
+                    lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/ignore', auth1,
+                        function () {
+                            // Verify that ignore list for user1 contains user2 only once.
+                            lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/contacts', auth1, function (res) {
+                                var expected = {
+                                    canseeme: [],
+                                    icansee: [],
+                                    ignored: [reply2.id],
+                                    idmapping: [],
+                                    nameMapping: {}
+                                };
+                                test.deepEqual(res.data, expected);
+                                test.done();
+                            });
+                        });
+                });
+            });
+        });
+    }
+};
+
+// Cannot ignore own user.
+tests.v1.cannotIgnoreSelf = function(version) {
+    return function (test) {
+        test.expect(5);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+            var authWithEmail = JSON.parse(JSON.stringify(auth1));
+            authWithEmail.data = {ids: [reply1.id]};
+            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/ignore', authWithEmail,
+                {status: 400}, function () {
+                    lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/contacts', auth1,
+                        function (res) {
+                            test.deepEqual(res.data.ignored, []);
+                            test.done();
+                        });
+                });
+        });
+    }
+};
+
+// Contacts can be deleted.
+tests.v1.deleteContact = function(version) {
+    return function (test) {
+        test.expect(15);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+            lmHelpers.createLocMapUser(test, testUserEmail2, 'dev2', function (auth2, reply2) {
+                auth1.data = {emails: [testUserEmail2]};
+                auth2.data = {emails: [testUserEmail]};
+                // Allow both users to see each other
+                lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/allow', auth1, function () {
+                    lmHelpers.api.post(test, '/' + version + '/user/' + reply2.id + '/allow', auth2, function () {
+                        // Ignore user 2
+                        auth1.data = {ids: [reply2.id]};
+                        lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/ignore', auth1, function () {
+                            // Rename user 2
+                            auth1.data = {name: 'deletetest'};
+                            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/rename/' + reply2.id, auth1, function () {
+                                // Verify that user1 can see and can be seen by user2 and that user 2 is on 1's ignore list
+                                lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/contacts', auth1,
+                                    function (res) {
+                                        var expected = {
+                                            canseeme: [reply2.id],
+                                            icansee: [],
+                                            ignored: [reply2.id],
+                                            idmapping: [],
+                                            nameMapping: {}
+                                        };
+                                        expected.nameMapping[reply2.id] = 'deletetest';
+                                        expected.idmapping[reply2.id] = testUserEmail2;
+                                        expected.icansee[reply2.id] = {location: {}, visibility: true, battery: ''};
+                                        test.deepEqual(res.data, expected);
+                                        // Delete user 2 from contacts
+                                        auth1.data = undefined;
+                                        lmHelpers.api.del(test, '/' + version + '/user/' + reply1.id + '/contacts/' + reply2.id, auth1, function () {
+                                            // Verify that user 1's contact list is clear
+                                            lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/contacts', auth1, function (res2) {
+                                                var expected2 = {
+                                                    canseeme: [],
+                                                    icansee: [],
+                                                    ignored: [],
+                                                    idmapping: [],
+                                                    nameMapping: {}
+                                                };
+                                                test.deepEqual(res2.data, expected2);
+                                                // Verify that user 2's contact list is clear
+                                                lmHelpers.api.get(test, '/' + version + '/user/' + reply2.id + '/contacts', auth2, function (res3) {
+                                                    test.deepEqual(res3.data, expected2);
+                                                    test.done();
+                                                });
+                                            });
+                                        });
+                                    });
+                            });
+                        });
+                    });
+                });
+            });
+        });
+    }
+};
+
+tests.v2.deleteContact = function(version) {
+    return function (test) {
+        test.expect(15);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+            lmHelpers.createLocMapUser(test, testUserEmail2, 'dev2', function (auth2, reply2) {
+                auth1.data = {emails: [testUserEmail2]};
+                auth2.data = {emails: [testUserEmail]};
+                // Allow both users to see each other
+                lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/contacts/allow', auth1, function () {
+                    lmHelpers.api.post(test, '/' + version + '/user/' + reply2.id + '/contacts/allow', auth2, function () {
+                        // Ignore user 2
+                        auth1.data = {ids: [reply2.id]};
+                        lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/contacts/ignore', auth1, function () {
+                            // Rename user 2
+                            auth1.data = {name: 'deletetest'};
+                            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/contacts/rename/' + reply2.id, auth1, function () {
+                                // Verify that user1 can see and can be seen by user2 and that user 2 is on 1's ignore list
+                                lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/contacts', auth1,
+                                    function (res) {
+                                        var expected = [{userId: reply2.id, email: testUserEmail2, name: 'deletetest', location: {}, isIgnored: true, canSeeMe: true}];
+                                        test.deepEqual(res.data, expected);
+                                        // Delete user 2 from contacts
+                                        auth1.data = undefined;
+                                        lmHelpers.api.del(test, '/' + version + '/user/' + reply1.id + '/contacts/' + reply2.id, auth1, function () {
+                                            // Verify that user 1's contact list is clear
+                                            lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/contacts', auth1, function (res2) {
+                                                var expected2 = [];
+                                                test.deepEqual(res2.data, expected2);
+                                                // Verify that user 2's contact list is clear
+                                                lmHelpers.api.get(test, '/' + version + '/user/' + reply2.id + '/contacts', auth2, function (res3) {
+                                                    test.deepEqual(res3.data, expected2);
+                                                    test.done();
+                                                });
+                                            });
+                                        });
+                                    });
+                            });
+                        });
+                    });
+                });
+            });
+        });
+    }
+};
+
+// User can delete a stub contact
+tests.v1.deleteStubContact = function(version) {
+    return function (test) {
+        test.expect(8);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+            auth1.data = {emails: [testStubUser]};
+            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/allow', auth1, function () {
+                // Verify that user1 can see and can be seen by user2 and that user 2 is on 1's ignore list
+                lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/contacts', auth1,
+                    function (res) {
+                        var expected = {
+                            canseeme: ['b4b265d4a1a7f40c631e4dd003510ebf43f32135'],
+                            icansee: [],
+                            ignored: [],
+                            idmapping: [],
+                            nameMapping: {}
+                        };
+                        expected.idmapping['b4b265d4a1a7f40c631e4dd003510ebf43f32135'] = testStubUser;
+                        test.deepEqual(res.data, expected);
+                        // Delete user 2 from contacts
+                        auth1.data = undefined;
+                        lmHelpers.api.del(test, '/' + version + '/user/' + reply1.id + '/contacts/' + 'b4b265d4a1a7f40c631e4dd003510ebf43f32135', auth1, function () {
+                            // Verify that user 1's contact list is clear
+                            lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/contacts', auth1, function (res2) {
+                                var expected2 = {
+                                    canseeme: [],
+                                    icansee: [],
+                                    ignored: [],
+                                    idmapping: [],
+                                    nameMapping: {}
+                                };
+                                test.deepEqual(res2.data, expected2);
+                                test.done();
+                            });
+                        });
+                    });
+            });
+        });
+    }
+};
+
+tests.v2.deleteStubContact = function(version) {
+    return function (test) {
+        test.expect(8);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+            auth1.data = {emails: [testStubUser]};
+            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/contacts/allow', auth1, function () {
+                // Verify that user1 can see and can be seen by user2 and that user 2 is on 1's ignore list
+                lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/contacts', auth1,
+                    function (res) {
+                        var userId = 'b4b265d4a1a7f40c631e4dd003510ebf43f32135';
+                        var expected = [{userId: userId, email: testStubUser, name: null, location: null, isIgnored: false, canSeeMe: true}];
+                        test.deepEqual(res.data, expected);
+                        // Delete user 2 from contacts
+                        auth1.data = undefined;
+                        lmHelpers.api.del(test, '/' + version + '/user/' + reply1.id + '/contacts/' + 'b4b265d4a1a7f40c631e4dd003510ebf43f32135', auth1, function () {
+                            // Verify that user 1's contact list is clear
+                            lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/contacts', auth1, function (res2) {
+                                var expected2 = [];
+                                test.deepEqual(res2.data, expected2);
+                                test.done();
+                            });
+                        });
+                    });
+            });
+        });
+    }
+};
+
+tests.v1.userRenameContacts = function(version) {
+    return function (test) {
+        test.expect(5);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth, reply) {
+            auth.data = {name: 'userName'};
+
+            lmHelpers.api.post(test, '/' + version + '/user/' + reply.id + '/rename/' + 'testUserId',
+                auth, function () {
+                    lmHelpers.api.get(test, '/' + version + '/user/' + reply.id + '/contacts', auth,
+                        function (res) {
+                            var expected = {canseeme: [], icansee: [], ignored: [], idmapping: []};
+                            expected.nameMapping = {'testUserId': 'userName'};
+                            test.deepEqual(res.data, expected);
+                            test.done();
+                        });
+                });
+        });
+    }
+};
+
+// User can rename contacts
+tests.v2.userRenameContacts = function(version) {
+    return function (test) {
+        test.expect(8);
+
+        var newName = 'userName';
+
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth, reply1) {
+            lmHelpers.createLocMapUser(test, testUserEmail2, 'dev2', function (auth2, reply2) {
+                auth.data = {emails: [testUserEmail2]};
+                lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/contacts/allow', auth, function () {
+
+                    auth.data = {name: newName};
+                    lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/contacts/rename/' + reply2.id,
+                        auth, function () {
+                            lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/contacts', auth,
+                                function (res) {
+                                    var expected = [{userId: reply2.id, email: testUserEmail2, name: 'userName', location: null, isIgnored: false, canSeeMe: true}];
+                                    test.deepEqual(res.data, expected);
+                                    test.done();
+                                });
+                        });
+                });
+            });
+        });
+    }
+};
+
 var v1 = 'v1', v2 = 'v2';
 var versions = [v1, v2];
 
-function capitalizeVersion(version) {
-    return version.toUpperCase();
+function addTest(name, version, scope) {
+    function prettifyVersion(version) {
+        return ' [' + version + ']';
+    }
+    module.exports[name + prettifyVersion(version)] = tests[scope][name](version);
 }
 
 Object.keys(tests.both).forEach(function (testName) {
     versions.forEach(function (version) {
-        module.exports[testName + capitalizeVersion(version)] = tests.both[testName](version);
+        addTest(testName, version, 'both');
     });
 });
 versions.forEach(function(version) {
     Object.keys(tests[version]).forEach(function (testName) {
-        module.exports[testName + capitalizeVersion(version)] = tests[version][testName](version);
+        addTest(testName, version, version);
     });
-})
+});
 
 module.exports.tearDown = function (callback) {
     callback();

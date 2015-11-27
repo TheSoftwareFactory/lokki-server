@@ -30,6 +30,9 @@ var i18n = new I18N();
 var check = require('validator').check;
 var uuid = require('node-uuid');
 
+var LocMapRestApi = require('./locMapRESTAPI');
+var locMapRestApi = new LocMapRestApi();
+
 // Rest API version 2
 var LocMapRESTAPI2 = function() {
 
@@ -54,6 +57,59 @@ var LocMapRESTAPI2 = function() {
         callback(200, places);
     };
 
+    /* Get user contacts.
+    param userId        Encrypted ID of the user whose contacts are being fetched
+    callback callback   Callback function
+    returns a list of contacts. Contact: {userId, name, email, <boolean> isIgnored, <boolean> canSeeMe, <Location> location}.
+    */
+    this.getUserContacts = function(userId, callback) {
+        // Load contact data from server
+        var locShare = new LocMapShareModel(userId);
+        locShare.getData(function (locShareResult) {
+            if (typeof locShareResult !== 'number') {
+                // nameMapping: userId -> name
+                var nameMapping = JSON.parse(locShare.data.nameMapping);
+
+                // Array of userIds who can see me. We create a dictionary for better performance.
+                var canSeeMe = {};
+                locShare.data.canSeeMe.forEach(function(userId) {
+                    canSeeMe[userId] = true;
+                });
+
+                // Array of userIds who I have ignored (= I can't see on the map). We create a dictionary for better performance.
+                var ignored = {};
+                locShare.data.ignored.forEach(function(userId) {
+                    ignored[userId] = true;
+                });
+
+                // iCanSee: userId -> {location: {lat, lon, acc}, battery: <string>, visibility: <boolean>}
+                locMapRestApi._getUserShareData(locShare.data.ICanSee, function(ICanSee) {
+
+                    var contacts = [];
+
+                    locMapRestApi._generateIdMapping(locShare.data.ICanSee, locShare.data.canSeeMe, function(idMapping) {
+                        // idMapping: userId -> email
+                        Object.keys(idMapping).forEach(function(contactUserId) {
+                            var email = idMapping[contactUserId];
+                            var contact = {userId: contactUserId, email: email};
+                            contact.name = (nameMapping[contactUserId]) ? nameMapping[contactUserId] : null;
+                            contact.isIgnored = !!ignored[contactUserId];
+                            contact.location = (ICanSee[contactUserId]) ? ICanSee[contactUserId].location : null;
+                            contact.canSeeMe = !!canSeeMe[contactUserId];
+
+                            contacts.push(contact);
+                        });
+
+                        // Send everything back
+                        callback(200, contacts);
+                    });
+                });
+            } else {
+                logger.warn('Failed to get contact for user ' + userId);
+                callback(404, 'Failed to get contact data for user.');
+            }
+        });
+    };
 };
 
 module.exports = LocMapRESTAPI2;
