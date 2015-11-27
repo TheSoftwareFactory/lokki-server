@@ -63,12 +63,11 @@ var LocMapRESTAPI2 = function() {
     returns a list of contacts. Contact: {userId, name, email, <boolean> isIgnored, <boolean> canSeeMe, <Location> location}.
     */
     this.getUserContacts = function(userId, callback) {
-        //var responseData = {};
         // Load contact data from server
         var locShare = new LocMapShareModel(userId);
         locShare.getData(function (locShareResult) {
             if (typeof locShareResult !== 'number') {
-                //nameMapping: userId -> name
+                // nameMapping: userId -> name
                 var nameMapping = JSON.parse(locShare.data.nameMapping);
 
                 // Array of userIds who can see me. We create a dictionary for better performance.
