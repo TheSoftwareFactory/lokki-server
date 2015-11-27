@@ -508,8 +508,6 @@ tests.both.allowedUsersUpperLimit = function(version) {
     }
 };
 
-
-
 // Stub users cannot be authorized.
 tests.both.stubUserDashboardFails = function(version) {
     return function (test) {

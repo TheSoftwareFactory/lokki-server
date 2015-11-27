@@ -27,5 +27,13 @@
     "reset.emailSubject": "Confirm Lokki sign-up",
     "reset.emailText": "You need to confirm your Lokki account. Click this %resetLink% to do so. This link is valid for 24 hours. Make sure that you log in to Lokki within two hours after you confirm your account. This does not affect your existing contacts and settings in Lokki.\n\nNote that you cannot use the same email address for more than one Lokki account or device.",
     "reset.serverMessage": "<html><body>Dear Lokki user,<br/><br/>You can now log in to Lokki. This authorization is valid for two hours. After you log in, Lokki will have same contacts and settings as before.<br/><br/>Note that you cannot use the same email address for more than one Lokki account or device.</body></html>",
-    "notify.friendLocationRequestLokkiStart": "Your Lokki friends are requesting your location. You should start Lokki to enable location reporting."
+    "notify.friendLocationRequestLokkiStart": "Your Lokki friends are requesting your location. You should start Lokki to enable location reporting.",
+    "delete.request.badaddress": "<html><body>There is on user with that address.</html></body>",
+    "delete.request.sent": "<html><body>An email has been sent to %email% <br/><br/> Please follow the instructions in that email</html></body>",
+    "delete.request.sendfail": "<html><body> Could not send email to %email% <br/><br/> Try again or contact Lokki administrators</html></body>",
+    "delete.emailSubject": "Confirm Lokki deletion",
+    "delete.emailText": "Someone has requested that your Lokki account and all its data be deleted. If this was not you, ignore this message. Otherwise, click on this link: %deleteLink%",
+    "delete.confirm": "<html><body> <a href=%yesLink%>Click here</a> to delete all your Lokki data.<br/><br/> This can't be undone! <br/><br/> If you don't want to delete your data, close this page. </html></body>",
+    "delete.done": "<html><body>Your data has been deleted</body></html>",
+    "delete.failed": "<html><body>We did not succeed deleting your data! <br/><br/> Try again or contact Lokki administrators."
 }
