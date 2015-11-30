@@ -245,7 +245,7 @@ module.exports = function (app) {
         var cache = new Cache();
         cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
 
-        if (req.params.versionCode < Constants.LatestAcceptedVersionCode) {
+        if (req.params.versionCode < Constants.MinimumAcceptedVersionCode) {
             var responseData = {};
             responseData.serverMessage = Constants.ServerMessage;
             res.send(200, responseData);
