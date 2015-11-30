@@ -66,6 +66,8 @@ module.exports = function (app) {
     // param uri                       The uri
     // param callback(req, res, next)  A callback function. IF there is callback2, next() must be called.
     // param callback2(req, res, next) Second callback function that is executed after first callback function.
+    //
+    // makes path of form: /<uri>
     function routeRootApi(type, uri, callback, callback2) {
             (callback2 === undefined) ?
                 app[type](uri, callback) :
@@ -78,6 +80,8 @@ module.exports = function (app) {
     // param versions                  An array containing every version that uses. Single value is also ok. Examples: ['v1', 'v2'], ['v1'], 'v1'
     // param callback(req, res, next)  A callback function. IF there is callback2, next() must be called.
     // param callback2(req, res, next) Second callback function that is executed after first callback function.
+    //
+    // makes path of form: /api/locmap/<version>/<uri>
     function route(type, versions, uris, callback, callback2) {
         if (!Array.isArray(versions)) versions = [versions];
         if (!Array.isArray(uris)) uris = [uris];
@@ -89,6 +93,7 @@ module.exports = function (app) {
         });
     }
 
+    // makes path of form: /api/locmap/<version>/user/:userId/<uri>
     function routeUser(type, versions, uris, callback) {
         if (!Array.isArray(uris)) uris = [uris];
         uris.forEach(function(uri) {
@@ -97,6 +102,7 @@ module.exports = function (app) {
         });
     }
 
+    // makes path of form: /api/locmap/<version>/admin/:userId/<uri>
     function routeAdmin(type, versions, uris, callback) {
         if (!Array.isArray(uris)) uris = [uris];
         uris.forEach(function(uri) {
@@ -391,7 +397,7 @@ module.exports = function (app) {
         });
     });
 
-    app.get('/request-delete/:emailAddr', suspend(function* (req, res) {
+    routeRootApi(GET, '/request-delete/:emailAddr', suspend(function* (req, res) {
         res.removeHeader('Content-Disposition');
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
 
@@ -406,7 +412,7 @@ module.exports = function (app) {
         assert.ok(status === 200);
     }));
 
-    app.get('/confirm-delete/:userId/:deleteCode', suspend(function* (req, res) {
+    routeRootApi(GET, '/confirm-delete/:userId/:deleteCode', suspend(function* (req, res) {
         res.removeHeader('Content-Disposition');
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
 
@@ -421,7 +427,7 @@ module.exports = function (app) {
         assert.ok(status === 200);
     }));
 
-    app.get('/do-delete/:userId/:deleteCode', suspend(function* (req, res) {
+    routeRootApi(GET, '/do-delete/:userId/:deleteCode', suspend(function* (req, res) {
         res.removeHeader('Content-Disposition');
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
 
