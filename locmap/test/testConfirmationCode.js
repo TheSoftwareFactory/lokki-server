@@ -22,6 +22,7 @@ var I18N = require('../../lib/i18n');
 var i18n = new I18N();
 
 var userEmail = 'test@example.com.invalid';
+var codeLength = conf.get('codeLengths').confirmation;
 
 module.exports = {
     setUp: function (callback) {
@@ -38,7 +39,7 @@ module.exports = {
             code = new LocMapConfirmationCode(myId);
         code.createConfirmationCode(myId, function (confirmationCode) {
             test.equal(typeof confirmationCode, 'string');
-            test.equal(confirmationCode.length, 80);
+            test.equal(confirmationCode.length, codeLength);
             test.done();
         });
     },
@@ -48,7 +49,7 @@ module.exports = {
         var userId = 'deadbeef';
         locMapConfirmationCode.createConfirmationCode(userId, function (confirmationCode) {
             test.equal(typeof confirmationCode, 'string');
-            test.equal(confirmationCode.length, 80);
+            test.equal(confirmationCode.length, codeLength);
             locMapConfirmationCode.getConfirmationCodeData(userId, confirmationCode, function (confirmationCodeData) {
                 test.deepEqual(confirmationCodeData, {confirmationCode: confirmationCode, userId: userId});
                 test.done();
@@ -76,7 +77,7 @@ module.exports = {
             var userId = userData.id;
             locMapConfirmationCode.createConfirmationCode(userId, function (confirmationCode) {
                 test.equal(typeof confirmationCode, 'string', 'Invalid type for confirmation code.');
-                test.equal(confirmationCode.length, 80, 'Wrong length for confirmation code.');
+                test.equal(confirmationCode.length, codeLength, 'Wrong length for confirmation code.');
                 locMapRestApi.confirmUserAccount(userId, confirmationCode, function (status, result) {
                     test.equal(status, 200, 'Confirm account call failed.');
                     test.equal(result, i18n.getLocalizedString('en-US', 'confirm.serverMessage'));

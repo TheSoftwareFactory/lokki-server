@@ -50,7 +50,7 @@ var ConfirmationCode = function () {
     };
 
     this.createConfirmationCode = function (userId, callback) {
-        var confirmationCode = locMapCommon.generateResetToken(),
+        var confirmationCode = locMapCommon.generateConfirmationCode(),
             data = {confirmationCode: confirmationCode, userId: userId},
             serializedData = this._serializeData(data);
             db.setex(modelPrefix + userId, conf.get('locMapConfig').confirmationCodeTimeout,

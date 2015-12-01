@@ -1189,7 +1189,7 @@ var LocMapRESTAPI = function() {
                     'delete.request.badaddress'));
         };
 
-        assert.ok(typeof userId === 'string' && userId.length === 40);
+        assert.ok(typeof userId === 'string' && userId.length > 10);
         var user = new LocMapUserModel(userId);
         var data = (yield user.getData(suspend.resumeRaw()))[0];
         var lang = data.language;

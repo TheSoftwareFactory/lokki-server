@@ -9,6 +9,8 @@ var logger = require('../../lib/logger');
 var conf = require('../../lib/config');
 var LocMapUserModel = require('./locMapUserModel');
 var LocMapShareModel = require('./locMapShareModel');
+var LocMapCommon = require('./locMapCommon');
+var locMapCommon = new LocMapCommon();
 
 var assert = require('assert');
 var suspend = require('suspend');
@@ -86,7 +88,7 @@ exports.tryDeleteUser = suspend(function* (userId, deleteCode, callback) {
 });
 
 exports.makeDeleteCode = suspend(function* (userId, callback) {
-    var code = generateCode();
+    var code = locMapCommon.generateDeleteCode();
     try {
         yield db.hmset(codePrefix + userId, {
                 userId: userId,
@@ -110,11 +112,3 @@ var getDeleteCode = suspend(function* (userId, callback) {
     return callback(null, result.code);
 });
 
-var generateCode = function () {
-    var s = '';
-    var chars = '0123456789abcdefghijklmnopqrstuvwxyz';
-    for (var i = 0; i < 32; ++i) {
-        s += chars.charAt(Math.floor(Math.random() * chars.length)); 
-    }
-    return s;
-}
