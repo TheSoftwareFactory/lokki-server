@@ -21,10 +21,12 @@ function placeInV2Format(place, id) {
     var clonePlace = JSON.parse(JSON.stringify(place));
     clonePlace.id = id;
     clonePlace.location = {};
-    ['lat', 'lon', 'rad'].forEach(function(field) {
+    ['lat', 'lon'].forEach(function(field) {
         clonePlace.location[field] = clonePlace[field];
         delete clonePlace[field];
     });
+    clonePlace.location.acc = clonePlace.rad;
+    delete clonePlace.rad;
     return clonePlace;
 }
 
@@ -607,25 +609,6 @@ tests.both.setVisibility = function(version) {
 };
 
 
-// Create multiple places with same name
-tests.both.createMultiplePlacesWithSameNameShouldError = function(version) {
-    return function (test) {
-        test.expect(4);
-        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
-            var authWithPlace = JSON.parse(JSON.stringify(auth1));
-            authWithPlace.data = lmHelpers.locMapPlace1;
-            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/place', authWithPlace,
-                function () {
-                    lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/place', authWithPlace,
-                        {status: 403}, function () {
-                            test.done();
-                        });
-                });
-        });
-    }
-};
-
-
 // Modify non-existing place returns 404
 tests.both.modifyNonExistingPlace = function(version) {
     return function (test) {
@@ -643,6 +626,42 @@ tests.both.modifyNonExistingPlace = function(version) {
 
 
 tests.v1 = {}, tests.v2 = {};
+
+// Create multiple places with same name
+tests.v1.createMultiplePlacesWithSameNameShouldError = function(version) {
+    return function (test) {
+        test.expect(4);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+            var authWithPlace = JSON.parse(JSON.stringify(auth1));
+            authWithPlace.data = lmHelpers.locMapPlace1;
+            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/place', authWithPlace,
+                function () {
+                    lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/place', authWithPlace,
+                        {status: 403}, function () {
+                            test.done();
+                        });
+                });
+        });
+    }
+};
+
+// Create multiple places with same name
+tests.v2.createMultiplePlacesWithSameNameShouldError = function(version) {
+    return function (test) {
+        test.expect(4);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+            var authWithPlace = JSON.parse(JSON.stringify(auth1));
+            authWithPlace.data = placeInV2Format(lmHelpers.locMapPlace1);
+            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places', authWithPlace,
+                function () {
+                    lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places', authWithPlace,
+                        {status: 403}, function () {
+                            test.done();
+                        });
+                });
+        });
+    }
+};
 
 // User without places gives an empty object back.
 tests.v1.getPlacesFromUserWithoutPlaces = function(version) {
@@ -698,7 +717,7 @@ tests.v2.createAndGetUserPlace = function(version) {
         test.expect(8);
         lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
             var authWithPlace = JSON.parse(JSON.stringify(auth1));
-            authWithPlace.data = lmHelpers.locMapPlace1;
+            authWithPlace.data = placeInV2Format(lmHelpers.locMapPlace1);
             lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places', authWithPlace,
                 function (result) {
                     // Verify that placeid is a uuid string.
@@ -919,7 +938,7 @@ tests.v2.modifyPlace = function(version) {
         test.expect(9);
         lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
             var authWithPlace = JSON.parse(JSON.stringify(auth1));
-            authWithPlace.data = lmHelpers.locMapPlace1;
+            authWithPlace.data = placeInV2Format(lmHelpers.locMapPlace1);
             lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places', authWithPlace,
                 function (result1) {
                     var placeId1 = result1.data.id;
@@ -977,12 +996,12 @@ tests.v2.modifyPlaceWithInvalid = function(version) {
         test.expect(6);
         lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
             var authWithPlace = JSON.parse(JSON.stringify(auth1));
-            authWithPlace.data = lmHelpers.locMapPlace1;
-            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/place', authWithPlace,
+            authWithPlace.data = placeInV2Format(lmHelpers.locMapPlace1);
+            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places', authWithPlace,
                 function (result1) {
                     var placeId1 = result1.data.id;
                     authWithPlace.data = {lat: 1.2, lon: 3.5, rad: 'plop'};
-                    lmHelpers.api.put(test, '/' + version + '/user/' + reply1.id + '/place/' + placeId1,
+                    lmHelpers.api.put(test, '/' + version + '/user/' + reply1.id + '/places/' + placeId1,
                         authWithPlace, {status: 400}, function () {
                             // Verify that place is still the original.
                             lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places', auth1,
