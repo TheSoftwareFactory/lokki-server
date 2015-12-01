@@ -313,11 +313,7 @@ var LocMapUserModel = function(userId) {
         }
 
         if (this.data.authorizationToken.length < 1) {
-            this.data.authorizationToken = '';
-            var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            for (var i = 0; i < 10; i++) {
-                this.data.authorizationToken += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
+            this.data.authorizationToken = locMapCommon.generateAuthToken();
         }
         logger.trace('authtoken: ' + this.data.authorizationToken);
     };

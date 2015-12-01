@@ -35,19 +35,30 @@ var LocMapCommon = function() {
         return status;
     };
 
+    this._randomHexChars = function (count) {
+        return crypto.randomBytes(Math.ceil(count / 2))
+            .toString('hex').slice(0, count);
+    };
+
     // must be called on initialized user
     this.generateAuthToken = function() {
-        var token = '';
-        var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        for (var i = 0; i < 10; i++) {
-            token += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return token;
+        var len = conf.get('codeLengths').authToken;
+        return this._randomHexChars(len);
     };
 
     this.generateResetToken = function() {
-        var token = crypto.randomBytes(40).toString('hex');
-        return token;
+        var len = conf.get('codeLengths').reset;
+        return this._randomHexChars(len);
+    };
+
+    this.generateDeleteCode = function () {
+        var len = conf.get('codeLengths').delete;
+        return this._randomHexChars(len);
+    };
+
+    this.generateConfirmationCode = function () {
+        var len = conf.get('codeLengths').confirmation;
+        return this._randomHexChars(len);
     };
 
     this.verifyPlace = function(rawPlace) {

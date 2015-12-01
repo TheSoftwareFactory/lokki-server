@@ -7,6 +7,7 @@ See LICENSE for details
 
 var helpers = require('../../test_helpers/test_helpers');
 var lmHelpers = require('../test_helpers/locMapHelpers');
+var conf = require('../../lib/config');
 
 var testUserEmail = 'user1@example.com.invalid';
 var testUserEmail2 = 'user2@example.com.invalid';
@@ -16,6 +17,8 @@ var testStubUser = 'testuser@fi.invalid';
 
 var userDashboard = {};
 var userDashboard2 = {};
+
+var tokenLength = conf.get('codeLengths').authToken;
 
 function placeInV2Format(place, id) {
     var clonePlace = JSON.parse(JSON.stringify(place));
@@ -61,7 +64,7 @@ tests.both.userSignUpReply = function(version) {
             var result = res.data;
             test.equal(result.id, '31ec43882c3898c7f8d72d6107cff6f38fb515b7');
             test.ok(typeof result.authorizationtoken === 'string');
-            test.equal(result.authorizationtoken.length, 10);
+            test.equal(result.authorizationtoken.length, tokenLength);
             test.deepEqual(result.icansee, []);
             test.deepEqual(result.canseeme, []);
             test.done();
@@ -543,7 +546,7 @@ tests.both.stubUserSignup = function(version) {
                         var result = res.data;
                         test.equal(result.id, 'b4b265d4a1a7f40c631e4dd003510ebf43f32135');
                         test.ok(typeof result.authorizationtoken === 'string');
-                        test.equal(result.authorizationtoken.length, 10);
+                        test.equal(result.authorizationtoken.length, tokenLength);
                         test.deepEqual(result.icansee, [reply1.id]);
                         test.deepEqual(result.canseeme, []);
                         test.done();
