@@ -112,8 +112,8 @@ var LocMapRESTAPI2 = function() {
             }
         });
     };
-    this.transformToAPIv1Format = function(v2place){
-        if(v2place.location === undefined){
+    this.transformToAPIv1Format = function(v2place) {
+        if (v2place.location === undefined) {
             return v2place;
         }
         v2place.rad = v2place.location.acc;
