@@ -22,6 +22,7 @@ var I18N = require('../../lib/i18n');
 var i18n = new I18N();
 
 var userEmail = 'test@example.com.invalid';
+var codeLength = conf.get('codeLengths').reset;
 
 module.exports = {
     setUp: function (callback) {
@@ -38,7 +39,7 @@ module.exports = {
             code = new LocMapResetCode(myId);
         code.createResetCode(myId, function (resetCode) {
             test.equal(typeof resetCode, 'string');
-            test.equal(resetCode.length, 80);
+            test.equal(resetCode.length, codeLength);
             test.done();
         });
     },
@@ -48,7 +49,7 @@ module.exports = {
         var userId = 'deadbeef';
         locMapResetCode.createResetCode(userId, function (resetCode) {
             test.equal(typeof resetCode, 'string');
-            test.equal(resetCode.length, 80);
+            test.equal(resetCode.length, codeLength);
             locMapResetCode.getResetCodeData(userId, resetCode, function (resetCodeData) {
                 test.deepEqual(resetCodeData, {resetCode: resetCode, userId: userId});
                 test.done();
@@ -77,7 +78,7 @@ module.exports = {
             var userId = userData.id;
             locMapResetCode.createResetCode(userId, function (resetCode) {
                 test.equal(typeof resetCode, 'string', 'Invalid type for reset code.');
-                test.equal(resetCode.length, 80, 'Wrong length for reset code.');
+                test.equal(resetCode.length, codeLength, 'Wrong length for reset code.');
                 locMapRestApi.resetUserAccountToRecoveryMode(userId, resetCode, function (status) {
                     test.equal(status, 200, 'Reset account call failed.');
                     var user = new LocMapUserModel(userId);
@@ -104,7 +105,7 @@ module.exports = {
             var userId = userData.id;
             locMapResetCode.createResetCode(userId, function (resetCode) {
                 test.equal(typeof resetCode, 'string', 'Invalid type for reset code.');
-                test.equal(resetCode.length, 80, 'Wrong length for reset code.');
+                test.equal(resetCode.length, codeLength, 'Wrong length for reset code.');
                 locMapRestApi.resetUserAccountToRecoveryMode(userId, resetCode, function (status, result) {
                     test.equal(status, 200, 'Reset account call failed.');
                     test.equal(result, i18n.getLocalizedString('en-US', 'reset.serverMessage'));

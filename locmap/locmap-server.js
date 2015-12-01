@@ -18,6 +18,7 @@ var locMapRestApi2 = new LocMapRestApi2();
 var LocMapAdminApi = require('./lib/locMapAdminApi');
 var locMapAdminApi = new LocMapAdminApi();
 var Cache = require('../lib/cache');
+var Constants = require('./lib/constants');
 
 var suspend = require('suspend');
 var assert = require('assert');
@@ -66,6 +67,8 @@ module.exports = function (app) {
     // param uri                       The uri
     // param callback(req, res, next)  A callback function. IF there is callback2, next() must be called.
     // param callback2(req, res, next) Second callback function that is executed after first callback function.
+    //
+    // makes path of form: /<uri>
     function routeRootApi(type, uri, callback, callback2) {
             (callback2 === undefined) ?
                 app[type](uri, callback) :
@@ -78,6 +81,8 @@ module.exports = function (app) {
     // param versions                  An array containing every version that uses. Single value is also ok. Examples: ['v1', 'v2'], ['v1'], 'v1'
     // param callback(req, res, next)  A callback function. IF there is callback2, next() must be called.
     // param callback2(req, res, next) Second callback function that is executed after first callback function.
+    //
+    // makes path of form: /api/locmap/<version>/<uri>
     function route(type, versions, uris, callback, callback2) {
         if (!Array.isArray(versions)) versions = [versions];
         if (!Array.isArray(uris)) uris = [uris];
@@ -89,6 +94,7 @@ module.exports = function (app) {
         });
     }
 
+    // makes path of form: /api/locmap/<version>/user/:userId/<uri>
     function routeUser(type, versions, uris, callback) {
         if (!Array.isArray(uris)) uris = [uris];
         uris.forEach(function(uri) {
@@ -97,6 +103,7 @@ module.exports = function (app) {
         });
     }
 
+    // makes path of form: /api/locmap/<version>/admin/:userId/<uri>
     function routeAdmin(type, versions, uris, callback) {
         if (!Array.isArray(uris)) uris = [uris];
         uris.forEach(function(uri) {
@@ -238,6 +245,25 @@ module.exports = function (app) {
         });
     });
 
+    // Check for version, if it is out of date, then return a server message.
+    // Otherwise, return the user dashboard information.
+    routeUser(GET, ['v1', 'v2'], 'version/:versionCode/dashboard', function (req, res) {
+        var cache = new Cache();
+        cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
+
+        if (req.params.versionCode < Constants.MinimumAcceptedVersionCode) {
+            var responseData = {};
+            responseData.serverMessage = Constants.ServerMessage;
+            res.send(200, responseData);
+        } else {
+            locMapRestApi.getUserDashboard(req.params.userId, cache, function (status, result) {
+                logger.trace('Dashboard reply status: ' + status +
+                    ' contents: ' + JSON.stringify(result));
+                res.send(status, result);
+            });
+        }
+    });
+
     // Send notification to update location to users that the current user can see.
     routeUser(POST, ['v1', 'v2'], 'update/locations', function (req, res) {
         logger.trace('User ' + req.params.userId + ' requested location updates.');
@@ -309,7 +335,7 @@ module.exports = function (app) {
     // Returns 200, {id: 'placeid'}
     // If place data is invalid, returns 400
     // If place limit reached, returns 403
-    routeUser(POST, ['v1', 'v2'], ['place', 'places'], function (req, res) {
+    routeUser(POST, 'v1', 'place', function (req, res) {
         var cache = new Cache();
         cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
 
@@ -318,15 +344,43 @@ module.exports = function (app) {
         });
     });
 
+    // Store a new place
+    // POST data contents {name: 'aa', location: {lat: 1, lon: 2, acc: 10}, img: 'internalpic1.png'}
+    // Returns 200, {id: 'placeid'}s
+    // If place data is invalid, returns 400
+    // If place limit reached, returns 403
+    routeUser(POST,'v2', 'places', function (req, res) {
+        var cache = new Cache();
+        cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
+
+        locMapRestApi.addUserPlace(req.params.userId, cache, locMapRestApi2.transformToAPIv1Format(req.body), function (status, result) {
+            res.send(status, result);
+        });
+    });
+
     // Update existing place
     // PUT data contents {name: 'aa', lat: 1, lon: 2, rad: 10, img: 'internalpic1.png'}
     // Returns 200
     // If place data is invalid, returns 400
-    routeUser(PUT, ['v1', 'v2'], ['place/:placeId', 'places/:placeId'], function (req, res) {
+    routeUser(PUT, 'v1', 'place/:placeId', function (req, res) {
         var cache = new Cache();
         cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
 
         locMapRestApi.modifyUserPlace(req.params.userId, cache, req.params.placeId, req.body,
+            function (status, result) {
+                res.send(status, result);
+            });
+    });
+
+    // Update existing place
+    // PUT data contents {name: 'aa', location: {lat: 1, lon: 2, acc: 10}, img: 'internalpic1.png'}
+    // Returns 200
+    // If place data is invalid, returns 400
+    routeUser(PUT, 'v2', 'places/:placeId', function (req, res) {
+        var cache = new Cache();
+        cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
+
+        locMapRestApi.modifyUserPlace(req.params.userId, cache, req.params.placeId, locMapRestApi2.transformToAPIv1Format(req.body),
             function (status, result) {
                 res.send(status, result);
             });
@@ -357,8 +411,7 @@ module.exports = function (app) {
     });
 
     // Get all places of user.
-    // Returns: 200, [{id: placeId, name: 'aa', lat: 1, lon: 2,
-    //  rad: 20, img: 'internalpic1.png'}, ... ]
+    // Returns: 200, [{id: placeId, name: 'aa', location: {lat: 1, lon: 2, acc: 10}, img: 'internalpic1.png'}, ... ]
     routeUser(GET, 'v2', 'places', function (req, res) {
         var cache = new Cache();
         cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
@@ -391,7 +444,7 @@ module.exports = function (app) {
         });
     });
 
-    app.get('/request-delete/:emailAddr', suspend(function* (req, res) {
+    routeRootApi(GET, '/request-delete/:emailAddr', suspend(function* (req, res) {
         res.removeHeader('Content-Disposition');
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
 
@@ -406,7 +459,7 @@ module.exports = function (app) {
         assert.ok(status === 200);
     }));
 
-    app.get('/confirm-delete/:userId/:deleteCode', suspend(function* (req, res) {
+    routeRootApi(GET, '/confirm-delete/:userId/:deleteCode', suspend(function* (req, res) {
         res.removeHeader('Content-Disposition');
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
 
@@ -421,7 +474,7 @@ module.exports = function (app) {
         assert.ok(status === 200);
     }));
 
-    app.get('/do-delete/:userId/:deleteCode', suspend(function* (req, res) {
+    routeRootApi(GET, '/do-delete/:userId/:deleteCode', suspend(function* (req, res) {
         res.removeHeader('Content-Disposition');
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
 

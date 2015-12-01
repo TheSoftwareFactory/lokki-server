@@ -1,9 +1,8 @@
 'use strict'
 
-var helpers = require('../../test_helpers/test_helpers');
 var lmHelpers = require('../test_helpers/locMapHelpers');
 var conf = require('../../lib/config');
-var testHelpers = require('../../test_helpers/test_helpers');
+var helpers = require('../../test_helpers/test_helpers');
 var LocMapCommon = require('../lib/locMapCommon');
 var locMapCommon = new LocMapCommon();
 var LocMapUserModel = require('../lib/locMapUserModel');
@@ -59,11 +58,11 @@ module.exports.deleteCodeCreated = suspend(function* (test) {
     var reply = (yield lmHelpers.createLocMapUser(test,  
             myEmail, 'dev1', suspend.resumeRaw()))[1];
 
-    test.ok(!(yield testHelpers.keyExists(
+    test.ok(!(yield helpers.keyExists(
                 codePrefix + reply.id, suspend.resume())));
     yield client.get(test, '/request-delete/' + myEmail,
             {}, suspend.resumeRaw());
-    test.ok(yield testHelpers.keyExists(
+    test.ok(yield helpers.keyExists(
                 codePrefix + reply.id, suspend.resume()));
 
     test.done();
@@ -77,9 +76,9 @@ module.exports.deleteStartToFinish = suspend(function* (test) {
 
     test.ok(!!reply.id);
 
-    test.ok(yield testHelpers.keyExists(userPrefix + reply.id, 
+    test.ok(yield helpers.keyExists(userPrefix + reply.id, 
                 suspend.resume()));
-    test.ok(yield testHelpers.keyExists(sharePrefix + reply.id, 
+    test.ok(yield helpers.keyExists(sharePrefix + reply.id, 
                 suspend.resume()));
 
     var user = new LocMapUserModel(reply.id);
@@ -87,12 +86,12 @@ module.exports.deleteStartToFinish = suspend(function* (test) {
 
     test.ok(user.exists);
 
-    test.ok(!(yield testHelpers.keyExists(codePrefix+reply.id, 
+    test.ok(!(yield helpers.keyExists(codePrefix+reply.id, 
                 suspend.resume())));
     yield client.get(test, '/request-delete/' + myEmail,
             {}, suspend.resumeRaw());
 
-    test.ok(yield testHelpers.keyExists(codePrefix+reply.id, 
+    test.ok(yield helpers.keyExists(codePrefix+reply.id, 
                 suspend.resume()));
 
     var lastmail_ = yield db.lindex('sentmail', -1, suspend.resume());
@@ -141,11 +140,11 @@ module.exports.deleteStartToFinish = suspend(function* (test) {
 
     test.ok(!!res && !!res.body && res.body.length > 10);
 
-    test.ok(!(yield testHelpers.keyExists(
+    test.ok(!(yield helpers.keyExists(
                 userPrefix + reply.id, suspend.resume())));
-    test.ok(!(yield testHelpers.keyExists(
+    test.ok(!(yield helpers.keyExists(
                 sharePrefix + reply.id, suspend.resume())));
-    test.ok(!(yield testHelpers.keyExists(
+    test.ok(!(yield helpers.keyExists(
                 codePrefix + reply.id, suspend.resume())));
 
     test.done();
