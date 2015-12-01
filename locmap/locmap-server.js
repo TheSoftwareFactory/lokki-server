@@ -335,7 +335,7 @@ module.exports = function (app) {
     // Returns 200, {id: 'placeid'}
     // If place data is invalid, returns 400
     // If place limit reached, returns 403
-    routeUser(POST, ['v1', 'v2'], ['place', 'places'], function (req, res) {
+    routeUser(POST, 'v1', 'place', function (req, res) {
         var cache = new Cache();
         cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
 
@@ -344,15 +344,43 @@ module.exports = function (app) {
         });
     });
 
+    // Store a new place
+    // POST data contents {name: 'aa', location: {lat: 1, lon: 2, acc: 10}, img: 'internalpic1.png'}
+    // Returns 200, {id: 'placeid'}s
+    // If place data is invalid, returns 400
+    // If place limit reached, returns 403
+    routeUser(POST,'v2', 'places', function (req, res) {
+        var cache = new Cache();
+        cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
+
+        locMapRestApi.addUserPlace(req.params.userId, cache, locMapRestApi2.transformToAPIv1Format(req.body), function (status, result) {
+            res.send(status, result);
+        });
+    });
+
     // Update existing place
     // PUT data contents {name: 'aa', lat: 1, lon: 2, rad: 10, img: 'internalpic1.png'}
     // Returns 200
     // If place data is invalid, returns 400
-    routeUser(PUT, ['v1', 'v2'], ['place/:placeId', 'places/:placeId'], function (req, res) {
+    routeUser(PUT, 'v1', 'place/:placeId', function (req, res) {
         var cache = new Cache();
         cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
 
         locMapRestApi.modifyUserPlace(req.params.userId, cache, req.params.placeId, req.body,
+            function (status, result) {
+                res.send(status, result);
+            });
+    });
+
+    // Update existing place
+    // PUT data contents {name: 'aa', location: {lat: 1, lon: 2, acc: 10}, img: 'internalpic1.png'}
+    // Returns 200
+    // If place data is invalid, returns 400
+    routeUser(PUT, 'v2', 'places/:placeId', function (req, res) {
+        var cache = new Cache();
+        cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
+
+        locMapRestApi.modifyUserPlace(req.params.userId, cache, req.params.placeId, locMapRestApi2.transformToAPIv1Format(req.body),
             function (status, result) {
                 res.send(status, result);
             });
@@ -383,8 +411,7 @@ module.exports = function (app) {
     });
 
     // Get all places of user.
-    // Returns: 200, [{id: placeId, name: 'aa', lat: 1, lon: 2,
-    //  rad: 20, img: 'internalpic1.png'}, ... ]
+    // Returns: 200, [{id: placeId, name: 'aa', location: {lat: 1, lon: 2, acc: 10}, img: 'internalpic1.png'}, ... ]
     routeUser(GET, 'v2', 'places', function (req, res) {
         var cache = new Cache();
         cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);

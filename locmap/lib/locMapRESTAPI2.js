@@ -47,10 +47,12 @@ var LocMapRESTAPI2 = function() {
             var place = cachedPlaces[id];
             place.id = id;
             place.location = {};
-            ['lat', 'lon', 'rad'].forEach(function(field) {
+            ['lat', 'lon'].forEach(function(field) {
                 place.location[field] = place[field];
                 delete place[field];
             });
+            place.location.acc = place.rad;
+            delete place.rad;
             places.push(place);
         });
 
@@ -110,6 +112,20 @@ var LocMapRESTAPI2 = function() {
             }
         });
     };
+    this.transformToAPIv1Format = function(v2place){
+        if(v2place.location === undefined){
+            return v2place;
+        }
+        v2place.rad = v2place.location.acc;
+        v2place.lon = v2place.location.lon;
+        v2place.lat = v2place.location.lat;
+
+
+        delete v2place.location;
+
+        return v2place;
+    }
+
 };
 
 module.exports = LocMapRESTAPI2;
