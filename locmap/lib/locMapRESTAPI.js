@@ -846,16 +846,16 @@ var LocMapRESTAPI = function() {
         });
     };
 
-    this.placeNameAlreadyInUse = function(user, placeName) {
+    this.placeNameAlreadyInUse = function(user, placeName, placeId) {
         for (var key in user.data.places) {
-            if (user.data.places[key].name === placeName) {
+            if (key !== placeId && user.data.places[key].name === placeName) {
                 return true;
             }
         }
         return false;
     }
 
-    this.getVerifiedPlace = function(userId, cache, place, callback) {
+    this.getVerifiedPlace = function(userId, cache, place, placeId, callback) {
         if (!place || (typeof place !== 'object') || place.lat === undefined || place.lon === undefined ||
                 place.rad === undefined || place.name === undefined || place.img === undefined) {
             callback(400, 'Place object is wrong!');
@@ -874,7 +874,7 @@ var LocMapRESTAPI = function() {
                 return;
             }
 
-            if (this.placeNameAlreadyInUse(user, verifiedPlace.name)) {
+            if (this.placeNameAlreadyInUse(user, verifiedPlace.name, placeId)) {
                 callback(403, 'place_name_already_in_use');
                 return;
             }
@@ -886,7 +886,7 @@ var LocMapRESTAPI = function() {
 
     // Add a new place to user.
     this.addUserPlace = function(userId, cache, placeObj, callback) {
-        var verifiedPlace = this.getVerifiedPlace(userId, cache, placeObj, callback);
+        var verifiedPlace = this.getVerifiedPlace(userId, cache, placeObj, undefined, callback);
         if (!verifiedPlace) {
             return;
         }
@@ -1111,7 +1111,7 @@ var LocMapRESTAPI = function() {
 
     // Modify an existing place.
     this.modifyUserPlace = function(userId, cache, placeId, placeObj, callback) {
-        var verifiedPlace = this.getVerifiedPlace(userId, cache, placeObj, callback);
+        var verifiedPlace = this.getVerifiedPlace(userId, cache, placeObj, placeId, callback);
         if (!verifiedPlace) {
             return;
         }

@@ -53,6 +53,7 @@ var LocMapRESTAPI2 = function() {
             });
             place.location.acc = place.rad;
             delete place.rad;
+            place.buzz = !!place.buzz;
             places.push(place);
         });
 
@@ -112,6 +113,21 @@ var LocMapRESTAPI2 = function() {
             }
         });
     };
+
+    // Set place's buzz.
+    this.setUserPlaceBuzz = function(userId, cache, placeId, callback) {
+        // Get user places.
+        locMapRestApi.getUserPlaces(userId, cache, function(status, places) {
+            if (status === 200 && places && places[placeId]) {
+                var place = places[placeId];
+                place.buzz = !place.buzz;
+                locMapRestApi.modifyUserPlace(userId, cache, placeId, place, callback);
+            } else {
+                callback(400, 'Place not found');
+            }
+        });
+    };
+
     this.transformToAPIv1Format = function(v2place) {
         if (v2place.location === undefined) {
             return v2place;

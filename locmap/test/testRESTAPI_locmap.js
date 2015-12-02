@@ -612,20 +612,6 @@ tests.both.setVisibility = function(version) {
 };
 
 
-// Modify non-existing place returns 404
-tests.both.modifyNonExistingPlace = function(version) {
-    return function (test) {
-        test.expect(3);
-        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
-            var authWithPlace = JSON.parse(JSON.stringify(auth1));
-            authWithPlace.data = lmHelpers.locMapPlace1;
-            lmHelpers.api.put(test, '/' + version + '/user/' + reply1.id + '/place/wrongPlaceId',
-                authWithPlace, {status: 404}, function () {
-                    test.done();
-                });
-        });
-    }
-};
 
 
 tests.v1 = {}, tests.v2 = {};
@@ -1012,6 +998,68 @@ tests.v2.modifyPlaceWithInvalid = function(version) {
                                     test.deepEqual(placesResult1.data[0],
                                         placeInV2Format(lmHelpers.locMapPlace1, placeId1));
                                     test.done();
+                                });
+                        });
+                });
+        });
+    }
+};
+
+// Modify non-existing place returns 404
+tests.v1.modifyNonExistingPlace = function(version) {
+    return function (test) {
+        test.expect(3);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+            var authWithPlace = JSON.parse(JSON.stringify(auth1));
+            authWithPlace.data = lmHelpers.locMapPlace1;
+            lmHelpers.api.put(test, '/' + version + '/user/' + reply1.id + '/place/wrongPlaceId',
+                authWithPlace, {status: 404}, function () {
+                    test.done();
+                });
+        });
+    }
+};
+
+// Modify non-existing place returns 404
+tests.v2.modifyNonExistingPlace = function(version) {
+    return function (test) {
+        test.expect(3);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+            var authWithPlace = JSON.parse(JSON.stringify(auth1));
+            authWithPlace.data = placeInV2Format(lmHelpers.locMapPlace1);
+            lmHelpers.api.put(test, '/' + version + '/user/' + reply1.id + '/places/wrongPlaceId',
+                authWithPlace, {status: 404}, function () {
+                    test.done();
+                });
+        });
+    }
+};
+
+tests.v2.setBuzzToPlace = function(version) {
+    return function (test) {
+        test.expect(9);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+            var authWithPlace = JSON.parse(JSON.stringify(auth1));
+            authWithPlace.data = placeInV2Format(lmHelpers.locMapPlace1);
+            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places', authWithPlace,
+                function (result1) {
+                    var placeId1 = result1.data.id;
+                    // Verify that first place is in.
+                    lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places', auth1,
+                        function (placesResult1) {
+                            test.deepEqual(placesResult1.data[0], placeInV2Format(lmHelpers.locMapPlace1, placeId1));
+                            //authWithPlace.data = lmHelpers.locMapPlace2;
+                            lmHelpers.api.put(test, '/' + version + '/user/' + reply1.id + '/places/' + placeId1 + '/buzz',
+                                auth1, function () {
+                                    lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places',
+                                        auth1, function (placesResult2) {
+                                            // Verify that number of places is still one,
+                                            // and that the place is the latest.
+                                            test.equal(Object.keys(placesResult2.data).length, 1);
+                                            test.deepEqual(placesResult2.data[0].buzz,
+                                                true);
+                                            test.done();
+                                        });
                                 });
                         });
                 });
