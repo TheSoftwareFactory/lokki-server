@@ -89,180 +89,218 @@ var LocMapRESTAPI = function() {
         flood.reset(callback);
     };
 
-    this._formatSignUpReplyData = function(userId, authorizationToken, userType, callback) {
-        var reply = {};
-        reply.id = userId;
-        reply.authorizationtoken = authorizationToken;
-        var locShare = new LocMapShareModel(userId);
-        reply.userType = userType
-        locShare.getData(function(locShareResult) {
-            reply.icansee = locShare.data.ICanSee;
-            reply.canseeme = locShare.data.canSeeMe;
-            if (locShareResult === 404) {  // New user, we should create the entry.
-                locShare.setData(function(writeResult) {
-                    if (typeof writeResult !== 'number') {
-                        callback(reply);
-                    } else {
-                        callback(writeResult);
-                    }
-                }, null);
-            } else {  // Existing user, use the found data.
-                callback(reply);
-            }
-        });
-    };
+    this.signUpUser = suspend(function* (requestData, callback) {
 
-    // Users recovery mode parameter needs to be a number that is between current time and configured ttl for recovery mode.
-    this._isUserInRecoveryMode = function(recoveryMode) {
+        if (typeof requestData !== 'object'
+            || typeof requestData.email !== 'string'
+            || typeof requestData.device_id !== 'string') {
+            return callback(400, 'Invalid data.');
+        }
+
+        try {
+           check(requestData.email).isEmail();
+        } catch (err) {
+           return callback(400, 'Invalid email address.');
+        }
+
+        var normalizedEmail = requestData.email.toLowerCase();
+        var userId = locMapCommon.getSaltedHashedId(normalizedEmail);
+        var user = new LocMapUserModel(userId);
+        yield user.getData(suspend.resumeRaw());
+
+        if (user.exists && user.data.activated) {
+
+            if (this._isUserInRecoveryMode(user.data.accountRecoveryMode)) {
+                logger.trace('User ' + userId + ' in recovery mode, signing up.');
+                return this._signUpRecovery(user, requestData, callback);
+
+            } else if (user.isMatchingDeviceId(requestData.device_id)) {
+                logger.trace('Device id match for user ' + userId);
+                return this._signUpMatch(user, requestData, callback);
+
+            } else {
+                // Send reset email, don't allow signing in
+                logger.trace('Device id mismatch for user ' + userId);
+                return this._signUpReset(user, requestData, callback);
+            }
+        } else {
+            // Create new user
+            return this._signUpNewUser(user, requestData, callback);
+        }
+    });
+
+    this._signUpReply = suspend(function* (user, share, userType, callback) {
+
+        var reply = {};
+        reply.id = user.data.userId;
+        reply.authorizationtoken = user.data.authorizationToken;
+        reply.userType = userType;
+        reply.icansee = share.data.ICanSee;
+        reply.canseeme = share.data.canSeeMe;
+        
+        return callback(200, reply);
+    });
+
+    // parameter: the accountRecoveryMode property of a user
+    // returns: whether the user is in recovery mode
+    //
+    // For user to be in recovery mode, 
+    // user's recovery mode parameter needs to be a point in time that 
+    //   1) is not in the future and 
+    //   2) is no older than the TTL defined in the config
+    this._isUserInRecoveryMode = function(recTime) {
+
         var now = Date.now();
-        var recoveryModeTimeout = now - conf.get('locMapConfig').accountRecoveryModeTimeout * 1000;
-        if (typeof recoveryMode === 'number' && recoveryMode <= now && recoveryMode > recoveryModeTimeout) {
+        var oldestAllowed = now - conf.get('locMapConfig').accountRecoveryModeTimeout * 1000;
+
+        if (typeof recTime === 'number' 
+            && recTime !== 0
+            && recTime <= now 
+            && recTime >= oldestAllowed) {
             return true;
         } else {
             return false;
         }
     };
 
-    this.initializeUser = function(user, langCode, deviceId) {
-        user.data.deviceId = locMapCommon.getSaltedHashedId(deviceId);
-        user.data.language = langCode;
+    this._signUpNewUser = suspend(function* (user, requestData, callback) {
+
+        var userId = user.data.userId;
+
+        user.data.activated = true;
+
+        var res = yield this._setFromRequest(user, requestData, suspend.resumeRaw());
+        if (res[0] !== 'OK') {
+            return callback(res[0], res[1]);
+        }
         user.data.authorizationToken = locMapCommon.generateAuthToken();
-    }
 
-    this.getLanguage = function(userData) {
-        if (!userData.language) {
-            return 'en-US';
+        var setResult = (yield user.setData(suspend.resumeRaw(), null))[0];
+
+        if (typeof setResult === 'number') {
+            return callback(400, 'Signup error');
         }
-        if (typeof userData.language === 'string' && userData.language.length < 11 && userData.language.length > 1) {
-            return userData.language;
+
+        var code = (yield locMapConfirmationCode.createConfirmationCode(userId, 
+                suspend.resumeRaw()))[0];
+
+        if (code === 400) {
+            return callback(400, 'Could not generate verification code');
         }
-        return null;
-    }
 
-    this.signUpNewUser = function(newUser, callback, userId) {
-        newUser.data.activated = true;
-        newUser.setData(function(result) {
-            if (typeof result !== 'number') {
-                restApi._formatSignUpReplyData(userId, newUser.data.authorizationToken,'newUser', function(replyResult) {
-                    // Generate account confirmation code
-                    locMapConfirmationCode.createConfirmationCode(newUser.data.userId, function (codeResult) {
-                        if (codeResult !== 400) {
-                            // Set account to expire in 24 hours if not verified
-                            newUser.setTimeout(function (timeoutResult) {
-                                if (timeoutResult !== 200) {
-                                    logger.warn('Could not set timeout for user ' + userId);
-                                }
-                                var confirmUrl = conf.get('locMapConfig').baseUrl + '/confirm/' + newUser.data.userId + '/' + codeResult;
-                                locMapEmail.sendSignupMail(newUser.data.email, newUser.data.language, confirmUrl, function(emailResult) {
-                                    if (emailResult) {
-                                        logger.trace('Signup email successfully sent to ' + newUser.data.email);
-                                    } else {
-                                        logger.warn('FAILED Signup email sending to ' + newUser.data.email);
-                                        if (timeoutResult === 200) {
-                                            // If we can't send the email, just make the account permanent
-                                            newUser.removeTimeout(function (removeTimeoutResult) {
-                                                if (removeTimeoutResult !== 200)    {
-                                                    logger.warn('Could neither send signup email not make account permanent!');
-                                                }
-                                            });
-                                        }
+        var timeoutResult = (yield user.setTimeout(suspend.resumeRaw()))[0];
 
-                                    }
-                                });
-                                callback(locMapCommon.statusFromResult(replyResult), replyResult);
-                            });
-                        } else {
-                            callback(400, 'Could not generate verification code');
-                        }
-                    });
-                });
-            } else {
-                callback(400, 'Signup error.');
-            }
-        }, null);
-    }
+        if (timeoutResult !== 200) {
+            logger.warn('Could not set timeout for user ' + userId);
+        }
 
-    this.signUpActivatedUser = function(newUser, userData, callback, langCode, userId) {
-        if (this._isUserInRecoveryMode(newUser.data.accountRecoveryMode)) {
-            logger.trace('User ' + newUser.data.userId + ' in recovery mode, signing up.');
-            newUser.data.accountRecoveryMode = 0;
-            this.initializeUser(newUser, langCode, userData.device_id);
-            newUser.setData(function(result) {
-                if (typeof result !== 'number') {
-                    restApi._formatSignUpReplyData(userId, newUser.data.authorizationToken,'activatedUser', function(replyResult) {
-                        // TODO Send some email?
-                        callback(locMapCommon.statusFromResult(replyResult), replyResult);
-                    });
+        var confirmUrl = conf.get('locMapConfig').baseUrl + '/confirm/' 
+            + userId + '/' + code;
+
+        // a callback instead of yield & resume 
+        // because we want to return without waiting for it to finish 
+        var emailSent = locMapEmail.sendSignupMail(user.data.email, 
+            user.data.language, confirmUrl, suspend(function* (emailSent) {
+                if (emailSent) {
+                    return logger.trace('Signup email successfully sent to ' + user.data.email);
+                }
+
+                logger.warn('Failed to send signup email to ' + user.data.email);
+
+                if (timeoutResult === 200) {
+                    // If we can't send the email, just make the account permanent
+                    var removeResult = (yield user.removeTimeout(suspend.resumeRaw()))[0];
+                    if (removeResult !== 200) {
+                        logger.warn('Could neither send signup email not make account permanent!');
+                    }
+                }
+            }));
+
+        var share = yield this._getOrCreateShare(userId, suspend.resume());
+
+        return this._signUpReply(user, share, 'newUser', callback);
+    });
+
+    this._getOrCreateShare = suspend(function* (userId, callback) {
+        var share = new LocMapShareModel(userId);
+        yield share.getData(suspend.resumeRaw());
+        if (!share.exists) yield share.setData(suspend.resumeRaw(), null);
+        return callback(null, share);
+    });
+
+    this._setFromRequest = suspend(function* (user, requestData, callback) {
+        
+        user.data.deviceId = locMapCommon.getSaltedHashedId(requestData.device_id);
+
+        if (!requestData.language) {
+            user.data.language = 'en-US';
+        } else if (typeof requestData.language === 'string' 
+                && requestData.language.length < 11 
+                && requestData.language.length > 1) {
+            user.data.language = requestData.language;
+        } else {
+            return callback(400, 'Invalid language code');
+        }
+
+        var normalizedEmail = requestData.email.toLowerCase();
+        user.data.email = normalizedEmail;
+
+        return callback('OK');
+    });
+
+    this._signUpReset = suspend(function* (user, requestData, callback) {
+
+        var userId = user.data.userId;
+
+        var code = (yield locMapResetCode.createResetCode(userId, 
+                suspend.resumeRaw()))[0];
+
+        if (typeof code === 'number') {
+            return callback(400, 'Signup error.');
+        }
+
+        var resetLink = conf.get('locMapConfig').baseUrl + '/reset/' 
+            + userId + '/' + code;
+
+        locMapEmail.sendResetEmail(user.data.email,
+            resetLink, user.data.language, function (sent) {
+                if (sent) {
+                    logger.trace('Reset link sent to ' + user.data.email);
                 } else {
-                    callback(400, 'Signup error.');
+                    logger.trace('Failed to send reset link to ' + user.data.email);
                 }
             });
-        } else if (newUser.isMatchingDeviceId(userData.device_id)) { // Device id match, treat as password success and let user in.
-            logger.trace('Device id match for user ' + newUser.data.userId);
-            restApi._formatSignUpReplyData(userId, newUser.data.authorizationToken,'activatedUser', function(replyResult) {
-                callback(locMapCommon.statusFromResult(replyResult), replyResult);
-            });
-        } else { // Device id mismatch, trigger recovery process for the account.
-            logger.trace('Device id mismatch for user ' + newUser.data.userId);
-            locMapResetCode.createResetCode(newUser.data.userId, function(resetResult) {
-                if (typeof resetResult !== 'number') {
-                    logger.trace('Reset code generated for user ' + newUser.data.userId + ' ' + resetResult);
-                    locMapEmail.sendResetEmail(newUser.data.email, conf.get('locMapConfig').baseUrl + '/reset/' + newUser.data.userId + '/' + resetResult, newUser.data.language, function(emailResult) {
-                        if (emailResult) {
-                            logger.trace('Reset link sent to ' + newUser.data.email);
-                        } else {
-                            logger.error('FAILED to send reset link to ' + newUser.data.email);
-                        }
-                    });
-                    callback(401, 'Signup authorization failed.');
-                } else {
-                    callback(400, 'Signup error.');
-                }
-            });
-        }
-    }
 
-    this.prepareSigningUp = function(userData, callback) {
-        if (typeof userData !== 'object' || typeof userData.email !== 'string' || typeof userData.device_id !== 'string') {
-            callback(400, 'Invalid data.');
-            return false;
-        }
-        try {
-            check(userData.email).isEmail();
-        } catch (e) {
-            logger.trace('User tried signing up with invalid email: ' + userData.email);
-            callback(400, 'Invalid email address.');
-            return false;
-        }
-        return true;
-    }
+        return callback(401, 'Signup authorization failed.');
+    });
 
-    this.signUpUser = function(userData, callback) {
-        if (!this.prepareSigningUp(userData, callback)) {
-            return;
+    this._signUpRecovery = suspend(function* (user, requestData, callback) {
+
+        user.data.accountRecoveryMode = 0;
+
+        var res = yield this._setFromRequest(user, requestData, suspend.resumeRaw());
+        if (res[0] !== 'OK') {
+            return callback(res[0], res[1]);
         }
-        var langCode = this.getLanguage(userData);
-        if (langCode === null) {
-            callback(400, 'Invalid language code.');
-            return false;
+        user.data.authorizationToken = locMapCommon.generateAuthToken();
+
+        var setResult = (yield user.setData(suspend.resumeRaw()))[0];
+
+        if (typeof setResult === 'number') {
+            return callback(400, 'Signup error');
         }
-        var cleanEmail = userData.email.toLowerCase();
-        var userId = locMapCommon.getSaltedHashedId(cleanEmail);
-        var newUser = new LocMapUserModel(userId);
-        var context = this;
-        newUser.getData(function() {
-            if (!newUser.exists) {
-                newUser.data.email = cleanEmail;
-                context.initializeUser(newUser, langCode, userData.device_id);
-                context.signUpNewUser(newUser, callback, userId);
-            } else if (newUser.data.activated) {  // User has been activated already
-                context.signUpActivatedUser(newUser, userData, callback, langCode, userId);
-            } else {  // User has not been activated ('stub' user) -> Normal signup without overwriting the email.
-                context.initializeUser(newUser, langCode, userData.device_id);
-                context.signUpNewUser(newUser, callback, userId);
-            }
-        });
-    };
+
+        var share = yield this._getOrCreateShare(user.data.userId, 
+                suspend.resume());
+        return this._signUpReply(user, share, 'activatedUser', callback);
+    });
+
+    this._signUpMatch = suspend(function* (user, requestData, callback) {
+
+        var share = yield this._getOrCreateShare(user.data.userId,
+                suspend.resume());
+        return this._signUpReply(user, share, 'activatedUser', callback);
+    });
 
     /* Makes a new user account permanent
     param userId            The account ID
@@ -286,7 +324,7 @@ var LocMapRESTAPI = function() {
                             // Persist the user account
                             user.removeTimeout(function (persistResult) {
                                 if (persistResult !== 200) {
-                                    callback(result, 'Error persisting account');
+                                    callback(persistResult, 'Error persisting account');
                                 } else {
                                     var lang = locMapCommon.verifyLangCode(user.data.language);
                                     callback(200, i18n.getLocalizedString(lang, 'confirm.serverMessage'));
@@ -951,8 +989,6 @@ var LocMapRESTAPI = function() {
     /* Assigns a user-defined name to a contact
     param userId    Currently logged in user
     param targetUserId  Contact to rename
-    param name      New contact name
-    callback callback
     */
     this.nameUser = function(userId, targetUserId, requestBody, callback) {
         if (!requestBody) {
