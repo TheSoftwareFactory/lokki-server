@@ -20,13 +20,19 @@ var userPrefix = conf.get('db').userPrefix;
 
 var LocMapCommon = function() {
 
-    // converts password from clear text to salted hashed password to store
-    this.getSaltedHashedId = function(id) {
+    this.getHashed = function(str) {
         var shasum = crypto.createHash('sha1');
-        shasum.update(id);
-        shasum.update('LokkiIsTheGreatTool'); // Separate salt for locmap
-        var userId = shasum.digest('hex');
-        return userId;
+        shasum.update(str);
+
+        /* Use a constant salt instead of a different salt for each user. This
+         * is acceptable because this function is not used to hash passwords,
+         * just emails and device ids, for which it's not a disaster if they're
+         * "cracked".
+         */
+        var salt = 'LokkiIsTheGreatTool';
+        shasum.update(salt); 
+
+        return shasum.digest('hex');
     };
 
     // If result is a number then returns it as is, if not - returns 200 with result
