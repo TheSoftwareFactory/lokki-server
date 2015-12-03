@@ -72,6 +72,7 @@ module.exports = {
 
     userDashboard: {icansee: [], canseeme: [], visibility: true, battery: '', location: {},
         idmapping: {}},
+    userDashboardv2: {battery: '', location: '', visibility: true},
 
     locMapPlace1: {name: 'PlaceName', lat: 1.11, lon: 2.22, rad: 10.0, img: 'somePic', buzz: false},
     locMapPlace2: {name: 'PlaceName2', lat: 2.22, lon: 3.33, rad: 20.1, img: 'somePic2', buzz: false},

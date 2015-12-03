@@ -234,11 +234,22 @@ module.exports = function (app) {
 
     // Receive user locations for the users current one can see,
     // list of users than can see current user and current global visibility status
-    routeUser(GET, ['v1', 'v2'], 'dashboard', function (req, res) {
+    routeUser(GET, 'v1', 'dashboard', function (req, res) {
         var cache = new Cache();
         cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
 
         locMapRestApi.getUserDashboard(req.params.userId, cache, function (status, result) {
+            logger.trace('Dashboard reply status: ' + status +
+                ' contents: ' + JSON.stringify(result));
+            res.send(status, result);
+        });
+    });
+
+    routeUser(GET, 'v2', 'dashboard', function (req, res) {
+        var cache = new Cache();
+        cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
+
+        locMapRestApi2.getUserDashboard(req.params.userId, cache, function (status, result) {
             logger.trace('Dashboard reply status: ' + status +
                 ' contents: ' + JSON.stringify(result));
             res.send(status, result);
