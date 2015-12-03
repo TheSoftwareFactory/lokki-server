@@ -104,7 +104,7 @@ var LocMapRESTAPI = function() {
         }
 
         var normalizedEmail = requestData.email.toLowerCase();
-        var userId = locMapCommon.getSaltedHashedId(normalizedEmail);
+        var userId = locMapCommon.getHashed(normalizedEmail);
         var user = new LocMapUserModel(userId);
         yield user.getData(suspend.resumeRaw());
 
@@ -230,7 +230,7 @@ var LocMapRESTAPI = function() {
 
     this._setFromRequest = suspend(function* (user, requestData, callback) {
         
-        user.data.deviceId = locMapCommon.getSaltedHashedId(requestData.device_id);
+        user.data.deviceId = locMapCommon.getHashed(requestData.device_id);
 
         if (!requestData.language) {
             user.data.language = 'en-US';
@@ -497,7 +497,7 @@ var LocMapRESTAPI = function() {
             return;
         }
 
-        var otherUserId = locMapCommon.getSaltedHashedId(cleanTargetEmail);
+        var otherUserId = locMapCommon.getHashed(cleanTargetEmail);
 
         if (currentUserLocShare.data.userId === otherUserId) {
             callback(400);
@@ -839,7 +839,7 @@ var LocMapRESTAPI = function() {
             callback(400, 'Invalid email address.');
             return;
         }
-        var userId = LocMapCommon.getSaltedHashedId(userEmail);
+        var userId = LocMapCommon.getHashed(userEmail);
         var user = new LocMapUserModel(userId);
         user.getData(function(result) {
             if (user.exists) {

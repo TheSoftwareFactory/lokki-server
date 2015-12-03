@@ -50,7 +50,7 @@ var LocMapAdminApi = function() {
             callback(401);
             return;
         }
-        var userId = locMapCommon.getSaltedHashedId(targetEmail);
+        var userId = locMapCommon.getHashed(targetEmail);
         var user = new LocMapUserModel(userId);
         user.getData(function() {
             if (user.exists) {
