@@ -152,12 +152,14 @@ var LocMapUserModel = function(userId) {
     this.removeTimeout = function(callback) {
         var currentUser = this;
         db.persist(userPrefix + currentUser.data.userId, function (error, result) {
-            if (error || result !== 1) {
+            if (error) {
                 logger.error('Error removing new account expire time: ' + error);
-                callback(result);
-            } else {
-                callback(200);
+                return callback(result);
+            } 
+            if (result === 0) {
+                logger.warn('Attempted to remove expire time from account that was already permanent');
             }
+            return callback(200);
         });
     };
 
