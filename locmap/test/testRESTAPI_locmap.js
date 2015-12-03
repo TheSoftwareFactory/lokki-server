@@ -611,9 +611,6 @@ tests.both.setVisibility = function(version) {
     }
 };
 
-
-
-
 tests.v1 = {}, tests.v2 = {};
 
 // Create multiple places with same name
@@ -1048,7 +1045,6 @@ tests.v2.setBuzzToPlace = function(version) {
                     lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places', auth1,
                         function (placesResult1) {
                             test.deepEqual(placesResult1.data[0], placeInV2Format(lmHelpers.locMapPlace1, placeId1));
-                            //authWithPlace.data = lmHelpers.locMapPlace2;
                             lmHelpers.api.put(test, '/' + version + '/user/' + reply1.id + '/places/' + placeId1 + '/buzz',
                                 auth1, function () {
                                     lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places',

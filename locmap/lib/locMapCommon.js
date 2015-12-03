@@ -75,14 +75,22 @@ var LocMapCommon = function() {
         function floatFieldValidator(place) {
             return setAndValidate(place,
                 ['lat', 'lon', 'rad'],
-                function parser(value) {return parseFloat(value)},
-                function validator(value) { return !isNaN(value); });
+                function parser(value) {
+                    return parseFloat(value);
+                },
+                function validator(value) {
+                    return !isNaN(value);
+                });
         }
         function stringFieldValidator(place) {
             return setAndValidate(place,
                 ['name', 'img'],
-                function parser(value) {return (value === undefined) ? '' : value.trim();},
-                function validator(value) { return typeof value === 'string'; });
+                function parser(value) {
+                    return (value === undefined) ? '' : value.trim();
+                },
+                function validator(value) {
+                    return typeof value === 'string';
+                });
         }
 
         var newPlace = {};
