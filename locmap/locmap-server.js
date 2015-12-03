@@ -421,6 +421,19 @@ module.exports = function (app) {
         });
     });
 
+    // Toggle place's buzz field.
+    // Returns 200
+    // If placeId or buzz param is invalid, returns 400
+    routeUser(PUT, 'v2', 'places/:placeId/buzz', function (req, res) {
+        var cache = new Cache();
+        cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
+
+        locMapRestApi2.setUserPlaceBuzz(req.params.userId, cache, req.params.placeId,
+            function (status, result) {
+                res.send(status, result);
+            });
+    });
+
     // Get all user's contacts.
     // Returns contacts in the same format as Dashboard (without idMapping)
     routeUser(GET, 'v1', 'contacts', function (req, res) {
