@@ -152,12 +152,14 @@ var LocMapUserModel = function(userId) {
     this.removeTimeout = function(callback) {
         var currentUser = this;
         db.persist(userPrefix + currentUser.data.userId, function (error, result) {
-            if (error || result !== 1) {
+            if (error) {
                 logger.error('Error removing new account expire time: ' + error);
-                callback(result);
-            } else {
-                callback(200);
+                return callback(result);
+            } 
+            if (result === 0) {
+                logger.warn('Attempted to remove expire time from account that was already permanent');
             }
+            return callback(200);
         });
     };
 
@@ -326,7 +328,7 @@ var LocMapUserModel = function(userId) {
             logger.trace('Checking device id on uninitialized user! Id: ' + currentUser.data.userId);
             return false;
         }
-        var hashedDeviceId = locMapCommon.getSaltedHashedId(deviceId);
+        var hashedDeviceId = locMapCommon.getHashed(deviceId);
         if (typeof currentUser.data.deviceId === 'string' && currentUser.data.deviceId.length > 0 && hashedDeviceId === currentUser.data.deviceId) {
             return true;
         } else {

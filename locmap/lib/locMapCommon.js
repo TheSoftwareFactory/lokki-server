@@ -20,13 +20,19 @@ var userPrefix = conf.get('db').userPrefix;
 
 var LocMapCommon = function() {
 
-    // converts password from clear text to salted hashed password to store
-    this.getSaltedHashedId = function(id) {
+    this.getHashed = function(str) {
         var shasum = crypto.createHash('sha1');
-        shasum.update(id);
-        shasum.update('LokkiIsTheGreatTool'); // Separate salt for locmap
-        var userId = shasum.digest('hex');
-        return userId;
+        shasum.update(str);
+
+        /* Use a constant salt instead of a different salt for each user. This
+         * is acceptable because this function is not used to hash passwords,
+         * just emails and device ids, for which it's not a disaster if they're
+         * "cracked".
+         */
+        var salt = 'LokkiIsTheGreatTool';
+        shasum.update(salt); 
+
+        return shasum.digest('hex');
     };
 
     // If result is a number then returns it as is, if not - returns 200 with result
@@ -62,27 +68,50 @@ var LocMapCommon = function() {
     };
 
     this.verifyPlace = function(rawPlace) {
-        var newPlace = {
-            lat: parseFloat(rawPlace.lat),
-            lon: parseFloat(rawPlace.lon),
-            rad: parseFloat(rawPlace.rad),
-            name: '',
-            img: ''
-        };
-        if (rawPlace.name !== undefined) {
-            newPlace.name = rawPlace.name;
+        function setAndValidate(place, fields, parseValue, isValid) {
+            for (var i in fields) {
+                var key = fields[i];
+                if (!rawPlace.hasOwnProperty(key)) return null;
+                place[key] = parseValue(rawPlace[key]);
+                if (!isValid(place[key])) return null;
+            }
+            return place;
         }
-        if (rawPlace.img !== undefined) {
-            newPlace.img = rawPlace.img;
+
+        function floatFieldValidator(place) {
+            return setAndValidate(place,
+                ['lat', 'lon', 'rad'],
+                function parser(value) {
+                    return parseFloat(value);
+                },
+                function validator(value) {
+                    return !isNaN(value);
+                });
         }
-        if (isNaN(newPlace.lat) || isNaN(newPlace.lon) || isNaN(newPlace.rad) || typeof newPlace.name !== 'string' || typeof newPlace.img !== 'string') {
-            return null;
-        } else {
-            newPlace.name = newPlace.name.trim();
-            var cleanName = newPlace.name.substr(0, 1).toUpperCase() + newPlace.name.substr(1);
-            newPlace.name = cleanName;
-            return newPlace;
+        function stringFieldValidator(place) {
+            return setAndValidate(place,
+                ['name', 'img'],
+                function parser(value) {
+                    return (value === undefined) ? '' : value.trim();
+                },
+                function validator(value) {
+                    return typeof value === 'string';
+                });
         }
+
+        var newPlace = {};
+        var fieldValidators = [floatFieldValidator, stringFieldValidator];
+        for (var i in fieldValidators) {
+            var setAndValidateFields = fieldValidators[i];
+            newPlace = setAndValidateFields(newPlace);
+            if (newPlace === null) return null;
+        }
+
+        newPlace.name = newPlace.name.substr(0, 1).toUpperCase() + newPlace.name.substr(1);
+
+        newPlace.buzz = !!rawPlace.buzz;
+
+        return newPlace;
     };
 
     this.verifyLocation = function(rawLocation) {
