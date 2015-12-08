@@ -134,8 +134,8 @@ var LocMapRESTAPI2 = function() {
 
     // Set place's buzz.
     this.setUserPlaceBuzz = function(userId, cache, placeId, buzzValue, callback) {
-        if (buzzValue === "true") buzzValue = true;
-        else if (buzzValue === "false") buzzValue = false;
+        if (buzzValue === 'true') buzzValue = true;
+        else if (buzzValue === 'false') buzzValue = false;
         if (typeof buzzValue !== 'boolean') {
             callback(400, 'Invalid buzz value');
         }
