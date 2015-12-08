@@ -421,14 +421,14 @@ module.exports = function (app) {
         });
     });
 
-    // Toggle place's buzz field.
+    // Change place's buzz field. buzzValue is either true or false.
     // Returns 200
     // If placeId or buzz param is invalid, returns 400
-    routeUser(PUT, 'v2', 'places/:placeId/buzz', function (req, res) {
+    routeUser(PUT, 'v2', 'places/:placeId/buzz/:buzzValue', function (req, res) {
         var cache = new Cache();
         cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
 
-        locMapRestApi2.setUserPlaceBuzz(req.params.userId, cache, req.params.placeId,
+        locMapRestApi2.setUserPlaceBuzz(req.params.userId, cache, req.params.placeId, req.params.buzzValue,
             function (status, result) {
                 res.send(status, result);
             });

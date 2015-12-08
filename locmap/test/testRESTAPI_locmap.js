@@ -1034,7 +1034,7 @@ tests.v2.modifyNonExistingPlace = function(version) {
 
 tests.v2.setBuzzToPlace = function(version) {
     return function (test) {
-        test.expect(9);
+        test.expect(13);
         lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
             var authWithPlace = JSON.parse(JSON.stringify(auth1));
             authWithPlace.data = placeInV2Format(lmHelpers.locMapPlace1);
@@ -1045,7 +1045,7 @@ tests.v2.setBuzzToPlace = function(version) {
                     lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places', auth1,
                         function (placesResult1) {
                             test.deepEqual(placesResult1.data[0], placeInV2Format(lmHelpers.locMapPlace1, placeId1));
-                            lmHelpers.api.put(test, '/' + version + '/user/' + reply1.id + '/places/' + placeId1 + '/buzz',
+                            lmHelpers.api.put(test, '/' + version + '/user/' + reply1.id + '/places/' + placeId1 + '/buzz/' + true,
                                 auth1, function () {
                                     lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places',
                                         auth1, function (placesResult2) {
@@ -1054,7 +1054,16 @@ tests.v2.setBuzzToPlace = function(version) {
                                             test.equal(Object.keys(placesResult2.data).length, 1);
                                             test.deepEqual(placesResult2.data[0].buzz,
                                                 true);
-                                            test.done();
+                                            lmHelpers.api.put(test, '/' + version + '/user/' + reply1.id + '/places/' + placeId1 + '/buzz/' + false,
+                                                auth1, function () {
+                                                    lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places',
+                                                        auth1, function (placesResult2) {
+                                                            test.equal(Object.keys(placesResult2.data).length, 1);
+                                                            test.deepEqual(placesResult2.data[0].buzz,
+                                                                false);
+                                                            test.done();
+                                                        });
+                                                });
                                         });
                                 });
                         });
