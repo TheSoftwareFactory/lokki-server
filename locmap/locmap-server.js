@@ -17,6 +17,7 @@ var LocMapRestApi2 = require('./lib/locMapRESTAPI2');
 var locMapRestApi2 = new LocMapRestApi2();
 var LocMapAdminApi = require('./lib/locMapAdminApi');
 var locMapAdminApi = new LocMapAdminApi();
+var LocMapUserModel = require('./lib/locMapUserModel');
 var Cache = require('../lib/cache');
 var Constants = require('./lib/constants');
 
@@ -261,18 +262,29 @@ module.exports = function (app) {
     routeUser(GET, ['v1', 'v2'], 'version/:versionCode/dashboard', function (req, res) {
         var cache = new Cache();
         cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
-
-        if (req.params.versionCode < Constants.MinimumAcceptedVersionCode) {
-            var responseData = {};
-            responseData.serverMessage = Constants.ServerMessage;
-            res.send(200, responseData);
-        } else {
-            locMapRestApi.getUserDashboard(req.params.userId, cache, function (status, result) {
-                logger.trace('Dashboard reply status: ' + status +
-                    ' contents: ' + JSON.stringify(result));
-                res.send(status, result);
-            });
-        }
+        // Load account data
+        var user = new LocMapUserModel(req.params.userId);
+        user.getData(function() {
+            if (!user.exists) {
+                // Account probably expired. Direct user to the sign up again.
+                logger.warn('User does not exist.');
+                var responseData = {};
+                responseData.accountExpiredMessage = Constants.AccountExpiredMessage;
+                res.send(200, responseData);
+            } else if (req.params.versionCode < Constants.MinimumAcceptedVersionCode) {
+                // User has out of date version of the application. Force user to update.
+                logger.warn('User has out of date version of the application.');
+                var responseData = {};
+                responseData.outOfDateVersionMessage = Constants.OutOfDateVersionMessage;
+                res.send(200, responseData);
+            } else {
+                locMapRestApi.getUserDashboard(req.params.userId, cache, function (status, result) {
+                    logger.trace('Dashboard reply status: ' + status +
+                        ' contents: ' + JSON.stringify(result));
+                    res.send(status, result);
+                });
+            }
+        });
     });
 
     // Send notification to update location to users that the current user can see.
@@ -432,14 +444,14 @@ module.exports = function (app) {
         });
     });
 
-    // Toggle place's buzz field.
+    // Change place's buzz field. buzzValue is either true or false.
     // Returns 200
     // If placeId or buzz param is invalid, returns 400
-    routeUser(PUT, 'v2', 'places/:placeId/buzz', function (req, res) {
+    routeUser(PUT, 'v2', 'places/:placeId/buzz/:buzzValue', function (req, res) {
         var cache = new Cache();
         cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
 
-        locMapRestApi2.setUserPlaceBuzz(req.params.userId, cache, req.params.placeId,
+        locMapRestApi2.setUserPlaceBuzz(req.params.userId, cache, req.params.placeId, req.params.buzzValue,
             function (status, result) {
                 res.send(status, result);
             });
