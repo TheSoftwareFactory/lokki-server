@@ -9,6 +9,8 @@ var helpers = require('../../test_helpers/test_helpers');
 var lmHelpers = require('../test_helpers/locMapHelpers');
 var conf = require('../../lib/config');
 
+var suspend = require('suspend');
+
 var testUserEmail = 'user1@example.com.invalid';
 var testUserEmail2 = 'user2@example.com.invalid';
 var testUserEmail3 = 'user3@example.com.invalid';
@@ -53,6 +55,9 @@ var tests = {};
 
 // Tests that both API versions use
 tests.both = { };
+
+tests.v1 = {};
+tests.v2 = {};
 
 // User signup call returns correct information.
 tests.both.userSignUpReply = function(version) {
@@ -127,7 +132,7 @@ tests.both.userDashboardAuthentication = function(version) {
 };
 
 // User dashboard has correct information.
-tests.both.userDashBoardNewUser = function(version) {
+tests.v1.userDashboardNewUser = function(version) {
     return function (test) {
         test.expect(4);
         lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth, reply) {
@@ -142,8 +147,22 @@ tests.both.userDashBoardNewUser = function(version) {
     }
 };
 
+tests.v2.userDashboardNewUser = function (version) {
+    return suspend(function* (test) {
+        var res = yield lmHelpers.createLocMapUser(
+               test, testUserEmail, 'dev1', suspend.resumeRaw()); 
+        var auth = res[0];
+        var reply = res[1];
+        var res = (yield lmHelpers.api.get(test, 
+               '/' + version + '/user/' + reply.id + '/dashboard', auth, suspend.resumeRaw()))[0];
+        var dash = JSON.parse(JSON.stringify(lmHelpers.userDashboardv2));
+        test.deepEqual(res.data, dash);
+        test.done();
+    });
+};
+
 // User dashboard contains location when it has been posted.
-tests.both.userDashBoardWithLocation = function(version) {
+tests.both.userDashboardWithLocation = function(version) {
     return function (test) {
     test.expect(8);
         lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth, reply) {
@@ -195,7 +214,7 @@ tests.both.userLocation = function(version) {
 };
 
 // Allowing another user adds them to icansee and idmapping in dashboard.
-tests.both.allowAnotherUser = function(version) {
+tests.v1.allowAnotherUser = function(version) {
     return function (test) {
         test.expect(9);
         lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
@@ -229,7 +248,7 @@ tests.both.allowAnotherUser = function(version) {
 };
 
 // Multiple allow users do not create duplicate entries.
-tests.both.allowAnotherUserMultiple = function(version) {
+tests.v1.allowAnotherUserMultiple = function(version) {
     return function (test) {
         test.expect(10);
         lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
@@ -269,7 +288,7 @@ tests.both.allowAnotherUserMultiple = function(version) {
 };
 
 // Removing user location sharing allowance.
-tests.both.allowAnotherUserRemove = function (version) {
+tests.v1.allowAnotherUserRemove = function (version) {
     return function (test) {
         test.expect(12);
         lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
@@ -305,7 +324,7 @@ tests.both.allowAnotherUserRemove = function (version) {
 };
 
 // Cannot allow own user.
-tests.both.cannotAllowSelf = function(version) {
+tests.v1.cannotAllowSelf = function(version) {
     return function (test) {
         test.expect(5);
         lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
@@ -324,7 +343,7 @@ tests.both.cannotAllowSelf = function(version) {
 };
 
 // Cannot allow users with invalid email.
-tests.both.cannotAllowInvalidEmail = function(version) {
+tests.v1.cannotAllowInvalidEmail = function(version) {
     return function (test) {
         test.expect(5);
         lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
@@ -343,7 +362,7 @@ tests.both.cannotAllowInvalidEmail = function(version) {
 };
 
 // Emails are lowercased when used in allow method.
-tests.both.allowWithUpperCasesEmail = function(version) {
+tests.v1.allowWithUpperCasesEmail = function(version) {
     return function (test) {
         test.expect(7);
         lmHelpers.createLocMapUser(test, 'testuser1@example.com', 'dev1', function (auth1, reply1) {
@@ -365,7 +384,7 @@ tests.both.allowWithUpperCasesEmail = function(version) {
 };
 
 // Dashboard shows another users location if allowed.
-tests.both.userDashboardAllowedUserLocation = function(version) {
+tests.v1.userDashboardAllowedUserLocation = function(version) {
     return function (test) {
         test.expect(14);
         lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
@@ -395,7 +414,7 @@ tests.both.userDashboardAllowedUserLocation = function(version) {
 };
 
 // Dashboard shows allowed users battery status.
-tests.both.userDashboardAllowedUserBatteryStatus = function(version) {
+tests.v1.userDashboardAllowedUserBatteryStatus = function(version) {
     return function (test) {
         test.expect(8);
         lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
@@ -418,7 +437,7 @@ tests.both.userDashboardAllowedUserBatteryStatus = function(version) {
 };
 
 // Previously non-existing user shows up in idmapping if allowed by user.
-tests.both.userDashboardIdMappingAllowedNewUser = function(version) {
+tests.v1.userDashboardIdMappingAllowedNewUser = function(version) {
     return function (test) {
         test.expect(6);
         lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
@@ -440,7 +459,7 @@ tests.both.userDashboardIdMappingAllowedNewUser = function(version) {
 };
 
 // Multiple allowed users show up correctly.
-tests.both.seeMultipleAllowedUsers = function(version) {
+tests.v1.seeMultipleAllowedUsers = function(version) {
     return function (test) {
         test.expect(10);
         lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
@@ -610,25 +629,6 @@ tests.both.setVisibility = function(version) {
         });
     }
 };
-
-
-// Modify non-existing place returns 404
-tests.both.modifyNonExistingPlace = function(version) {
-    return function (test) {
-        test.expect(3);
-        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
-            var authWithPlace = JSON.parse(JSON.stringify(auth1));
-            authWithPlace.data = lmHelpers.locMapPlace1;
-            lmHelpers.api.put(test, '/' + version + '/user/' + reply1.id + '/place/wrongPlaceId',
-                authWithPlace, {status: 404}, function () {
-                    test.done();
-                });
-        });
-    }
-};
-
-
-tests.v1 = {}, tests.v2 = {};
 
 // Create multiple places with same name
 tests.v1.createMultiplePlacesWithSameNameShouldError = function(version) {
@@ -1012,6 +1012,67 @@ tests.v2.modifyPlaceWithInvalid = function(version) {
                                     test.deepEqual(placesResult1.data[0],
                                         placeInV2Format(lmHelpers.locMapPlace1, placeId1));
                                     test.done();
+                                });
+                        });
+                });
+        });
+    }
+};
+
+// Modify non-existing place returns 404
+tests.v1.modifyNonExistingPlace = function(version) {
+    return function (test) {
+        test.expect(3);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+            var authWithPlace = JSON.parse(JSON.stringify(auth1));
+            authWithPlace.data = lmHelpers.locMapPlace1;
+            lmHelpers.api.put(test, '/' + version + '/user/' + reply1.id + '/place/wrongPlaceId',
+                authWithPlace, {status: 404}, function () {
+                    test.done();
+                });
+        });
+    }
+};
+
+// Modify non-existing place returns 404
+tests.v2.modifyNonExistingPlace = function(version) {
+    return function (test) {
+        test.expect(3);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+            var authWithPlace = JSON.parse(JSON.stringify(auth1));
+            authWithPlace.data = placeInV2Format(lmHelpers.locMapPlace1);
+            lmHelpers.api.put(test, '/' + version + '/user/' + reply1.id + '/places/wrongPlaceId',
+                authWithPlace, {status: 404}, function () {
+                    test.done();
+                });
+        });
+    }
+};
+
+tests.v2.setBuzzToPlace = function(version) {
+    return function (test) {
+        test.expect(9);
+        lmHelpers.createLocMapUser(test, testUserEmail, 'dev1', function (auth1, reply1) {
+            var authWithPlace = JSON.parse(JSON.stringify(auth1));
+            authWithPlace.data = placeInV2Format(lmHelpers.locMapPlace1);
+            lmHelpers.api.post(test, '/' + version + '/user/' + reply1.id + '/places', authWithPlace,
+                function (result1) {
+                    var placeId1 = result1.data.id;
+                    // Verify that first place is in.
+                    lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places', auth1,
+                        function (placesResult1) {
+                            test.deepEqual(placesResult1.data[0], placeInV2Format(lmHelpers.locMapPlace1, placeId1));
+                            lmHelpers.api.put(test, '/' + version + '/user/' + reply1.id + '/places/' + placeId1 + '/buzz',
+                                auth1, function () {
+                                    lmHelpers.api.get(test, '/' + version + '/user/' + reply1.id + '/places',
+                                        auth1, function (placesResult2) {
+                                            // Verify that number of places is still one,
+                                            // and that the place is the latest.
+                                            test.equal(Object.keys(placesResult2.data).length, 1);
+                                            test.deepEqual(placesResult2.data[0].buzz,
+                                                true);
+                                            test.done();
+                                        });
                                 });
                         });
                 });

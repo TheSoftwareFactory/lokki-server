@@ -29,12 +29,30 @@ var i18n = new I18N();
 
 var check = require('validator').check;
 var uuid = require('node-uuid');
+var suspend = require('suspend');
 
 var LocMapRestApi = require('./locMapRESTAPI');
 var locMapRestApi = new LocMapRestApi();
 
 // Rest API version 2
 var LocMapRESTAPI2 = function() {
+
+    this.getUserDashboard = suspend(function* (userId, cache, callback) {
+
+        var user = cache.get('locmapuser', userId);
+
+        var reply = {};
+        reply.location = user.data.location;
+        reply.visibility = user.data.visibility;
+        reply.battery = user.data.battery;
+
+        var setResult = (yield user.setLastDashboardRead(suspend.resumeRaw()));
+        if (setResult !== 'OK') {
+            logger.warn('Failed to update last dashboard access for user ' + userId);
+        }
+
+        callback(200, reply);
+    });
 
     // Get user places.
     this.getUserPlaces = function(userId, cache, callback) {
@@ -53,6 +71,7 @@ var LocMapRESTAPI2 = function() {
             });
             place.location.acc = place.rad;
             delete place.rad;
+            place.buzz = !!place.buzz;
             places.push(place);
         });
 
@@ -112,6 +131,21 @@ var LocMapRESTAPI2 = function() {
             }
         });
     };
+
+    // Set place's buzz.
+    this.setUserPlaceBuzz = function(userId, cache, placeId, callback) {
+        // Get user places.
+        locMapRestApi.getUserPlaces(userId, cache, function(status, places) {
+            if (status === 200 && places && places[placeId]) {
+                var place = places[placeId];
+                place.buzz = !place.buzz;
+                locMapRestApi.modifyUserPlace(userId, cache, placeId, place, callback);
+            } else {
+                callback(400, 'Place not found');
+            }
+        });
+    };
+
     this.transformToAPIv1Format = function(v2place) {
         if (v2place.location === undefined) {
             return v2place;

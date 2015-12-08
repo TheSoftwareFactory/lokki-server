@@ -235,11 +235,22 @@ module.exports = function (app) {
 
     // Receive user locations for the users current one can see,
     // list of users than can see current user and current global visibility status
-    routeUser(GET, ['v1', 'v2'], 'dashboard', function (req, res) {
+    routeUser(GET, 'v1', 'dashboard', function (req, res) {
         var cache = new Cache();
         cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
 
         locMapRestApi.getUserDashboard(req.params.userId, cache, function (status, result) {
+            logger.trace('Dashboard reply status: ' + status +
+                ' contents: ' + JSON.stringify(result));
+            res.send(status, result);
+        });
+    });
+
+    routeUser(GET, 'v2', 'dashboard', function (req, res) {
+        var cache = new Cache();
+        cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
+
+        locMapRestApi2.getUserDashboard(req.params.userId, cache, function (status, result) {
             logger.trace('Dashboard reply status: ' + status +
                 ' contents: ' + JSON.stringify(result));
             res.send(status, result);
@@ -431,6 +442,19 @@ module.exports = function (app) {
         locMapRestApi2.getUserPlaces(req.params.userId, cache, function (status, result) {
             res.send(status, result);
         });
+    });
+
+    // Toggle place's buzz field.
+    // Returns 200
+    // If placeId or buzz param is invalid, returns 400
+    routeUser(PUT, 'v2', 'places/:placeId/buzz', function (req, res) {
+        var cache = new Cache();
+        cache.cache('locmapuser', req.params.userId, req.cachedUserObjFromAuthorization);
+
+        locMapRestApi2.setUserPlaceBuzz(req.params.userId, cache, req.params.placeId,
+            function (status, result) {
+                res.send(status, result);
+            });
     });
 
     // Get all user's contacts.
