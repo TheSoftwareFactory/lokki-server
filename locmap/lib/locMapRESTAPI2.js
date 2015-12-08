@@ -29,12 +29,30 @@ var i18n = new I18N();
 
 var check = require('validator').check;
 var uuid = require('node-uuid');
+var suspend = require('suspend');
 
 var LocMapRestApi = require('./locMapRESTAPI');
 var locMapRestApi = new LocMapRestApi();
 
 // Rest API version 2
 var LocMapRESTAPI2 = function() {
+
+    this.getUserDashboard = suspend(function* (userId, cache, callback) {
+
+        var user = cache.get('locmapuser', userId);
+
+        var reply = {};
+        reply.location = user.data.location;
+        reply.visibility = user.data.visibility;
+        reply.battery = user.data.battery;
+
+        var setResult = (yield user.setLastDashboardRead(suspend.resumeRaw()));
+        if (setResult !== 'OK') {
+            logger.warn('Failed to update last dashboard access for user ' + userId);
+        }
+
+        callback(200, reply);
+    });
 
     // Get user places.
     this.getUserPlaces = function(userId, cache, callback) {
