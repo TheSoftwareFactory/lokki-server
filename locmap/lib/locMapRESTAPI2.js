@@ -133,12 +133,17 @@ var LocMapRESTAPI2 = function() {
     };
 
     // Set place's buzz.
-    this.setUserPlaceBuzz = function(userId, cache, placeId, callback) {
+    this.setUserPlaceBuzz = function(userId, cache, placeId, buzzValue, callback) {
+        if (buzzValue === 'true') buzzValue = true;
+        else if (buzzValue === 'false') buzzValue = false;
+        if (typeof buzzValue !== 'boolean') {
+            callback(400, 'Invalid buzz value');
+        }
         // Get user places.
         locMapRestApi.getUserPlaces(userId, cache, function(status, places) {
             if (status === 200 && places && places[placeId]) {
                 var place = places[placeId];
-                place.buzz = !place.buzz;
+                place.buzz = buzzValue;
                 locMapRestApi.modifyUserPlace(userId, cache, placeId, place, callback);
             } else {
                 callback(400, 'Place not found');
