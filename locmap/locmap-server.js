@@ -20,6 +20,7 @@ var locMapAdminApi = new LocMapAdminApi();
 var LocMapUserModel = require('./lib/locMapUserModel');
 var Cache = require('../lib/cache');
 var Constants = require('./lib/constants');
+var ServerErrors = require('./lib/serverErrors')
 
 var suspend = require('suspend');
 var assert = require('assert');
@@ -265,17 +266,17 @@ module.exports = function (app) {
         // Load account data
         var user = new LocMapUserModel(req.params.userId);
         user.getData(function() {
-            if (!user.exists) {
-                // Account probably expired. Direct user to the sign up again.
-                logger.warn('User does not exist.');
-                var responseData = {};
-                responseData.accountExpiredMessage = Constants.AccountExpiredMessage;
-                res.send(200, responseData);
-            } else if (req.params.versionCode < Constants.MinimumAcceptedVersionCode) {
+            if (req.params.versionCode < Constants.MinimumAcceptedVersionCode) {
                 // User has out of date version of the application. Force user to update.
                 logger.warn('User has out of date version of the application.');
                 var responseData = {};
-                responseData.outOfDateVersionMessage = Constants.OutOfDateVersionMessage;
+                responseData.serverError = ServerErrors.OutOfDateVersionError;
+                res.send(200, responseData);
+            } else if (!user.exists) {
+                // Account probably expired. Direct user to the sign up again.
+                logger.warn('User does not exist.');
+                var responseData = {};
+                responseData.serverError = ServerErrors.AccountExpiredError;
                 res.send(200, responseData);
             } else {
                 locMapRestApi.getUserDashboard(req.params.userId, cache, function (status, result) {

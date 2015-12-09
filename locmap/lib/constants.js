@@ -8,9 +8,7 @@
  */
 
 var Constants = {
-    'MinimumAcceptedVersionCode':'413',
-    'OutOfDateVersionMessage':'Your application is out of date. Please download the new version from Google Play Store.',
-    'AccountExpiredMessage':'Your account has expired. Please sign up again.'
+    'MinimumAcceptedVersionCode':'425'
 };
 
 module.exports = Constants;
