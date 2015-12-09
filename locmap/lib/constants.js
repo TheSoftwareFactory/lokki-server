@@ -8,7 +8,7 @@
  */
 
 var Constants = {
-    'MinimumAcceptedVersionCode':'425'
+    'MinimumAcceptedVersionCode':'413'
 };
 
 module.exports = Constants;
